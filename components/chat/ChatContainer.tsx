@@ -312,52 +312,52 @@ export function ChatContainer() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto h-[calc(100vh-64px)] p-4 flex flex-col">
+    <div className="max-w-5xl mx-auto h-[calc(100vh-64px)] p-2 sm:p-4 flex flex-col">
       {/* Step Progress Bar */}
-      <div className="pb-4 mb-4 border-b flex-shrink-0">
+      <div className="pb-2 sm:pb-4 mb-2 sm:mb-4 border-b flex-shrink-0">
         <StepProgress currentStep={step} onStepChange={setStep} />
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0">
         {step === 'welcome' && (
-          <div className="flex flex-col items-center h-full space-y-4">
+          <div className="flex flex-col items-center h-full space-y-2 sm:space-y-4">
             {/* Header */}
-            <div className="text-center space-y-2 flex-shrink-0">
-              <h1 className="text-2xl font-bold">AI 큐레이터와 전시 기획하기</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="text-center space-y-1 sm:space-y-2 flex-shrink-0 px-2">
+              <h1 className="text-xl sm:text-2xl font-bold">AI 큐레이터와 전시 기획하기</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 AI 큐레이터와 대화하며 당신의 전시 아이디어를 구체화하세요
               </p>
             </div>
 
             {/* Chat Container */}
-            <div className="w-full max-w-4xl border rounded-xl bg-gradient-to-b from-card to-card/50 shadow-lg overflow-hidden flex-1 flex flex-col">
+            <div className="w-full max-w-4xl border rounded-lg sm:rounded-xl bg-gradient-to-b from-card to-card/50 shadow-lg overflow-hidden flex-1 flex flex-col">
                 {/* Chat Header */}
-                <div className="bg-primary/5 border-b px-6 py-4 flex-shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-xl">🎨</span>
+                <div className="bg-primary/5 border-b px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg sm:text-xl">🎨</span>
                     </div>
                     <div>
-                      <h3 className="font-semibold">AI 큐레이터</h3>
+                      <h3 className="text-sm sm:text-base font-semibold">AI 큐레이터</h3>
                       <p className="text-xs text-muted-foreground">전시 기획 전문가</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Chat Messages */}
-                <div className="flex-1 p-6 space-y-4 overflow-y-auto bg-background/50">
+                <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto bg-background/50">
                   {messages.length > 0 ? (
                     <MessageList messages={messages} />
                   ) : (
-                    <div className="text-center text-sm text-muted-foreground py-8">
+                    <div className="text-center text-xs sm:text-sm text-muted-foreground py-8">
                       대화를 시작해주세요...
                     </div>
                   )}
                 </div>
 
                 {/* Chat Input */}
-                <div className="border-t bg-card p-4 flex-shrink-0">
+                <div className="border-t bg-card p-2 sm:p-4 flex-shrink-0">
                   <ChatInput
                     input={input}
                     handleInputChange={handleInputChange}
