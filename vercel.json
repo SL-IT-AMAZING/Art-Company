@@ -4,11 +4,6 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["icn1"],
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@next-public-api-url",
-    "NEXT_PUBLIC_SUPABASE_URL": "@next-public-supabase-url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@next-public-supabase-anon-key"
-  },
   "headers": [
     {
       "source": "/(.*)",
