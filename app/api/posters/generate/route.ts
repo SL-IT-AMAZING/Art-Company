@@ -58,7 +58,7 @@ The poster should evoke a sense of sophistication and artistic excellence, suita
       style: 'natural',
     })
 
-    const imageUrl = response.data[0]?.url
+    const imageUrl = response.data?.[0]?.url
 
     if (!imageUrl) {
       throw new Error('Failed to generate poster image')
