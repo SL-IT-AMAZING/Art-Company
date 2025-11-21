@@ -45,7 +45,7 @@ export async function PATCH(
       .eq('id', artworkId)
       .single()
 
-    if (!artwork || artwork.exhibitions.user_id !== user.id) {
+    if (!artwork || (artwork.exhibitions as any).user_id !== user.id) {
       return new Response(
         JSON.stringify({ error: '작품을 찾을 수 없거나 권한이 없습니다' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
@@ -114,7 +114,7 @@ export async function DELETE(
       .eq('id', artworkId)
       .single()
 
-    if (!artwork || artwork.exhibitions.user_id !== user.id) {
+    if (!artwork || (artwork.exhibitions as any).user_id !== user.id) {
       return new Response(
         JSON.stringify({ error: '작품을 찾을 수 없거나 권한이 없습니다' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }

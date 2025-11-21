@@ -52,9 +52,46 @@ export async function POST(req: NextRequest) {
     const getContentText = (type: string): string => {
       const content = contentMap.get(type)
       if (!content?.content) return ''
-      return typeof content.content === 'string'
+
+      let text = typeof content.content === 'string'
         ? content.content
         : content.content.text || ''
+
+      // Remove JSON formatting if present
+      if (text.trim().startsWith('{') || text.trim().startsWith('```json')) {
+        try {
+          // Remove markdown code block if present
+          text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+
+          // Try to parse as JSON
+          const parsed = JSON.parse(text)
+
+          // Extract the actual content from common JSON response formats
+          if (type === 'artistBio' && parsed.artistBio) return parsed.artistBio
+          if (type === 'introduction' && parsed.introduction) return parsed.introduction
+          if (type === 'preface' && parsed.preface) return parsed.preface
+          if (type === 'pressRelease' && parsed.pressRelease) return parsed.pressRelease
+          if (type === 'marketingReport' && parsed.marketingReport) {
+            // Format marketing report if it's an object
+            if (typeof parsed.marketingReport === 'object') {
+              const mr = parsed.marketingReport
+              let formatted = ''
+              if (mr.overview) formatted += mr.overview + '\n\n'
+              if (mr.targetAudience) formatted += '주요 타깃:\n' + mr.targetAudience.join('\n') + '\n\n'
+              if (mr.marketingPoints) formatted += '마케팅 포인트:\n' + mr.marketingPoints.join('\n') + '\n\n'
+              if (mr.pricingStrategy) formatted += '가격 전략:\n' + mr.pricingStrategy + '\n\n'
+              if (mr.promotionStrategy) formatted += '추천 홍보 전략:\n' + mr.promotionStrategy.join('\n')
+              return formatted.trim()
+            }
+            return parsed.marketingReport
+          }
+        } catch (e) {
+          // If parsing fails, return original text without JSON markers
+          return text
+        }
+      }
+
+      return text
     }
 
     // Generate HTML for PDF

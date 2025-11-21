@@ -64,7 +64,44 @@ export async function POST(req: NextRequest) {
     // Content mapping helper
     const getContent = (type: string) => {
       const item = content?.find((c: any) => c.content_type === type)
-      return item?.content || ''
+      if (!item?.content) return ''
+
+      let text = typeof item.content === 'string' ? item.content : item.content.text || ''
+
+      // Remove JSON formatting if present
+      if (text.trim().startsWith('{') || text.trim().startsWith('```json')) {
+        try {
+          // Remove markdown code block if present
+          text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+
+          // Try to parse as JSON
+          const parsed = JSON.parse(text)
+
+          // Extract the actual content from common JSON response formats
+          if (parsed.artistBio) return parsed.artistBio
+          if (parsed.introduction) return parsed.introduction
+          if (parsed.preface) return parsed.preface
+          if (parsed.pressRelease) return parsed.pressRelease
+          if (parsed.marketingReport) {
+            // Format marketing report if it's an object
+            if (typeof parsed.marketingReport === 'object') {
+              const mr = parsed.marketingReport
+              let formatted = ''
+              if (mr.overview) formatted += mr.overview + '<br><br>'
+              if (mr.targetAudience) formatted += '<strong>주요 타깃:</strong><br>' + mr.targetAudience.join('<br>') + '<br><br>'
+              if (mr.marketingPoints) formatted += '<strong>마케팅 포인트:</strong><br>' + mr.marketingPoints.join('<br>') + '<br><br>'
+              if (mr.pricingStrategy) formatted += '<strong>가격 전략:</strong><br>' + mr.pricingStrategy + '<br><br>'
+              if (mr.promotionStrategy) formatted += '<strong>추천 홍보 전략:</strong><br>' + mr.promotionStrategy.join('<br>')
+              return formatted.trim()
+            }
+            return parsed.marketingReport
+          }
+        } catch (e) {
+          // If parsing fails, return original text without JSON markers
+        }
+      }
+
+      return text
     }
 
     // Create HTML with Korean font support
