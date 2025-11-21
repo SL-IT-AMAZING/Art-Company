@@ -1,0 +1,4 @@
+Voxelexample
+*.log
+.env.local
+.env*.local
