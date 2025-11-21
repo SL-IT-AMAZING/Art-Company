@@ -77,6 +77,7 @@ export function MarketingReportGenerator({
             <p className="text-muted-foreground">
               마케팅 리포트를 생성하고 있습니다...
             </p>
+            <p className="text-sm font-medium text-primary mt-2">예상 소요시간: 약 10-15초</p>
           </div>
         )}
 

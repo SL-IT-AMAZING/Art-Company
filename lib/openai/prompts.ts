@@ -75,28 +75,30 @@ JSON 형식으로 응답:
 
   generateMarketingReport: (exhibitionData: any, context: string) => `
 당신은 미술 시장 전문 분석가입니다.
-다음 전시 정보를 바탕으로 마케팅 리포트(컬렉팅 포인트)를 작성해주세요.
+다음 전시 정보를 바탕으로 마케팅 리포트를 한글로 작성해주세요.
 
 전시 정보:
 ${JSON.stringify(exhibitionData, null, 2)}
 
 참고 스타일: ${context}
 
-마케팅 리포트 구조:
-1. 전시 요약 (Brief Overview)
-2. 주요 타깃 (Target Audience)
-3. 마케팅 포인트 (Marketing Points)
-4. 가격 전략 (Pricing Strategy) - 일반적 제안
-5. 추천 홍보 전략 (Promotion Strategy)
+**중요: 모든 내용을 한글로 작성하세요. 영어 단어나 영어 문장을 사용하지 마세요.**
 
-JSON 형식으로 응답:
+마케팅 리포트 구조:
+1. 전시 요약: 전시의 핵심 메시지와 특징을 2-3문장으로 요약
+2. 주요 타깃: 이 전시에 관심을 가질 관람객 그룹 (3-5개 항목)
+3. 마케팅 포인트: 전시의 차별화된 강점과 홍보 포인트 (3-5개 항목)
+4. 가격 전략: 입장료 및 가격 정책 제안
+5. 추천 홍보 전략: 효과적인 홍보 방법 (3-5개 항목)
+
+JSON 형식으로 응답 (모든 내용은 한글로):
 {
   "marketingReport": {
-    "overview": "...",
-    "targetAudience": [...],
-    "marketingPoints": [...],
-    "pricingStrategy": "...",
-    "promotionStrategy": [...]
+    "overview": "전시 요약을 한글로...",
+    "targetAudience": ["타깃1 한글로", "타깃2 한글로", ...],
+    "marketingPoints": ["포인트1 한글로", "포인트2 한글로", ...],
+    "pricingStrategy": "가격 전략을 한글로...",
+    "promotionStrategy": ["전략1 한글로", "전략2 한글로", ...]
   }
 }
 `,

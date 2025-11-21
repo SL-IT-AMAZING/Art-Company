@@ -69,9 +69,10 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">AI가 전시 타이틀을 생성하고 있습니다...</p>
+            <p className="text-sm font-medium text-primary">예상 소요시간: 약 10초</p>
           </div>
         </CardContent>
       </Card>

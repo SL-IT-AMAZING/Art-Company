@@ -65,6 +65,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
             <p className="text-muted-foreground">포스터를 생성하고 있습니다...</p>
+            <p className="text-sm font-medium text-primary mt-2">예상 소요시간: 약 15-20초</p>
           </div>
         )}
 
@@ -84,12 +85,14 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
 
         {posterUrl && (
           <div className="space-y-4">
-            <div className="relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
-              <img
-                src={posterUrl}
-                alt="Generated Poster"
-                className="w-full h-full object-cover"
-              />
+            <div className="flex justify-center">
+              <div className="relative w-1/4 aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
+                <img
+                  src={posterUrl}
+                  alt="Generated Poster"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={generatePoster}>

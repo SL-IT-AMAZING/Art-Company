@@ -76,8 +76,6 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
     }
   }
 
-  const visibleSteps = STEP_ORDER.slice(scrollPosition, scrollPosition + itemsPerPage)
-
   return (
     <div className="flex items-center justify-center gap-2 w-full px-4 py-3">
       <Button
@@ -91,9 +89,13 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
-      <div className="flex items-center gap-2 overflow-hidden transition-all duration-300 ease-in-out">
-        {visibleSteps.map((step, index) => {
-          const actualIndex = scrollPosition + index
+      <div className="flex items-center gap-2 overflow-hidden" style={{ width: '600px' }}>
+        <div
+          className="flex items-center gap-2 transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${scrollPosition * 120}px)` }}
+        >
+        {STEP_ORDER.map((step, index) => {
+          const actualIndex = index
           const isComplete = actualIndex < currentIndex
           const isActive = actualIndex === currentIndex
           const isClickable = actualIndex <= currentIndex && onStepChange
@@ -113,11 +115,11 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
                 <div
                   className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-all duration-300 ${
                     isActive
-                      ? 'bg-primary text-primary-foreground shadow-lg scale-110'
+                      ? 'bg-primary text-primary-foreground shadow-lg'
                       : isComplete
                         ? 'bg-primary/20 text-primary hover:bg-primary/30'
                         : 'bg-muted text-muted-foreground'
-                  } ${isClickable && !isActive ? 'group-hover:scale-105' : ''}`}
+                  }`}
                 >
                   {actualIndex + 1}
                 </div>
@@ -133,7 +135,7 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
                   {step.label}
                 </span>
               </button>
-              {index < visibleSteps.length - 1 && (
+              {index < STEP_ORDER.length - 1 && (
                 <div
                   className={`w-4 border-t transition-all duration-300 ${
                     actualIndex < currentIndex ? 'border-primary' : 'border-muted'
@@ -143,6 +145,7 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
             </div>
           )
         })}
+        </div>
       </div>
 
       <Button

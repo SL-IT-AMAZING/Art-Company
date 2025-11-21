@@ -392,9 +392,9 @@ export function ChatContainer() {
                   <div className="text-center space-y-2">
                     <h3 className="text-lg font-semibold">전시 본문 생성 중...</h3>
                     <p className="text-sm text-muted-foreground">
-                      AI가 전시 소개, 서문 등을 생성하고 있습니다.
+                      AI가 전시 소개, 서문, 작가 소개, 작품 설명을 생성하고 있습니다.
                       <br />
-                      잠시만 기다려주세요. (약 30초 소요)
+                      <span className="font-medium text-primary">예상 소요시간: 약 20-30초</span>
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 text-sm text-muted-foreground">
@@ -404,7 +404,7 @@ export function ChatContainer() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-primary rounded-full animate-pulse delay-100"></div>
-                      전시 서문 생성 중
+                      전시 서문 및 작품 설명 생성 중
                     </div>
                   </div>
                 </CardContent>

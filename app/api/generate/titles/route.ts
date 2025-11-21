@@ -24,7 +24,10 @@ export async function POST(req: Request) {
       max_tokens: 500,
     })
 
-    const content = response.choices[0]?.message?.content || ''
+    let content = response.choices[0]?.message?.content || ''
+
+    // Remove code block markers if present
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
 
     // Try to parse JSON response
     try {
@@ -32,7 +35,10 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify(parsed), {
         headers: { 'Content-Type': 'application/json' },
       })
-    } catch {
+    } catch (parseError) {
+      console.error('Failed to parse titles JSON:', parseError)
+      console.error('Content:', content)
+
       // If not JSON, return as plain text wrapped in titles array
       const titles = content
         .split('\n')
