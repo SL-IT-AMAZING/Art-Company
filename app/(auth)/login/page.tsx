@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -14,7 +15,15 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  useEffect(() => {
+    const authError = searchParams.get('auth_error')
+    if (authError) {
+      setError(authError)
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,6 +96,24 @@ export default function LoginPage() {
               {loading ? '로그인 중...' : '로그인'}
             </Button>
           </form>
+
+          <div className="mt-4 text-right">
+            <Link href="/reset-password" className="text-sm text-primary hover:underline">
+              비밀번호를 잊으셨나요?
+            </Link>
+          </div>
+
+          <div className="my-6">
+            <div className="relative text-center">
+              <span className="px-3 text-sm text-muted-foreground bg-card relative z-10">
+                또는 소셜 계정으로 계속하기
+              </span>
+              <div className="absolute inset-x-0 top-1/2 border-b" aria-hidden />
+            </div>
+            <div className="mt-6">
+              <SocialLoginButtons />
+            </div>
+          </div>
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">계정이 없으신가요? </span>

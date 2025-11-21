@@ -55,7 +55,7 @@ export default async function ExhibitionListPage() {
                   <CardContent>
                     {exhibition.keywords && exhibition.keywords.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {exhibition.keywords.slice(0, 5).map((keyword, index) => (
+                        {exhibition.keywords.slice(0, 5).map((keyword: string, index: number) => (
                           <span
                             key={index}
                             className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs"

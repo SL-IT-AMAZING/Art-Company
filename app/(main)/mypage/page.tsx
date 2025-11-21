@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils/helpers'
+import { ProfileSettingsCard } from '@/components/profile/ProfileSettingsCard'
 
 export default async function MyPage() {
   const supabase = await createClient()
@@ -37,6 +38,14 @@ export default async function MyPage() {
           <Link href="/curation">
             <Button size="lg">새 전시 만들기</Button>
           </Link>
+        </div>
+
+        <div className="mb-8">
+          <ProfileSettingsCard
+            email={user.email || ''}
+            initialDisplayName={(user.user_metadata?.full_name as string) || ''}
+            initialBio={(user.user_metadata?.bio as string) || ''}
+          />
         </div>
 
         <div className="grid gap-6">

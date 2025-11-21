@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       max_tokens: 2000,
     })
 
-    const stream = OpenAIStream(response, {
+    const stream = OpenAIStream(response as any, {
       onCompletion: async (completion) => {
         // Save to database if exhibition ID and step are provided
         if (exhibitionId && step) {

@@ -53,12 +53,12 @@ export function Footer() {
             <h4 className="font-semibold mb-3">계정</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/auth/login" className="text-muted-foreground hover:text-foreground">
+                <Link href="/login" className="text-muted-foreground hover:text-foreground">
                   로그인
                 </Link>
               </li>
               <li>
-                <Link href="/auth/signup" className="text-muted-foreground hover:text-foreground">
+                <Link href="/signup" className="text-muted-foreground hover:text-foreground">
                   회원가입
                 </Link>
               </li>
