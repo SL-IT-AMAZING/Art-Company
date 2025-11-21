@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/app/actions/auth'
 import { NavItems } from './NavItems'
+import { ProfileMenu } from './ProfileMenu'
 
 export async function Header() {
   const supabase = await createClient()
@@ -21,16 +22,11 @@ export async function Header() {
 
         <div className="flex items-center space-x-2">
           {user ? (
-            <>
-              <Link href="/mypage">
-                <Button variant="ghost">{user.email}</Button>
-              </Link>
-              <form action={logout}>
-                <Button variant="outline" type="submit">
-                  로그아웃
-                </Button>
-              </form>
-            </>
+            <ProfileMenu
+              email={user.email || ''}
+              displayName={(user.user_metadata?.full_name as string) || undefined}
+              logoutAction={logout}
+            />
           ) : (
             <>
               <Link href="/login">

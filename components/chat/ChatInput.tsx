@@ -11,6 +11,7 @@ interface ChatInputProps {
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void
   isLoading: boolean
   placeholder?: string
+  disabled?: boolean
 }
 
 export function ChatInput({
@@ -19,17 +20,20 @@ export function ChatInput({
   handleSubmit,
   isLoading,
   placeholder = '메시지를 입력하세요...',
+  disabled = false,
 }: ChatInputProps) {
+  const isDisabled = disabled || isLoading
+
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       <Input
         value={input}
         onChange={handleInputChange}
         placeholder={placeholder}
-        disabled={isLoading}
+        disabled={isDisabled}
         className="flex-1"
       />
-      <Button type="submit" disabled={isLoading || !input.trim()}>
+      <Button type="submit" disabled={isDisabled || !input.trim()}>
         <Send className="w-4 h-4" />
       </Button>
     </form>

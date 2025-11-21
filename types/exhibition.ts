@@ -6,6 +6,12 @@ export interface MarketingReport {
   promotionStrategy: string[]
 }
 
+export interface ArtworkDescription {
+  artworkId: string | number
+  title: string
+  description: string
+}
+
 export interface ExhibitionData {
   id?: string
   keywords: string[]
@@ -14,6 +20,7 @@ export interface ExhibitionData {
   introduction?: string
   preface?: string
   artistBio?: string
+  artworkDescriptions?: ArtworkDescription[]
   pressRelease?: string
   marketingReport?: MarketingReport
 }

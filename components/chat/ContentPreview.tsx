@@ -88,26 +88,6 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
             </div>
           )}
 
-          {/* Press Release */}
-          {data.pressRelease && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-muted-foreground">
-                  보도자료
-                </h3>
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit('pressRelease')}
-                  >
-                    수정
-                  </Button>
-                )}
-              </div>
-              <p className="text-sm leading-relaxed">{data.pressRelease}</p>
-            </div>
-          )}
 
           {/* Images */}
           {data.images.length > 0 && (

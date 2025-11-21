@@ -1,12 +1,14 @@
 export const PROMPTS = {
-  generateTitles: (keywords: string[], artworkDescriptions: string[]) => `
+  generateTitles: (keywords: string[], artworkDescriptions: string[], conversationContext: string = '') => `
 당신은 한국 현대미술 전문 큐레이터입니다.
-다음 키워드와 작품 설명을 바탕으로 전시 타이틀 5개를 제안해주세요.
+다음 정보를 바탕으로 전시 타이틀 5개를 제안해주세요.
 
-키워드: ${keywords.join(', ')}
+${conversationContext ? `사용자와의 대화 내용:\n${conversationContext}\n\n` : ''}키워드: ${keywords.join(', ')}
 작품 설명: ${artworkDescriptions.join('\n')}
 
 각 타이틀은:
+- 사용자와의 대화에서 나온 전시 컨셉과 아이디어를 반영
+- 키워드의 핵심 의미를 담기
 - 감성적이고 상징적인 표현 사용
 - 한국어와 영어 병기 가능
 - 전시의 핵심 메시지 담기
@@ -73,28 +75,30 @@ JSON 형식으로 응답:
 
   generateMarketingReport: (exhibitionData: any, context: string) => `
 당신은 미술 시장 전문 분석가입니다.
-다음 전시 정보를 바탕으로 마케팅 리포트(컬렉팅 포인트)를 작성해주세요.
+다음 전시 정보를 바탕으로 마케팅 리포트를 한글로 작성해주세요.
 
 전시 정보:
 ${JSON.stringify(exhibitionData, null, 2)}
 
 참고 스타일: ${context}
 
-마케팅 리포트 구조:
-1. 전시 요약 (Brief Overview)
-2. 주요 타깃 (Target Audience)
-3. 마케팅 포인트 (Marketing Points)
-4. 가격 전략 (Pricing Strategy) - 일반적 제안
-5. 추천 홍보 전략 (Promotion Strategy)
+**중요: 모든 내용을 한글로 작성하세요. 영어 단어나 영어 문장을 사용하지 마세요.**
 
-JSON 형식으로 응답:
+마케팅 리포트 구조:
+1. 전시 요약: 전시의 핵심 메시지와 특징을 2-3문장으로 요약
+2. 주요 타깃: 이 전시에 관심을 가질 관람객 그룹 (3-5개 항목)
+3. 마케팅 포인트: 전시의 차별화된 강점과 홍보 포인트 (3-5개 항목)
+4. 가격 전략: 입장료 및 가격 정책 제안
+5. 추천 홍보 전략: 효과적인 홍보 방법 (3-5개 항목)
+
+JSON 형식으로 응답 (모든 내용은 한글로):
 {
   "marketingReport": {
-    "overview": "...",
-    "targetAudience": [...],
-    "marketingPoints": [...],
-    "pricingStrategy": "...",
-    "promotionStrategy": [...]
+    "overview": "전시 요약을 한글로...",
+    "targetAudience": ["타깃1 한글로", "타깃2 한글로", ...],
+    "marketingPoints": ["포인트1 한글로", "포인트2 한글로", ...],
+    "pricingStrategy": "가격 전략을 한글로...",
+    "promotionStrategy": ["전략1 한글로", "전략2 한글로", ...]
   }
 }
 `,

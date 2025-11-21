@@ -9,10 +9,11 @@ import { Loader2 } from 'lucide-react'
 interface TitleSelectorProps {
   keywords: string[]
   images: string[]
+  conversationContext?: string
   onSelect: (title: string) => void
 }
 
-export function TitleSelector({ keywords, images, onSelect }: TitleSelectorProps) {
+export function TitleSelector({ keywords, images, conversationContext, onSelect }: TitleSelectorProps) {
   const [titles, setTitles] = useState<string[]>([])
   const [selectedTitle, setSelectedTitle] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
@@ -33,6 +34,7 @@ export function TitleSelector({ keywords, images, onSelect }: TitleSelectorProps
         body: JSON.stringify({
           keywords,
           artworkDescriptions: images.map((_, i) => `작품 ${i + 1}`),
+          conversationContext: conversationContext || '',
         }),
       })
 
@@ -67,9 +69,10 @@ export function TitleSelector({ keywords, images, onSelect }: TitleSelectorProps
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">AI가 전시 타이틀을 생성하고 있습니다...</p>
+            <p className="text-sm font-medium text-primary">예상 소요시간: 약 10초</p>
           </div>
         </CardContent>
       </Card>

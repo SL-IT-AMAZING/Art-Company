@@ -27,7 +27,10 @@ export async function POST(req: Request) {
       max_tokens: 1000,
     })
 
-    const content = response.choices[0]?.message?.content || ''
+    let content = response.choices[0]?.message?.content || ''
+
+    // Remove markdown code blocks if present
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
 
     // Try to parse JSON response
     try {

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -14,7 +15,15 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  useEffect(() => {
+    const authError = searchParams.get('auth_error')
+    if (authError) {
+      setError(authError)
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,6 +59,23 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Social Login Buttons */}
+          <div className="space-y-3 mb-6">
+            <SocialLoginButtons nextPath="/mypage" />
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                또는 이메일로 계속하기
+              </span>
+            </div>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -87,6 +113,12 @@ export default function LoginPage() {
               {loading ? '로그인 중...' : '로그인'}
             </Button>
           </form>
+
+          <div className="mt-4 text-right">
+            <Link href="/reset-password" className="text-sm text-primary hover:underline">
+              비밀번호를 잊으셨나요?
+            </Link>
+          </div>
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">계정이 없으신가요? </span>

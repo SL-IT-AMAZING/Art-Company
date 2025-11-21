@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useChat } from 'ai/react'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
@@ -16,9 +16,11 @@ import { VirtualExhibitionPrompt } from '../exhibition/VirtualExhibitionPrompt'
 import { ExhibitionComplete } from '../exhibition/ExhibitionComplete'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 import { ExhibitionData, MarketingReport } from '@/types/exhibition'
 import { Step } from '@/types/chat'
-import { mapStepToContentType } from '@/lib/utils/helpers'
+import { StepProgress } from './StepProgress'
 
 export function ChatContainer() {
   const [step, setStep] = useState<Step>('welcome')
@@ -27,8 +29,10 @@ export function ChatContainer() {
     images: [],
     selectedTitle: '',
   })
+  const [chatInitialized, setChatInitialized] = useState(false)
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false)
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
     api: '/api/chat',
     body: {
       exhibitionId: exhibitionData.id,
@@ -39,35 +43,75 @@ export function ChatContainer() {
 
   const supabase = createClient()
 
-  // Initialize exhibition in database
+  // Initialize chat and exhibition
   const initExhibition = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      // If not logged in, still allow creation but without user_id
-      // In production, you'd want to require login
-      console.warn('User not logged in')
-      setStep('keywords')
-      return
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        console.warn('User not logged in')
+        return
+      }
 
-    const { data, error } = await supabase
-      .from('exhibitions')
-      .insert({ user_id: user.id, status: 'draft' })
-      .select()
-      .single()
+      const { data, error } = await supabase
+        .from('exhibitions')
+        .insert({ user_id: user.id, status: 'draft' })
+        .select()
+        .single()
 
-    if (data && !error) {
-      setExhibitionData((prev) => ({ ...prev, id: data.id }))
-      setStep('keywords')
-    } else {
-      console.error('Error creating exhibition:', error)
-      setStep('keywords') // Continue anyway for demo
+      if (data && !error) {
+        setExhibitionData((prev) => ({ ...prev, id: data.id }))
+      } else {
+        console.error('Error creating exhibition:', error)
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err)
     }
   }
 
-  const handleStart = () => {
-    initExhibition()
+  // Initialize chat on mount
+  const initializeChat = () => {
+    if (!chatInitialized) {
+      setMessages([
+        {
+          id: 'welcome-1',
+          role: 'assistant',
+          content: '안녕하세요! 저는 Art Wizard의 AI 큐레이터입니다. 🎨\n\n어떤 전시를 기획 중이신가요? 전시의 주제, 컨셉, 분위기 등 자유롭게 말씀해주세요!',
+          createdAt: new Date(),
+        },
+      ])
+      setChatInitialized(true)
+      initExhibition()
+    }
   }
+
+  const handleProceedToKeywords = () => {
+    setStep('keywords')
+  }
+
+  const handlePreviousStep = () => {
+    const stepOrder: Step[] = [
+      'welcome',
+      'keywords',
+      'images',
+      'titles',
+      'content',
+      'press-release',
+      'poster',
+      'marketing',
+      'virtual',
+      'complete',
+    ]
+    const currentIndex = stepOrder.indexOf(step)
+    if (currentIndex > 0) {
+      setStep(stepOrder[currentIndex - 1])
+    }
+  }
+
+  // Auto-initialize chat on mount
+  useEffect(() => {
+    initializeChat()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleKeywordsSubmit = async (keywords: string[]) => {
     setExhibitionData((prev) => ({ ...prev, keywords }))
@@ -160,6 +204,7 @@ export function ChatContainer() {
 
   const handleTitleSelect = async (title: string) => {
     setExhibitionData((prev) => ({ ...prev, selectedTitle: title }))
+    setIsGeneratingContent(true)
 
     // Save title to database
     if (exhibitionData.id) {
@@ -173,59 +218,89 @@ export function ChatContainer() {
       }
     }
 
-    // Generate introduction and preface
+    // Generate all content: introduction, preface, artist bio, artwork descriptions
     try {
-      const introResponse = await fetch('/api/generate/introduction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          keywords: exhibitionData.keywords,
+      const [introResponse, prefaceResponse, artistBioResponse, artworkDescResponse] = await Promise.all([
+        fetch('/api/generate/introduction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            keywords: exhibitionData.keywords,
+          }),
         }),
-      })
-
-      const prefaceResponse = await fetch('/api/generate/preface', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          keywords: exhibitionData.keywords,
+        fetch('/api/generate/preface', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            keywords: exhibitionData.keywords,
+          }),
         }),
-      })
+        fetch('/api/generate/artist-bio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            artistName: '작가', // TODO: Get from user input
+            keywords: exhibitionData.keywords,
+            title,
+          }),
+        }),
+        fetch('/api/generate/artwork-descriptions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            artworks: exhibitionData.images.map((url, idx) => ({
+              id: idx,
+              imageUrl: url,
+              title: `작품 ${idx + 1}`,
+            })),
+            title,
+            keywords: exhibitionData.keywords,
+          }),
+        }),
+      ])
 
-      if (introResponse.ok && prefaceResponse.ok) {
+      if (introResponse.ok && prefaceResponse.ok && artistBioResponse.ok && artworkDescResponse.ok) {
         const introData = await introResponse.json()
         const prefaceData = await prefaceResponse.json()
+        const artistBioData = await artistBioResponse.json()
+        const artworkDescData = await artworkDescResponse.json()
 
         setExhibitionData((prev) => ({
           ...prev,
           introduction: introData.introduction,
           preface: prefaceData.preface,
+          artistBio: artistBioData.artistBio,
+          artworkDescriptions: artworkDescData.descriptions,
         }))
 
-        // Save introduction and preface to exhibition_content table
+        // Save all content to database
         if (exhibitionData.id) {
-          // Save introduction
-          await supabase
-            .from('exhibition_content')
-            .insert({
+          await Promise.all([
+            supabase.from('exhibition_content').insert({
               exhibition_id: exhibitionData.id,
               content_type: 'introduction',
-              content: introData.introduction,
-            })
-
-          // Save preface
-          await supabase
-            .from('exhibition_content')
-            .insert({
+              content: { text: introData.introduction },
+            }),
+            supabase.from('exhibition_content').insert({
               exhibition_id: exhibitionData.id,
               content_type: 'preface',
-              content: prefaceData.preface,
-            })
+              content: { text: prefaceData.preface },
+            }),
+            supabase.from('exhibition_content').insert({
+              exhibition_id: exhibitionData.id,
+              content_type: 'artist_bio',
+              content: { text: artistBioData.artistBio },
+            }),
+          ])
         }
       }
     } catch (error) {
       console.error('Error generating content:', error)
+      alert('콘텐츠 생성 중 오류가 발생했습니다.')
+    } finally {
+      setIsGeneratingContent(false)
     }
 
     setStep('content')
@@ -237,29 +312,98 @@ export function ChatContainer() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] max-w-4xl mx-auto p-4">
-      <div className="flex-1 overflow-y-auto space-y-4">
+    <div className="max-w-5xl mx-auto h-[calc(100vh-64px)] p-4 flex flex-col">
+      {/* Step Progress Bar */}
+      <div className="pb-4 mb-4 border-b flex-shrink-0">
+        <StepProgress currentStep={step} onStepChange={setStep} />
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-h-0">
         {step === 'welcome' && (
-          <div className="text-center py-12">
-            <h1 className="text-4xl font-bold mb-4">Art Wizard</h1>
-            <p className="text-xl text-gray-600 mb-8">
-              AI 큐레이터가 당신의 전시를 기획합니다
-            </p>
-            <Button onClick={handleStart} size="lg">
-              전시 만들기 시작
-            </Button>
+          <div className="flex flex-col items-center h-full space-y-4">
+            {/* Header */}
+            <div className="text-center space-y-2 flex-shrink-0">
+              <h1 className="text-2xl font-bold">AI 큐레이터와 전시 기획하기</h1>
+              <p className="text-sm text-muted-foreground">
+                AI 큐레이터와 대화하며 당신의 전시 아이디어를 구체화하세요
+              </p>
+            </div>
+
+            {/* Chat Container */}
+            <div className="w-full max-w-4xl border rounded-xl bg-gradient-to-b from-card to-card/50 shadow-lg overflow-hidden flex-1 flex flex-col">
+                {/* Chat Header */}
+                <div className="bg-primary/5 border-b px-6 py-4 flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-xl">🎨</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">AI 큐레이터</h3>
+                      <p className="text-xs text-muted-foreground">전시 기획 전문가</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 p-6 space-y-4 overflow-y-auto bg-background/50">
+                  {messages.length > 0 ? (
+                    <MessageList messages={messages} />
+                  ) : (
+                    <div className="text-center text-sm text-muted-foreground py-8">
+                      대화를 시작해주세요...
+                    </div>
+                  )}
+                </div>
+
+                {/* Chat Input */}
+                <div className="border-t bg-card p-4 flex-shrink-0">
+                  <ChatInput
+                    input={input}
+                    handleInputChange={handleInputChange}
+                    handleSubmit={handleSubmit}
+                    isLoading={isLoading}
+                    placeholder="전시 아이디어를 자유롭게 말씀해주세요..."
+                  />
+                </div>
+              </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex gap-3 flex-shrink-0">
+              <Button
+                onClick={handleProceedToKeywords}
+                size="lg"
+                disabled={isLoading}
+              >
+                다음 단계로 →
+              </Button>
+            </div>
           </div>
         )}
 
         {step === 'keywords' && (
-          <KeywordsInput onSubmit={handleKeywordsSubmit} />
-        )}
+          <div className="space-y-4 overflow-y-auto">
+              <KeywordsInput onSubmit={handleKeywordsSubmit} />
+              <div className="flex justify-between pt-4">
+                <Button onClick={handlePreviousStep} variant="outline">
+                  ← 이전 단계
+                </Button>
+              </div>
+            </div>
+          )}
 
         {step === 'images' && (
-          <ImageUploader
-            onUpload={handleImagesUpload}
-            existingImages={exhibitionData.images}
-          />
+          <div className="space-y-4 overflow-y-auto">
+            <ImageUploader
+              onUpload={handleImagesUpload}
+              existingImages={exhibitionData.images}
+            />
+            <div className="flex justify-between pt-4">
+              <Button onClick={handlePreviousStep} variant="outline">
+                ← 이전 단계
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'edit-titles' && exhibitionData.id && (
@@ -271,68 +415,145 @@ export function ChatContainer() {
         )}
 
         {step === 'titles' && (
-          <TitleSelector
-            keywords={exhibitionData.keywords}
-            images={exhibitionData.images}
-            onSelect={handleTitleSelect}
-          />
+          <div className="space-y-4 overflow-y-auto">
+            {isGeneratingContent ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                  <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold">전시 본문 생성 중...</h3>
+                    <p className="text-sm text-muted-foreground">
+                      AI가 전시 소개, 서문, 작가 소개, 작품 설명을 생성하고 있습니다.
+                      <br />
+                      <span className="font-medium text-primary">예상 소요시간: 약 20-30초</span>
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                      전시 소개문 생성 중
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse delay-100"></div>
+                      전시 서문 및 작품 설명 생성 중
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <TitleSelector
+                  keywords={exhibitionData.keywords}
+                  images={exhibitionData.images}
+                  conversationContext={messages
+                    .filter((m) => m.role === 'user')
+                    .map((m) => m.content)
+                    .join(' ')}
+                  onSelect={handleTitleSelect}
+                />
+                <div className="flex justify-between pt-4">
+                  <Button onClick={handlePreviousStep} variant="outline">
+                    ← 이전 단계
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         {step === 'content' && (
-          <ContentPreview
-            data={exhibitionData}
-            onNext={() => setStep('press-release')}
-          />
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <ContentPreview
+                data={exhibitionData}
+                onNext={() => setStep('press-release')}
+              />
+            </div>
+            <div className="flex justify-between pt-4 flex-shrink-0">
+              <Button onClick={handlePreviousStep} variant="outline">
+                ← 이전 단계
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'press-release' && (
-          <PressReleaseGenerator
-            data={exhibitionData}
-            onComplete={() => setStep('poster')}
-          />
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <PressReleaseGenerator
+                data={exhibitionData}
+                onComplete={() => setStep('poster')}
+              />
+            </div>
+            <div className="flex justify-between pt-4 flex-shrink-0">
+              <Button onClick={handlePreviousStep} variant="outline">
+                ← 이전 단계
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'poster' && (
-          <PosterGenerator
-            data={exhibitionData}
-            onComplete={() => setStep('marketing')}
-          />
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <PosterGenerator
+                data={exhibitionData}
+                onComplete={() => setStep('marketing')}
+              />
+            </div>
+            <div className="flex justify-between pt-4 flex-shrink-0">
+              <Button onClick={handlePreviousStep} variant="outline">
+                ← 이전 단계
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'marketing' && (
-          <MarketingReportGenerator
-            data={exhibitionData}
-            onComplete={handleMarketingComplete}
-          />
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <MarketingReportGenerator
+                data={exhibitionData}
+                onComplete={handleMarketingComplete}
+              />
+            </div>
+            <div className="flex justify-between pt-4 flex-shrink-0">
+              <Button onClick={handlePreviousStep} variant="outline">
+                ← 이전 단계
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'virtual' && (
-          <VirtualExhibitionPrompt
-            data={exhibitionData}
-            onComplete={() => setStep('complete')}
-          />
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <VirtualExhibitionPrompt
+                data={exhibitionData}
+                onComplete={() => setStep('complete')}
+              />
+            </div>
+            <div className="flex justify-between pt-4 flex-shrink-0">
+              <Button onClick={handlePreviousStep} variant="outline">
+                ← 이전 단계
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'complete' && (
-          <ExhibitionComplete data={exhibitionData} />
-        )}
-
-        {['content'].includes(step) && messages.length > 0 && (
-          <MessageList messages={messages} />
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <ExhibitionComplete data={exhibitionData} />
+            </div>
+            <div className="flex justify-between pt-4 flex-shrink-0">
+              <Button onClick={handlePreviousStep} variant="outline">
+                ← 이전 단계
+              </Button>
+            </div>
+          </div>
         )}
       </div>
-
-      {['content'].includes(step) && (
-        <div className="border-t pt-4 mt-4">
-          <ChatInput
-            input={input}
-            handleInputChange={handleInputChange}
-            handleSubmit={handleSubmit}
-            isLoading={isLoading}
-            placeholder="AI 큐레이터와 대화하기..."
-          />
-        </div>
-      )}
     </div>
   )
 }
