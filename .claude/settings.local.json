@@ -4,7 +4,14 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "Bash(ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "mcp__serena__list_dir",
+      "Bash(npm run dev)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

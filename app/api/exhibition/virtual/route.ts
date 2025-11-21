@@ -32,22 +32,21 @@ export async function POST(req: Request) {
       )
     }
 
-    // Create artwork records if provided
-    if (artworks && Array.isArray(artworks)) {
-      const artworkRecords = artworks.map((artwork: any, index: number) => ({
-        exhibition_id: exhibitionId,
-        title: artwork.title || `작품 ${index + 1}`,
-        description: artwork.description || '',
-        image_url: artwork.imageUrl,
-        order_index: artwork.order !== undefined ? artwork.order : index,
-      }))
+    // Update existing artworks with numbered titles (don't create duplicates)
+    // Artworks are already created during image upload in ChatContainer
+    const { data: existingArtworks, error: fetchError } = await supabase
+      .from('artworks')
+      .select('id')
+      .eq('exhibition_id', exhibitionId)
+      .order('order_index', { ascending: true })
 
-      const { error: artworksError } = await supabase
-        .from('artworks')
-        .insert(artworkRecords)
-
-      if (artworksError) {
-        console.error('Error creating artworks:', artworksError)
+    if (!fetchError && existingArtworks && existingArtworks.length > 0) {
+      // Update existing artworks with numbered titles if they don't have custom titles
+      for (let i = 0; i < existingArtworks.length; i++) {
+        await supabase
+          .from('artworks')
+          .update({ title: `작품 ${i + 1}` })
+          .eq('id', existingArtworks[i].id)
       }
     }
 

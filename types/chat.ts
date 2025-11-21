@@ -2,6 +2,7 @@ export type Step =
   | 'welcome'
   | 'keywords'
   | 'images'
+  | 'edit-titles'
   | 'titles'
   | 'content'
   | 'press-release'
