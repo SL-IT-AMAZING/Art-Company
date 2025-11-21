@@ -16,7 +16,7 @@ import type { User } from '@supabase/supabase-js'
 
 interface MobileNavProps {
   user: User | null
-  logoutAction: () => Promise<void>
+  logoutAction: () => Promise<{ error: string } | void>
 }
 
 export function MobileNav({ user, logoutAction }: MobileNavProps) {
