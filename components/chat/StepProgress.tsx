@@ -29,16 +29,34 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
     0
   )
   const [scrollPosition, setScrollPosition] = useState(0)
+  const [previousIndex, setPreviousIndex] = useState(0)
   const itemsPerPage = 5
 
-  // Auto-scroll to show current step
+  // Auto-scroll to center current step only when moving forward
   useEffect(() => {
-    if (currentIndex < scrollPosition) {
-      setScrollPosition(currentIndex)
-    } else if (currentIndex >= scrollPosition + itemsPerPage) {
-      setScrollPosition(Math.max(0, currentIndex - itemsPerPage + 1))
+    const isMovingForward = currentIndex > previousIndex
+
+    if (isMovingForward) {
+      // Center the current step when moving forward
+      const centerPosition = Math.max(
+        0,
+        Math.min(
+          currentIndex - Math.floor(itemsPerPage / 2),
+          STEP_ORDER.length - itemsPerPage
+        )
+      )
+      setScrollPosition(centerPosition)
+    } else {
+      // When moving backward, only scroll if current step is out of view
+      if (currentIndex < scrollPosition) {
+        setScrollPosition(currentIndex)
+      } else if (currentIndex >= scrollPosition + itemsPerPage) {
+        setScrollPosition(Math.max(0, currentIndex - itemsPerPage + 1))
+      }
     }
-  }, [currentIndex, scrollPosition, itemsPerPage])
+
+    setPreviousIndex(currentIndex)
+  }, [currentIndex]) // Remove scrollPosition and itemsPerPage from dependencies
 
   const canScrollLeft = scrollPosition > 0
   const canScrollRight = scrollPosition + itemsPerPage < STEP_ORDER.length

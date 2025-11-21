@@ -27,7 +27,10 @@ export async function POST(req: Request) {
       max_tokens: 2000,
     })
 
-    const content = response.choices[0]?.message?.content || ''
+    let content = response.choices[0]?.message?.content || ''
+
+    // Remove code block markers if present
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
 
     // Try to parse JSON response
     try {
@@ -35,7 +38,10 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify(parsed), {
         headers: { 'Content-Type': 'application/json' },
       })
-    } catch {
+    } catch (parseError) {
+      console.error('Failed to parse marketing report JSON:', parseError)
+      console.error('Content:', content)
+
       // If not JSON, create a basic structure
       return new Response(
         JSON.stringify({
