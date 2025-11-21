@@ -6,6 +6,7 @@ import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { ImageUploader } from './ImageUploader'
 import { KeywordsInput } from './KeywordsInput'
+import ArtworkTitleEditor from './ArtworkTitleEditor'
 import { TitleSelector } from './TitleSelector'
 import { ContentPreview } from './ContentPreview'
 import { PosterGenerator } from '../poster/PosterGenerator'
@@ -132,6 +133,7 @@ export function ChatContainer() {
 
   const handleImagesUpload = async (files: File[]) => {
     const imageUrls: string[] = []
+    const failedUploads: string[] = []
 
     // Upload to Supabase Storage and save artwork records
     for (const file of files) {
@@ -153,23 +155,51 @@ export function ChatContainer() {
             .insert({
               exhibition_id: exhibitionData.id,
               image_url: publicUrl,
-              title: file.name.replace(/\.[^/.]+$/, ''), // Use filename without extension as default title
+              title: `작품 ${imageUrls.length}`, // Use numbered title as default
               order_index: imageUrls.length - 1,
             })
 
           if (artworkError) {
-            console.error('Error saving artwork:', artworkError)
+            console.error('Error saving artwork to database:', artworkError)
+            alert(`작품 정보 저장 실패: ${file.name}. 다시 시도해주세요.`)
+            failedUploads.push(file.name)
           }
         }
       } else {
-        console.error('Error uploading image:', error)
-        // For demo, create a placeholder URL
-        imageUrls.push(URL.createObjectURL(file))
+        console.error('Error uploading image to storage:', error)
+        console.error('Failed file:', file.name)
+        console.error('Error details:', error?.message || 'Unknown error')
+
+        failedUploads.push(file.name)
+
+        // Show user-friendly error message
+        alert(
+          `이미지 업로드 실패: ${file.name}\n\n` +
+          `오류: ${error?.message || '알 수 없는 오류'}\n\n` +
+          'Supabase Storage 설정을 확인해주세요:\n' +
+          '1. "artworks" 버킷이 존재하는지\n' +
+          '2. 버킷이 Public으로 설정되어 있는지\n' +
+          '3. 업로드 권한이 있는지'
+        )
       }
     }
 
-    setExhibitionData((prev) => ({ ...prev, images: imageUrls }))
-    setStep('titles')
+    // Only proceed if all uploads succeeded
+    if (failedUploads.length > 0) {
+      console.error('Failed to upload files:', failedUploads)
+      alert(
+        `${failedUploads.length}개의 이미지 업로드에 실패했습니다.\n\n` +
+        `실패한 파일:\n${failedUploads.join('\n')}\n\n` +
+        '모든 이미지가 성공적으로 업로드되어야 진행할 수 있습니다.'
+      )
+      return // Don't proceed to next step
+    }
+
+    // Only save if all uploads succeeded
+    if (imageUrls.length === files.length) {
+      setExhibitionData((prev) => ({ ...prev, images: imageUrls }))
+      setStep('edit-titles') // Go to title editing step
+    }
   }
 
   const handleTitleSelect = async (title: string) => {
@@ -381,6 +411,14 @@ export function ChatContainer() {
               </Button>
             </div>
           </div>
+        )}
+
+        {step === 'edit-titles' && exhibitionData.id && (
+          <ArtworkTitleEditor
+            exhibitionId={exhibitionData.id}
+            onComplete={() => setStep('titles')}
+            onSkip={() => setStep('titles')}
+          />
         )}
 
         {step === 'titles' && (
