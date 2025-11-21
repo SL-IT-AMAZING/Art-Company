@@ -25,6 +25,17 @@ interface Gallery3DProps {
 export default function Gallery3D({ artworks }: Gallery3DProps) {
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null)
   const [isLocked, setIsLocked] = useState(false)
+  const controlsRef = useRef<any>(null)
+
+  // Cleanup pointer lock on unmount
+  useEffect(() => {
+    return () => {
+      // Unlock pointer when component unmounts
+      if (controlsRef.current && document.pointerLockElement) {
+        document.exitPointerLock()
+      }
+    }
+  }, [])
 
   // Calculate room dimensions and artwork positions
   const { dimensions, artworkPositions } = useMemo(() => {
@@ -110,6 +121,7 @@ export default function Gallery3D({ artworks }: Gallery3DProps) {
 
         {/* First-person controls */}
         <PointerLockControls
+          ref={controlsRef}
           onLock={() => setIsLocked(true)}
           onUnlock={() => setIsLocked(false)}
           maxPolarAngle={Math.PI * 0.95}

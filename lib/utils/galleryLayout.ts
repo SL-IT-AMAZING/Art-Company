@@ -38,14 +38,14 @@ export function calculateRoomDimensions(artworkCount: number): GalleryDimensions
 
 /**
  * Auto-arrange artworks on gallery walls
- * Artworks are placed at eye level (1.5m from floor) with 2m spacing
+ * Artworks are placed at 1.8m from floor with 2m spacing
  */
 export function autoArrangeArtworks(
   artworkIds: string[],
   dimensions: GalleryDimensions
 ): ArtworkPosition[] {
   const positions: ArtworkPosition[] = []
-  const artHeight = 1.5 // Height from floor to center of artwork
+  const artHeight = 1.8 // Height from floor to center of artwork (raised from 1.5m)
   const spacing = 2 // Minimum spacing between artworks
   const wallOffset = 0.35 // Distance from wall center
 

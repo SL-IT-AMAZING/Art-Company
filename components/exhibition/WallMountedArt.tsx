@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { Vector3, Euler } from 'three'
 import * as THREE from 'three'
+import { Html } from '@react-three/drei'
 import ArtworkTexture from './ArtworkTexture'
 import type { Artwork } from '@/types/exhibition'
 
@@ -126,15 +127,35 @@ export default function WallMountedArt({
         target-position={[0, 0, 0]}
       />
 
-      {/* Invisible label plane for raycasting */}
-      {hovered && (
-        <mesh position={[0, -artworkHeight / 2 - frameThickness - 0.2, frameDepth]}>
-          <planeGeometry args={[artworkWidth * 0.8, 0.15]} />
-          <meshBasicMaterial color="#000000" opacity={0.7} transparent />
-        </mesh>
-      )}
+      {/* Title label above artwork */}
+      <Html
+        position={[0, artworkHeight / 2 + frameThickness + 0.15, 0]}
+        center
+        distanceFactor={1.5}
+        style={{ pointerEvents: 'none' }}
+      >
+        <div className="bg-black/70 px-5 py-2.5 rounded backdrop-blur-sm">
+          <p className="text-white font-semibold whitespace-nowrap" style={{ fontSize: '30px' }}>
+            {artwork.title}
+          </p>
+        </div>
+      </Html>
 
-      {/* Title text when hovered (using HTML overlay would be better, but this is placeholder) */}
+      {/* Description label below artwork */}
+      {artwork.description && (
+        <Html
+          position={[0, -artworkHeight / 2 - frameThickness - 0.15, 0]}
+          center
+          distanceFactor={1.5}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className="bg-black/70 px-5 py-2.5 rounded backdrop-blur-sm max-w-[500px]">
+            <p className="text-white text-center line-clamp-2" style={{ fontSize: '25px' }}>
+              {artwork.description}
+            </p>
+          </div>
+        </Html>
+      )}
     </group>
   )
 }

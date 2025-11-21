@@ -3,7 +3,7 @@ import { deleteImageFromStorage } from '@/lib/utils/storage'
 
 /**
  * PATCH /api/exhibitions/[id]/artworks/[artworkId]
- * Update artwork title
+ * Update artwork title and description
  */
 export async function PATCH(
   req: Request,
@@ -11,11 +11,18 @@ export async function PATCH(
 ) {
   try {
     const { id: exhibitionId, artworkId } = await params
-    const { title } = await req.json()
+    const { title, description } = await req.json()
 
     if (!title || typeof title !== 'string') {
       return new Response(
         JSON.stringify({ error: '유효한 제목을 입력해주세요' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (description !== undefined && description !== null && typeof description !== 'string') {
+      return new Response(
+        JSON.stringify({ error: '유효한 설명을 입력해주세요' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
     }
@@ -45,10 +52,15 @@ export async function PATCH(
       )
     }
 
-    // Update artwork title
+    // Update artwork title and description
+    const updateData: { title: string; description?: string | null } = { title }
+    if (description !== undefined) {
+      updateData.description = description || null
+    }
+
     const { data, error } = await supabase
       .from('artworks')
-      .update({ title })
+      .update(updateData)
       .eq('id', artworkId)
       .select()
       .single()
