@@ -1,20 +1,21 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { ParallaxGallery } from '@/components/exhibition/ParallaxGallery'
-import { ViewPoint } from '@/types/exhibition'
+import ExhibitionViewer from '@/components/exhibition/ExhibitionViewer'
+import { ViewPoint, Artwork } from '@/types/exhibition'
 
 export default async function ExhibitionViewerPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const supabase = await createClient()
 
   // Fetch exhibition data
   const { data: exhibition, error } = await supabase
     .from('exhibitions')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !exhibition) {
@@ -34,64 +35,52 @@ export default async function ExhibitionViewerPage({
     await supabase
       .from('exhibitions')
       .update({ view_count: (exhibition.view_count || 0) + 1 })
-      .eq('id', params.id)
+      .eq('id', id)
   }
 
   // Fetch artworks
   const { data: artworks } = await supabase
     .from('artworks')
     .select('*')
-    .eq('exhibition_id', params.id)
+    .eq('exhibition_id', id)
     .order('order_index', { ascending: true })
 
-  // Create viewpoints for the parallax gallery
-  // For MVP, we'll create a single viewpoint with all artworks
+  // Transform artworks to match Artwork interface
+  const transformedArtworks: Artwork[] = artworks?.map((artwork) => ({
+    id: artwork.id,
+    title: artwork.title,
+    description: artwork.description || '',
+    imageUrl: artwork.image_url,
+  })) || []
+
+  // Create viewpoints for the parallax gallery (2D view)
   let viewPoints: ViewPoint[] = [
     {
       id: 1,
-      background: '', // Could use a default background image
-      artworks:
-        artworks?.map((artwork) => ({
-          id: artwork.id,
-          title: artwork.title,
-          description: artwork.description || '',
-          imageUrl: artwork.image_url,
-        })) || [],
+      background: '',
+      artworks: transformedArtworks,
     },
   ]
 
   // If there are many artworks, split them into multiple viewpoints
-  if (artworks && artworks.length > 6) {
+  if (transformedArtworks.length > 6) {
     viewPoints = []
     const artworksPerView = 6
-    for (let i = 0; i < artworks.length; i += artworksPerView) {
+    for (let i = 0; i < transformedArtworks.length; i += artworksPerView) {
       viewPoints.push({
         id: i / artworksPerView + 1,
         background: '',
-        artworks: artworks.slice(i, i + artworksPerView).map((artwork) => ({
-          id: artwork.id,
-          title: artwork.title,
-          description: artwork.description || '',
-          imageUrl: artwork.image_url,
-        })),
+        artworks: transformedArtworks.slice(i, i + artworksPerView),
       })
     }
   }
 
   return (
     <div>
-      <ParallaxGallery
-        viewPoints={viewPoints.length > 0 ? viewPoints : [{
-          id: 1,
-          background: '',
-          artworks: artworks?.map((artwork) => ({
-            id: artwork.id,
-            title: artwork.title,
-            description: artwork.description || '',
-            imageUrl: artwork.image_url,
-          })) || [],
-        }]}
+      <ExhibitionViewer
+        viewPoints={viewPoints}
         exhibitionTitle={exhibition.title || '제목 없음'}
+        artworks={transformedArtworks}
       />
     </div>
   )
