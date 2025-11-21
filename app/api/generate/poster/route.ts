@@ -59,7 +59,7 @@ The poster should feel premium, timeless, and appropriate for a high-end contemp
       style: 'natural', // More photorealistic/realistic style
     })
 
-    const posterUrl = response.data[0]?.url
+    const posterUrl = response.data?.[0]?.url
 
     if (!posterUrl) {
       throw new Error('No image URL returned from DALL-E')
