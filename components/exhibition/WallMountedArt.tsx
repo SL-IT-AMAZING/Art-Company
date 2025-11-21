@@ -134,11 +134,15 @@ export default function WallMountedArt({
         distanceFactor={1.5}
         style={{ pointerEvents: 'none' }}
       >
-        <div className="bg-black/70 px-5 py-2.5 rounded backdrop-blur-sm">
-          <p className="text-white font-semibold whitespace-nowrap" style={{ fontSize: '30px' }}>
-            {artwork.title}
-          </p>
-        </div>
+        <p
+          className="text-white font-bold whitespace-nowrap"
+          style={{
+            fontSize: '48px',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9), 2px -2px 4px rgba(0,0,0,0.9), -2px 2px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8)'
+          }}
+        >
+          {artwork.title}
+        </p>
       </Html>
 
       {/* Description label below artwork */}
@@ -149,11 +153,16 @@ export default function WallMountedArt({
           distanceFactor={1.5}
           style={{ pointerEvents: 'none' }}
         >
-          <div className="bg-black/70 px-5 py-2.5 rounded backdrop-blur-sm max-w-[500px]">
-            <p className="text-white text-center line-clamp-2" style={{ fontSize: '25px' }}>
-              {artwork.description}
-            </p>
-          </div>
+          <p
+            className="text-white text-center line-clamp-2"
+            style={{
+              fontSize: '33px',
+              maxWidth: '600px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9), 2px -2px 4px rgba(0,0,0,0.9), -2px 2px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8)'
+            }}
+          >
+            {artwork.description}
+          </p>
         </Html>
       )}
     </group>
