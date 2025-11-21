@@ -1,20 +1,14 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import { Message } from 'ai'
 import { cn } from '@/lib/utils/helpers'
+import ReactMarkdown from 'react-markdown'
 
 interface MessageListProps {
   messages: Message[]
 }
 
 export function MessageList({ messages }: MessageListProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
   return (
     <div className="space-y-4">
       {messages.map((message) => (
@@ -33,11 +27,16 @@ export function MessageList({ messages }: MessageListProps) {
                 : 'bg-muted'
             )}
           >
-            <p className="whitespace-pre-wrap">{message.content}</p>
+            {message.role === 'user' ? (
+              <p className="whitespace-pre-wrap">{message.content}</p>
+            ) : (
+              <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
+            )}
           </div>
         </div>
       ))}
-      <div ref={messagesEndRef} />
     </div>
   )
 }

@@ -103,18 +103,6 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <div className="my-6">
-            <div className="relative text-center">
-              <span className="px-3 text-sm text-muted-foreground bg-card relative z-10">
-                또는 소셜 계정으로 계속하기
-              </span>
-              <div className="absolute inset-x-0 top-1/2 border-b" aria-hidden />
-            </div>
-            <div className="mt-6">
-              <SocialLoginButtons />
-            </div>
-          </div>
-
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">계정이 없으신가요? </span>
             <Link href="/signup" className="text-primary hover:underline">

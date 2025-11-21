@@ -40,31 +40,39 @@ export function ChatContainer() {
 
   // Initialize exhibition in database
   const initExhibition = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      // If not logged in, still allow creation but without user_id
-      // In production, you'd want to require login
-      console.warn('User not logged in')
-      setStep('keywords')
-      return
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        // If not logged in, still allow creation but without user_id
+        // In production, you'd want to require login
+        console.warn('User not logged in')
+        setStep('keywords')
+        return
+      }
 
-    const { data, error } = await supabase
-      .from('exhibitions')
-      .insert({ user_id: user.id, status: 'draft' })
-      .select()
-      .single()
+      const { data, error } = await supabase
+        .from('exhibitions')
+        .insert({ user_id: user.id, status: 'draft' })
+        .select()
+        .single()
 
-    if (data && !error) {
-      setExhibitionData((prev) => ({ ...prev, id: data.id }))
-      setStep('keywords')
-    } else {
-      console.error('Error creating exhibition:', error)
+      if (data && !error) {
+        setExhibitionData((prev) => ({ ...prev, id: data.id }))
+        setStep('keywords')
+      } else {
+        console.error('Error creating exhibition:', error)
+        alert('전시 생성 중 오류가 발생했습니다: ' + error?.message)
+        setStep('keywords') // Continue anyway for demo
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err)
+      alert('전시 생성 중 예상치 못한 오류가 발생했습니다.')
       setStep('keywords') // Continue anyway for demo
     }
   }
 
   const handleStart = () => {
+    console.log('handleStart called, current step:', step)
     initExhibition()
   }
 
@@ -241,12 +249,12 @@ export function ChatContainer() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[3fr_2fr] h-[calc(100vh-64px)] p-4">
-      <div className="flex flex-col border rounded-lg bg-card/30 p-4 overflow-hidden">
-        <div className="pb-4 border-b mb-4">
+    <div className="grid gap-4 lg:grid-cols-[3fr_2fr] h-[calc(100vh-64px)] p-4 items-start">
+      <div className="flex flex-col border rounded-lg bg-card/30 p-4 overflow-hidden h-full">
+        <div className="pb-4 border-b mb-4 flex-shrink-0">
           <StepProgress currentStep={step} />
         </div>
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0">
           {step === 'welcome' && (
             <div className="text-center py-12">
               <h1 className="text-4xl font-bold mb-4">Art Wizard</h1>
@@ -319,14 +327,14 @@ export function ChatContainer() {
         </div>
       </div>
 
-      <div className="flex flex-col border rounded-lg bg-background">
-        <div className="p-4 border-b">
+      <div className="flex flex-col border rounded-lg bg-background h-full">
+        <div className="p-4 border-b flex-shrink-0">
           <h2 className="text-lg font-semibold">AI 큐레이터와 대화</h2>
           <p className="text-sm text-muted-foreground">
             전시 과정 전반에 대해 질문하거나 피드백을 요청하세요.
           </p>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
           {messages.length > 0 ? (
             <MessageList messages={messages} />
           ) : (
@@ -335,7 +343,7 @@ export function ChatContainer() {
             </div>
           )}
         </div>
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
           <ChatInput
             input={input}
             handleInputChange={handleInputChange}
