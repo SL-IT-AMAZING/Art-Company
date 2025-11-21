@@ -1,0 +1,123 @@
+'use client'
+
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ExhibitionData } from '@/types/exhibition'
+import { Image, FileDown } from 'lucide-react'
+
+interface VirtualExhibitionPromptProps {
+  data: ExhibitionData
+  onComplete: () => void
+}
+
+export function VirtualExhibitionPrompt({
+  data,
+  onComplete,
+}: VirtualExhibitionPromptProps) {
+  const createVirtualExhibition = async () => {
+    // This would create the virtual exhibition settings
+    try {
+      const response = await fetch('/api/exhibition/virtual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          exhibitionId: data.id,
+          templateType: '2.5d_fixed',
+          artworks: data.images.map((url, i) => ({
+            imageUrl: url,
+            title: `작품 ${i + 1}`,
+            description: '',
+            order: i,
+          })),
+        }),
+      })
+
+      if (response.ok) {
+        onComplete()
+      }
+    } catch (error) {
+      console.error('Error creating virtual exhibition:', error)
+    }
+  }
+
+  const downloadPDF = async () => {
+    try {
+      const response = await fetch('/api/generate/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exhibitionId: data.id }),
+      })
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${data.selectedTitle}_전시패키지.pdf`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>전시 완성</CardTitle>
+          <CardDescription>
+            전시 기획이 완료되었습니다! 가상 전시를 만들거나 패키지를 다운로드하세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 border rounded-lg space-y-3">
+              <Image className="w-10 h-10 text-primary" />
+              <h3 className="font-semibold text-lg">온라인 가상 전시 생성</h3>
+              <p className="text-sm text-muted-foreground">
+                2.5D 가상 갤러리에서 작품을 전시하고 전 세계와 공유하세요.
+              </p>
+              <Button onClick={createVirtualExhibition} className="w-full">
+                가상 전시 만들기
+              </Button>
+            </div>
+
+            <div className="p-6 border rounded-lg space-y-3">
+              <FileDown className="w-10 h-10 text-primary" />
+              <h3 className="font-semibold text-lg">전시 패키지 다운로드</h3>
+              <p className="text-sm text-muted-foreground">
+                서문, 소개, 보도자료, 마케팅 리포트를 PDF로 다운로드하세요.
+              </p>
+              <Button onClick={downloadPDF} variant="outline" className="w-full">
+                PDF 다운로드
+              </Button>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t">
+            <h4 className="font-semibold mb-2">생성된 콘텐츠</h4>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li>✓ 전시 타이틀: {data.selectedTitle}</li>
+              <li>✓ 키워드: {data.keywords.join(', ')}</li>
+              {data.introduction && <li>✓ 전시 소개문</li>}
+              {data.preface && <li>✓ 전시 서문</li>}
+              {data.pressRelease && <li>✓ 보도자료</li>}
+              {data.marketingReport && <li>✓ 마케팅 리포트</li>}
+              <li>✓ 작품 이미지: {data.images.length}개</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={onComplete} size="lg">
+          완료
+        </Button>
+      </div>
+    </div>
+  )
+}

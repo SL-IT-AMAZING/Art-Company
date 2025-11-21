@@ -1,0 +1,134 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils/helpers'
+import { Loader2 } from 'lucide-react'
+
+interface TitleSelectorProps {
+  keywords: string[]
+  images: string[]
+  onSelect: (title: string) => void
+}
+
+export function TitleSelector({ keywords, images, onSelect }: TitleSelectorProps) {
+  const [titles, setTitles] = useState<string[]>([])
+  const [selectedTitle, setSelectedTitle] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    generateTitles()
+  }, [])
+
+  const generateTitles = async () => {
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/generate/titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keywords,
+          artworkDescriptions: images.map((_, i) => `작품 ${i + 1}`),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate titles')
+      }
+
+      const data = await response.json()
+      setTitles(data.titles || [])
+    } catch (err) {
+      console.error('Error generating titles:', err)
+      setError('타이틀 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
+      // Fallback titles
+      setTitles([
+        '빛의 궤적',
+        '경계의 해체',
+        '기억의 지도',
+        '도시의 리듬',
+        '자연의 시간',
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSubmit = () => {
+    if (!selectedTitle) return
+    onSelect(selectedTitle)
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">AI가 전시 타이틀을 생성하고 있습니다...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>전시 타이틀 선택</CardTitle>
+        <CardDescription>
+          AI가 생성한 5개의 타이틀 중 마음에 드는 것을 선택해주세요.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
+            <p className="text-sm">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateTitles}
+              className="mt-2"
+            >
+              다시 생성
+            </Button>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {titles.map((title, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedTitle(title)}
+              className={cn(
+                'w-full text-left p-4 rounded-lg border-2 transition-all',
+                selectedTitle === title
+                  ? 'border-primary bg-primary/5'
+                  : 'border-gray-200 hover:border-gray-300'
+              )}
+            >
+              <p className="text-lg font-medium">{title}</p>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={generateTitles}>
+            다시 생성
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!selectedTitle}
+            size="lg"
+          >
+            타이틀 선택 완료
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

@@ -1,0 +1,75 @@
+import { OpenAI } from 'openai'
+import { getRAGContext } from '@/lib/rag/retrieval'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+export async function POST(req: Request) {
+  try {
+    const { title, keywords, introduction, preface } = await req.json()
+
+    if (!title || !keywords || keywords.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Get RAG context for press releases
+    const ragContext = await getRAGContext('press_release')
+
+    const prompt = `당신은 전문 미술 전시 보도자료 작성자입니다.
+
+아래 정보를 바탕으로 전문적인 보도자료를 작성해주세요:
+
+전시 제목: ${title}
+키워드: ${keywords.join(', ')}
+${introduction ? `전시 소개: ${introduction}` : ''}
+${preface ? `서문: ${preface}` : ''}
+
+${ragContext}
+
+보도자료는 다음 형식을 따라야 합니다:
+- 헤드라인 (간결하고 임팩트 있게)
+- 리드 (핵심 내용 요약)
+- 본문 (전시 상세 정보, 작가 소개, 전시 의의)
+- 전시 정보 (날짜, 장소, 입장료 등은 "[TBD]"로 표시)
+
+한국어로 작성하고, 전문적이고 공식적인 톤을 유지하세요.`
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: '당신은 전문 미술 전시 보도자료 작성자입니다.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1500,
+    })
+
+    const pressRelease = completion.choices[0]?.message?.content || ''
+
+    return new Response(
+      JSON.stringify({ pressRelease }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+  } catch (error) {
+    console.error('Press release generation error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Failed to generate press release' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+  }
+}
