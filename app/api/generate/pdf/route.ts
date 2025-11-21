@@ -335,11 +335,24 @@ export async function POST(req: NextRequest) {
 
     await browser.close()
 
+
+    // Ensure the filename we send in headers stays ASCII while still providing original title
+    const baseTitle = exhibition.title || 'document'
+    const titleForFilename = `exhibition_${baseTitle}`
+    const asciiFallback = titleForFilename
+      .normalize('NFKD')
+      .replace(/[^\u0000-\u007f]/g, '')
+      .replace(/[^A-Za-z0-9._-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+    const safeFilename = (asciiFallback || 'exhibition_document') + '.pdf'
+    const encodedFilename = encodeURIComponent(`${titleForFilename}.pdf`)
+
     // Return PDF
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="exhibition_${exhibition.title || 'document'}.pdf"`,
+        'Content-Disposition': `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
       },
     })
   } catch (error) {
