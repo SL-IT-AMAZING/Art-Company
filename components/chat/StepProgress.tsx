@@ -1,6 +1,9 @@
 'use client'
 
 import { Step } from '@/types/chat'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react'
 
 const STEP_ORDER: { id: Step; label: string }[] = [
   { id: 'welcome', label: '시작' },
@@ -17,57 +20,123 @@ const STEP_ORDER: { id: Step; label: string }[] = [
 
 interface StepProgressProps {
   currentStep: Step
+  onStepChange?: (step: Step) => void
 }
 
-export function StepProgress({ currentStep }: StepProgressProps) {
+export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
   const currentIndex = Math.max(
     STEP_ORDER.findIndex((step) => step.id === currentStep),
     0
   )
+  const [scrollPosition, setScrollPosition] = useState(0)
+  const itemsPerPage = 5
+
+  // Auto-scroll to show current step
+  useEffect(() => {
+    if (currentIndex < scrollPosition) {
+      setScrollPosition(currentIndex)
+    } else if (currentIndex >= scrollPosition + itemsPerPage) {
+      setScrollPosition(Math.max(0, currentIndex - itemsPerPage + 1))
+    }
+  }, [currentIndex, scrollPosition, itemsPerPage])
+
+  const canScrollLeft = scrollPosition > 0
+  const canScrollRight = scrollPosition + itemsPerPage < STEP_ORDER.length
+
+  const handleScrollLeft = () => {
+    setScrollPosition((prev) => Math.max(0, prev - 1))
+  }
+
+  const handleScrollRight = () => {
+    setScrollPosition((prev) => Math.min(STEP_ORDER.length - itemsPerPage, prev + 1))
+  }
+
+  const handleStepClick = (stepId: Step, index: number) => {
+    // Only allow navigation to completed or current steps
+    if (index <= currentIndex && onStepChange) {
+      onStepChange(stepId)
+    }
+  }
+
+  const visibleSteps = STEP_ORDER.slice(scrollPosition, scrollPosition + itemsPerPage)
 
   return (
-    <div className="overflow-x-auto">
-      <ol className="flex items-center gap-4 min-w-max">
-        {STEP_ORDER.map((step, index) => {
-          const isComplete = index < currentIndex
-          const isActive = index === currentIndex
+    <div className="flex items-center justify-center gap-2 w-full px-4 py-3">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleScrollLeft}
+        disabled={!canScrollLeft}
+        className="h-8 w-8 flex-shrink-0 transition-opacity hover:bg-primary/10"
+        aria-label="이전 단계 보기"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+
+      <div className="flex items-center gap-2 overflow-hidden transition-all duration-300 ease-in-out">
+        {visibleSteps.map((step, index) => {
+          const actualIndex = scrollPosition + index
+          const isComplete = actualIndex < currentIndex
+          const isActive = actualIndex === currentIndex
+          const isClickable = actualIndex <= currentIndex && onStepChange
+
           return (
-            <li key={step.id} className="flex items-center gap-2">
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : isComplete
-                      ? 'bg-muted text-foreground'
-                      : 'bg-muted text-muted-foreground'
+            <div
+              key={step.id}
+              className="flex items-center gap-2 transition-all duration-300"
+            >
+              <button
+                onClick={() => handleStepClick(step.id, actualIndex)}
+                disabled={!isClickable}
+                className={`group flex items-center gap-2 ${
+                  isClickable ? 'cursor-pointer' : 'cursor-default'
                 }`}
               >
-                {index + 1}
-              </div>
-              <span
-                className={`text-sm ${
-                  isActive
-                    ? 'font-semibold text-foreground'
-                    : isComplete
-                      ? 'text-foreground'
-                      : 'text-muted-foreground'
-                }`}
-              >
-                {step.label}
-              </span>
-              {index < STEP_ORDER.length - 1 && (
                 <div
-                  className={`w-8 border-t ${
-                    index < currentIndex
-                      ? 'border-primary'
-                      : 'border-muted'
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-all duration-300 ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-lg scale-110'
+                      : isComplete
+                        ? 'bg-primary/20 text-primary hover:bg-primary/30'
+                        : 'bg-muted text-muted-foreground'
+                  } ${isClickable && !isActive ? 'group-hover:scale-105' : ''}`}
+                >
+                  {actualIndex + 1}
+                </div>
+                <span
+                  className={`text-xs whitespace-nowrap transition-all duration-300 ${
+                    isActive
+                      ? 'font-semibold text-foreground'
+                      : isComplete
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
+                  } ${isClickable && !isActive ? 'group-hover:text-primary' : ''}`}
+                >
+                  {step.label}
+                </span>
+              </button>
+              {index < visibleSteps.length - 1 && (
+                <div
+                  className={`w-4 border-t transition-all duration-300 ${
+                    actualIndex < currentIndex ? 'border-primary' : 'border-muted'
                   }`}
                 />
               )}
-            </li>
+            </div>
           )
         })}
-      </ol>
+      </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleScrollRight}
+        disabled={!canScrollRight}
+        className="h-8 w-8 flex-shrink-0 transition-opacity hover:bg-primary/10"
+        aria-label="다음 단계 보기"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   )
 }

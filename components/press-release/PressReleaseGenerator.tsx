@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { ExhibitionData } from '@/types/exhibition'
 import { createClient } from '@/lib/supabase/client'
 import { mapStepToContentType } from '@/lib/utils/helpers'
+import ReactMarkdown from 'react-markdown'
 
 interface PressReleaseGeneratorProps {
   data: ExhibitionData
@@ -108,9 +109,9 @@ export function PressReleaseGenerator({
 
         {pressRelease && (
           <div className="space-y-6">
-            <div className="p-4 bg-muted rounded-lg">
-              <div className="whitespace-pre-wrap text-sm">
-                {pressRelease}
+            <div className="p-6 bg-muted rounded-lg">
+              <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4 prose-ul:my-3 prose-ol:my-3 prose-li:my-1">
+                <ReactMarkdown>{pressRelease}</ReactMarkdown>
               </div>
             </div>
 

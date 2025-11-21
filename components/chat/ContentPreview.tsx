@@ -88,66 +88,6 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
             </div>
           )}
 
-          {/* Artist Bio */}
-          {data.artistBio && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-muted-foreground">
-                  작가 소개
-                </h3>
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit('artistBio')}
-                  >
-                    수정
-                  </Button>
-                )}
-              </div>
-              <p className="text-sm leading-relaxed">{data.artistBio}</p>
-            </div>
-          )}
-
-          {/* Artwork Descriptions */}
-          {data.artworkDescriptions && data.artworkDescriptions.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground mb-3">
-                작품 소개
-              </h3>
-              <div className="space-y-4">
-                {data.artworkDescriptions.map((artwork: any, index: number) => (
-                  <div key={index} className="border-l-2 border-primary/30 pl-4">
-                    <h4 className="font-medium mb-1">{artwork.title}</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {artwork.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Press Release */}
-          {data.pressRelease && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-muted-foreground">
-                  보도자료
-                </h3>
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit('pressRelease')}
-                  >
-                    수정
-                  </Button>
-                )}
-              </div>
-              <p className="text-sm leading-relaxed">{data.pressRelease}</p>
-            </div>
-          )}
 
           {/* Images */}
           {data.images.length > 0 && (

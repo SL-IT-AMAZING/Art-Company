@@ -9,10 +9,11 @@ import { Loader2 } from 'lucide-react'
 interface TitleSelectorProps {
   keywords: string[]
   images: string[]
+  conversationContext?: string
   onSelect: (title: string) => void
 }
 
-export function TitleSelector({ keywords, images, onSelect }: TitleSelectorProps) {
+export function TitleSelector({ keywords, images, conversationContext, onSelect }: TitleSelectorProps) {
   const [titles, setTitles] = useState<string[]>([])
   const [selectedTitle, setSelectedTitle] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
@@ -33,6 +34,7 @@ export function TitleSelector({ keywords, images, onSelect }: TitleSelectorProps
         body: JSON.stringify({
           keywords,
           artworkDescriptions: images.map((_, i) => `작품 ${i + 1}`),
+          conversationContext: conversationContext || '',
         }),
       })
 

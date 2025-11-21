@@ -1,12 +1,14 @@
 export const PROMPTS = {
-  generateTitles: (keywords: string[], artworkDescriptions: string[]) => `
+  generateTitles: (keywords: string[], artworkDescriptions: string[], conversationContext: string = '') => `
 당신은 한국 현대미술 전문 큐레이터입니다.
-다음 키워드와 작품 설명을 바탕으로 전시 타이틀 5개를 제안해주세요.
+다음 정보를 바탕으로 전시 타이틀 5개를 제안해주세요.
 
-키워드: ${keywords.join(', ')}
+${conversationContext ? `사용자와의 대화 내용:\n${conversationContext}\n\n` : ''}키워드: ${keywords.join(', ')}
 작품 설명: ${artworkDescriptions.join('\n')}
 
 각 타이틀은:
+- 사용자와의 대화에서 나온 전시 컨셉과 아이디어를 반영
+- 키워드의 핵심 의미를 담기
 - 감성적이고 상징적인 표현 사용
 - 한국어와 영어 병기 가능
 - 전시의 핵심 메시지 담기

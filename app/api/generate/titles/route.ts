@@ -3,7 +3,7 @@ import { PROMPTS } from '@/lib/openai/prompts'
 
 export async function POST(req: Request) {
   try {
-    const { keywords, artworkDescriptions } = await req.json()
+    const { keywords, artworkDescriptions, conversationContext } = await req.json()
 
     if (!keywords || keywords.length === 0) {
       return new Response(
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: 'system',
-          content: PROMPTS.generateTitles(keywords, artworkDescriptions || []),
+          content: PROMPTS.generateTitles(keywords, artworkDescriptions || [], conversationContext || ''),
         },
       ],
       temperature: 0.8,
