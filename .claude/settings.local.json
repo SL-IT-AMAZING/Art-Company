@@ -8,7 +8,9 @@
       "mcp__serena__list_dir",
       "Bash(npm run dev)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
