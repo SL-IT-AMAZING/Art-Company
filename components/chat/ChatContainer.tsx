@@ -281,25 +281,18 @@ export function ChatContainer() {
             supabase.from('exhibition_content').insert({
               exhibition_id: exhibitionData.id,
               content_type: 'introduction',
-              content: introData.introduction,
+              content: { text: introData.introduction },
             }),
             supabase.from('exhibition_content').insert({
               exhibition_id: exhibitionData.id,
               content_type: 'preface',
-              content: prefaceData.preface,
+              content: { text: prefaceData.preface },
             }),
             supabase.from('exhibition_content').insert({
               exhibition_id: exhibitionData.id,
               content_type: 'artist_bio',
-              content: artistBioData.artistBio,
+              content: { text: artistBioData.artistBio },
             }),
-            ...artworkDescData.descriptions.map((desc: any) =>
-              supabase.from('exhibition_content').insert({
-                exhibition_id: exhibitionData.id,
-                content_type: 'artwork_description',
-                content: JSON.stringify(desc),
-              })
-            ),
           ])
         }
       }

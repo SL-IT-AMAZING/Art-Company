@@ -1,16 +1,22 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExhibitionData } from '@/types/exhibition'
-import { Check, Eye, Share2, FileText } from 'lucide-react'
+import { Check, Eye, Share2, FileText, Globe, Loader2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface ExhibitionCompleteProps {
   data: ExhibitionData
 }
 
 export function ExhibitionComplete({ data }: ExhibitionCompleteProps) {
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [isPublished, setIsPublished] = useState(false)
+  const supabase = createClient()
+
   const shareUrl = data.id
     ? `${window.location.origin}/exhibition/${data.id}`
     : ''
@@ -19,6 +25,37 @@ export function ExhibitionComplete({ data }: ExhibitionCompleteProps) {
     if (shareUrl) {
       navigator.clipboard.writeText(shareUrl)
       alert('링크가 복사되었습니다!')
+    }
+  }
+
+  const publishExhibition = async () => {
+    if (!data.id) {
+      alert('전시 ID가 없습니다.')
+      return
+    }
+
+    setIsPublishing(true)
+
+    try {
+      const { error } = await supabase
+        .from('exhibitions')
+        .update({
+          status: 'complete',
+          is_public: true,
+        })
+        .eq('id', data.id)
+
+      if (error) {
+        throw error
+      }
+
+      setIsPublished(true)
+      alert('전시가 온라인 갤러리에 공개되었습니다!')
+    } catch (error) {
+      console.error('Error publishing exhibition:', error)
+      alert('전시 공개 중 오류가 발생했습니다.')
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -48,6 +85,48 @@ export function ExhibitionComplete({ data }: ExhibitionCompleteProps) {
               ))}
             </div>
           </div>
+
+          {/* Publish Button */}
+          {!isPublished && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Globe className="w-5 h-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold mb-1">온라인 갤러리에 공개하기</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    전시를 공개하면 누구나 온라인 갤러리에서 감상할 수 있습니다.
+                  </p>
+                  <Button
+                    onClick={publishExhibition}
+                    disabled={isPublishing}
+                    className="w-full"
+                  >
+                    {isPublishing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        공개 중...
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-4 h-4 mr-2" />
+                        전시 공개하기
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isPublished && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <Check className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <p className="font-semibold text-green-900">온라인 갤러리에 공개되었습니다!</p>
+              <p className="text-sm text-green-700 mt-1">
+                이제 누구나 전시를 감상할 수 있습니다.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link href={`/exhibition/${data.id}`}>

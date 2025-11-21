@@ -65,7 +65,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
             <p className="text-muted-foreground">포스터를 생성하고 있습니다...</p>
-            <p className="text-sm font-medium text-primary mt-2">예상 소요시간: 약 15-20초</p>
+            <p className="text-sm font-medium text-primary mt-2">예상 소요시간: 약 1-2분</p>
           </div>
         )}
 

@@ -66,6 +66,7 @@ export function VirtualExhibitionPrompt({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        console.error('[PDF Client] Error response:', errorData)
         throw new Error(errorData.error || 'PDF 생성 실패')
       }
 
@@ -106,15 +107,15 @@ export function VirtualExhibitionPrompt({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-6 border rounded-lg space-y-3 opacity-60">
-              <Image className="w-10 h-10 text-muted-foreground" />
-              <h3 className="font-semibold text-lg">온라인 가상 전시 생성</h3>
+            <div className="p-6 border rounded-lg space-y-3">
+              <Image className="w-10 h-10 text-primary" />
+              <h3 className="font-semibold text-lg">온라인 가상 전시</h3>
               <p className="text-sm text-muted-foreground">
                 2.5D 가상 갤러리에서 작품을 전시하고 전 세계와 공유하세요.
               </p>
-              <Button disabled className="w-full">
-                개발 중
-              </Button>
+              <div className="w-full py-2 px-4 bg-green-50 text-green-700 rounded-md text-center font-medium">
+                ✓ 생성 완료
+              </div>
             </div>
 
             <div className="p-6 border rounded-lg space-y-3">
