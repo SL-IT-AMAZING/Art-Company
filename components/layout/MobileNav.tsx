@@ -74,7 +74,7 @@ export function MobileNav({ user, logoutAction }: MobileNavProps) {
                     마이페이지
                   </Button>
                 </Link>
-                <form action={logoutAction}>
+                <form action={logoutAction as any}>
                   <Button variant="ghost" type="submit" className="w-full">
                     로그아웃
                   </Button>
