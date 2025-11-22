@@ -6,10 +6,12 @@ CREATE EXTENSION IF NOT EXISTS "vector";
 CREATE TABLE IF NOT EXISTS public.exhibitions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
+  title TEXT,
   description TEXT,
   theme TEXT,
   poster_url TEXT,
+  status TEXT DEFAULT 'draft',
+  keywords TEXT[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -22,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.artworks (
   description TEXT,
   image_url TEXT NOT NULL,
   position INTEGER,
+  order_index INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
