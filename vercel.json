@@ -4,6 +4,16 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["icn1"],
+  "functions": {
+    "app/api/generate/poster/route.ts": {
+      "memory": 3008,
+      "maxDuration": 60
+    },
+    "app/api/generate/pdf/route.ts": {
+      "memory": 3008,
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",

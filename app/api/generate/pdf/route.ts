@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import puppeteer from 'puppeteer-core'
-import chromium from '@sparticuz/chromium'
+import chromium from '@sparticuz/chromium-min'
+
+// Remote chromium URL for Vercel serverless
+const CHROMIUM_URL = 'https://github.com/nicolekellydesign/chromium-brotli/releases/download/v133.0.6943.126/chromium-v133.0.6943.126-pack.tar'
 
 export async function POST(req: NextRequest) {
   let browser = null
@@ -360,14 +363,15 @@ export async function POST(req: NextRequest) {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       })
     } else {
-      // Production (Vercel) - use puppeteer-core with chromium
+      // Production (Vercel) - use puppeteer-core with remote chromium
+      const executablePath = await chromium.executablePath(CHROMIUM_URL)
       browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: {
           width: 1920,
           height: 1080,
         },
-        executablePath: await chromium.executablePath(),
+        executablePath,
         headless: true,
       })
     }
