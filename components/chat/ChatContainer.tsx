@@ -14,6 +14,7 @@ import { PressReleaseGenerator } from '../press-release/PressReleaseGenerator'
 import { MarketingReportGenerator } from '../marketing/MarketingReportGenerator'
 import { VirtualExhibitionPrompt } from '../exhibition/VirtualExhibitionPrompt'
 import { ExhibitionComplete } from '../exhibition/ExhibitionComplete'
+import ExhibitionMetadataForm from './ExhibitionMetadataForm'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -84,15 +85,64 @@ export function ChatContainer() {
     }
   }
 
-  const handleProceedToKeywords = () => {
+  const handleProceedToMetadata = () => {
+    setStep('metadata')
+  }
+
+  const handleMetadataSubmit = async (metadata: {
+    exhibitionDate: string
+    exhibitionEndDate?: string
+    venue: string
+    location: string
+    artistName: string
+    openingHours?: string
+    admissionFee?: string
+    contactInfo?: string
+  }) => {
+    // Update exhibition data
+    setExhibitionData((prev) => ({
+      ...prev,
+      exhibitionDate: metadata.exhibitionDate,
+      exhibitionEndDate: metadata.exhibitionEndDate,
+      venue: metadata.venue,
+      location: metadata.location,
+      artistName: metadata.artistName,
+      openingHours: metadata.openingHours,
+      admissionFee: metadata.admissionFee,
+      contactInfo: metadata.contactInfo,
+    }))
+
+    // Save metadata to database
+    if (exhibitionData.id) {
+      const { error } = await supabase
+        .from('exhibitions')
+        .update({
+          exhibition_date: metadata.exhibitionDate,
+          exhibition_end_date: metadata.exhibitionEndDate || null,
+          venue: metadata.venue,
+          location: metadata.location,
+          artist_name: metadata.artistName,
+          opening_hours: metadata.openingHours || null,
+          admission_fee: metadata.admissionFee || null,
+          contact_info: metadata.contactInfo || null,
+        })
+        .eq('id', exhibitionData.id)
+
+      if (error) {
+        console.error('Error saving metadata:', error)
+      }
+    }
+
     setStep('keywords')
   }
 
   const handlePreviousStep = () => {
     const stepOrder: Step[] = [
       'welcome',
+      'metadata',
       'keywords',
       'images',
+      'edit-titles',
       'titles',
       'content',
       'press-release',
@@ -137,6 +187,21 @@ export function ChatContainer() {
 
     // Upload to Supabase Storage and save artwork records
     for (const file of files) {
+      // Load image to get dimensions
+      const imageData = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const img = new window.Image()
+        const url = URL.createObjectURL(file)
+        img.onload = () => {
+          URL.revokeObjectURL(url)
+          resolve({ width: img.width, height: img.height })
+        }
+        img.onerror = () => {
+          URL.revokeObjectURL(url)
+          reject(new Error('Failed to load image'))
+        }
+        img.src = url
+      }).catch(() => ({ width: 0, height: 0 }))
+
       const fileName = `${Date.now()}-${file.name}`
       const { data, error } = await supabase.storage
         .from('artworks')
@@ -148,7 +213,10 @@ export function ChatContainer() {
         } = supabase.storage.from('artworks').getPublicUrl(data.path)
         imageUrls.push(publicUrl)
 
-        // Save artwork metadata to database
+        // Calculate aspect ratio
+        const aspectRatio = imageData.width > 0 ? imageData.width / imageData.height : 1
+
+        // Save artwork metadata to database with dimensions
         if (exhibitionData.id) {
           const { error: artworkError } = await supabase
             .from('artworks')
@@ -157,6 +225,9 @@ export function ChatContainer() {
               image_url: publicUrl,
               title: `작품 ${imageUrls.length}`, // Use numbered title as default
               order_index: imageUrls.length - 1,
+              image_width: imageData.width,
+              image_height: imageData.height,
+              aspect_ratio: aspectRatio,
             })
 
           if (artworkError) {
@@ -241,7 +312,7 @@ export function ChatContainer() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            artistName: '작가', // TODO: Get from user input
+            artistName: exhibitionData.artistName || '작가',
             keywords: exhibitionData.keywords,
             title,
           }),
@@ -371,13 +442,22 @@ export function ChatContainer() {
             {/* Navigation Buttons */}
             <div className="flex gap-3 flex-shrink-0">
               <Button
-                onClick={handleProceedToKeywords}
+                onClick={handleProceedToMetadata}
                 size="lg"
                 disabled={isLoading}
               >
                 다음 단계로 →
               </Button>
             </div>
+          </div>
+        )}
+
+        {step === 'metadata' && (
+          <div className="space-y-4 overflow-y-auto">
+            <ExhibitionMetadataForm
+              onSubmit={handleMetadataSubmit}
+              onBack={handlePreviousStep}
+            />
           </div>
         )}
 

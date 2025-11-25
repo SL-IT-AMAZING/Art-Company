@@ -3,7 +3,7 @@ import { deleteImagesFromStorage } from '@/lib/utils/storage'
 
 /**
  * PATCH /api/exhibitions/[id]
- * Update exhibition title
+ * Update exhibition title, status, and/or is_public
  */
 export async function PATCH(
   req: Request,
@@ -11,11 +11,29 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const { title } = await req.json()
+    const body = await req.json()
+    const { title, status, is_public } = body
 
-    if (!title || typeof title !== 'string') {
+    // At least one field must be provided
+    if (title === undefined && status === undefined && is_public === undefined) {
+      return new Response(
+        JSON.stringify({ error: '수정할 내용을 입력해주세요' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate title if provided
+    if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
       return new Response(
         JSON.stringify({ error: '유효한 제목을 입력해주세요' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate status if provided
+    if (status !== undefined && !['draft', 'completed'].includes(status)) {
+      return new Response(
+        JSON.stringify({ error: '유효하지 않은 상태입니다' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
     }
@@ -31,13 +49,18 @@ export async function PATCH(
       )
     }
 
-    // Update exhibition title
+    // Build update object with only provided fields
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString()
+    }
+    if (title !== undefined) updateData.title = title
+    if (status !== undefined) updateData.status = status
+    if (is_public !== undefined) updateData.is_public = is_public
+
+    // Update exhibition
     const { data, error } = await supabase
       .from('exhibitions')
-      .update({
-        title,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .eq('user_id', user.id) // Ensure user owns this exhibition
       .select()
@@ -46,7 +69,7 @@ export async function PATCH(
     if (error) {
       console.error('Error updating exhibition:', error)
       return new Response(
-        JSON.stringify({ error: '전시 제목 수정에 실패했습니다' }),
+        JSON.stringify({ error: '전시 수정에 실패했습니다' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       )
     }

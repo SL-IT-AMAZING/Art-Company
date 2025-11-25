@@ -1,5 +1,6 @@
 export type Step =
   | 'welcome'
+  | 'metadata'
   | 'keywords'
   | 'images'
   | 'edit-titles'

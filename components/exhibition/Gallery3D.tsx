@@ -4,6 +4,20 @@ import { Suspense, useState, useMemo, useEffect, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { PointerLockControls, Loader } from '@react-three/drei'
 import { Vector3 } from 'three'
+
+/**
+ * Camera setup component to ensure camera looks forward (toward north wall)
+ */
+function CameraSetup() {
+  const { camera } = useThree()
+
+  useEffect(() => {
+    // Point camera toward north wall (negative Z direction)
+    camera.lookAt(0, 1.6, -5)
+  }, [camera])
+
+  return null
+}
 import VoxelGalleryRoom from './VoxelGalleryRoom'
 import WallMountedArt from './WallMountedArt'
 import { ArtworkDetail } from './ArtworkDetail'
@@ -39,10 +53,17 @@ export default function Gallery3D({ artworks }: Gallery3DProps) {
 
   // Calculate room dimensions and artwork positions
   const { dimensions, artworkPositions } = useMemo(() => {
-    const dims = calculateRoomDimensions(artworks.length)
+    // Extract aspect ratios from artworks
+    const aspectRatios = artworks.map(a => a.aspectRatio || 1.0)
+
+    // Calculate room dimensions based on actual artwork sizes
+    const dims = calculateRoomDimensions(artworks.length, aspectRatios)
+
+    // Arrange artworks with proper spacing for variable sizes
     const positions = autoArrangeArtworks(
       artworks.map(a => a.id),
-      dims
+      dims,
+      aspectRatios
     )
 
     return {
@@ -90,12 +111,15 @@ export default function Gallery3D({ artworks }: Gallery3DProps) {
       <Canvas
         shadows
         camera={{
-          position: [0, 1.6, dimensions.depth / 2 + 2],
+          position: [0, 1.6, 0],
           fov: 75
         }}
         gl={{ antialias: true, alpha: false }}
         dpr={[1, 2]}
       >
+        {/* Camera setup - ensure camera looks forward */}
+        <CameraSetup />
+
         {/* Gallery Room (no suspense needed) */}
         <VoxelGalleryRoom dimensions={dimensions} />
 

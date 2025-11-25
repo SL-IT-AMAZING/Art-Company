@@ -13,8 +13,8 @@ interface WallMountedArtProps {
 }
 
 /**
- * Wall-mounted artwork with voxel-style frame
- * Displays actual artwork image inside a 3D voxel frame
+ * Wall-mounted artwork with realistic frame
+ * Displays actual artwork image inside a 3D frame with dynamic sizing based on aspect ratio
  */
 export default function WallMountedArt({
   artwork,
@@ -25,9 +25,23 @@ export default function WallMountedArt({
   const [hovered, setHovered] = useState(false)
   const groupRef = useRef<THREE.Group>(null)
 
-  // Frame dimensions
-  const artworkWidth = 1.2
-  const artworkHeight = 1.5
+  // Calculate dynamic frame dimensions based on aspect ratio
+  const MAX_SIZE = 2.0 // Maximum width or height in meters
+  const aspectRatio = artwork.aspectRatio || 1.0
+
+  let artworkWidth: number
+  let artworkHeight: number
+
+  if (aspectRatio >= 1) {
+    // Landscape or square: wider than tall
+    artworkWidth = Math.min(MAX_SIZE, MAX_SIZE)
+    artworkHeight = artworkWidth / aspectRatio
+  } else {
+    // Portrait: taller than wide
+    artworkHeight = Math.min(MAX_SIZE, MAX_SIZE)
+    artworkWidth = artworkHeight * aspectRatio
+  }
+
   const frameThickness = 0.08
   const frameDepth = 0.05
   const voxelSize = 0.04
@@ -65,7 +79,7 @@ export default function WallMountedArt({
     }
 
     return voxels
-  }, [artworkWidth, artworkHeight, frameThickness, frameDepth, voxelSize])
+  }, [artworkWidth, artworkHeight, frameThickness, frameDepth, voxelSize, aspectRatio])
 
   return (
     <group

@@ -349,16 +349,28 @@ export async function POST(req: NextRequest) {
       </html>
     `
 
-    // Launch Puppeteer with Vercel-compatible configuration
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: {
-        width: 1920,
-        height: 1080,
-      },
-      executablePath: await chromium.executablePath(),
-      headless: true,
-    })
+    // Launch Puppeteer - detect environment
+    const isDev = process.env.NODE_ENV === 'development'
+
+    if (isDev) {
+      // Local development - use regular puppeteer
+      const puppeteerFull = await import('puppeteer')
+      browser = await puppeteerFull.default.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      })
+    } else {
+      // Production (Vercel) - use puppeteer-core with chromium
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: {
+          width: 1920,
+          height: 1080,
+        },
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      })
+    }
 
     const page = await browser.newPage()
     await page.setContent(htmlContent, {

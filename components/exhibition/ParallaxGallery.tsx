@@ -83,14 +83,23 @@ export function ParallaxGallery({
                   onClick={() => setSelectedArtwork(artwork)}
                 >
                   <div className="relative bg-white p-4 rounded-lg shadow-xl">
-                    {/* Frame */}
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <Image
-                        src={artwork.imageUrl}
-                        alt={artwork.title}
-                        fill
-                        className="object-cover"
-                      />
+                    {/* Frame - dynamic sizing based on aspect ratio */}
+                    <div
+                      className="relative w-full flex items-center justify-center overflow-hidden bg-gray-50"
+                      style={{
+                        maxHeight: '320px',
+                        minHeight: '200px',
+                        aspectRatio: artwork.aspectRatio ? `${artwork.aspectRatio}` : '1'
+                      }}
+                    >
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={artwork.imageUrl}
+                          alt={artwork.title}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
                     </div>
                     {/* Label */}
                     <div className="mt-3 text-center">

@@ -37,6 +37,14 @@ export function PressReleaseGenerator({
           keywords: data.keywords,
           introduction: data.introduction,
           preface: data.preface,
+          // Exhibition metadata for actual values (not [TBD])
+          exhibitionDate: data.exhibitionDate,
+          exhibitionEndDate: data.exhibitionEndDate,
+          venue: data.venue,
+          location: data.location,
+          artistName: data.artistName,
+          openingHours: data.openingHours,
+          admissionFee: data.admissionFee,
         }),
       })
 

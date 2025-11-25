@@ -26,6 +26,7 @@ export function MobileNav({ user, logoutAction }: MobileNavProps) {
     { href: '/curation', label: 'AI 큐레이터' },
     { href: '/exhibition', label: '온라인 전시' },
     { href: '/salon', label: 'Art Salon' },
+    { href: '/pricing', label: '요금제' },
     { href: '/notice', label: '공지사항' },
     { href: '/about', label: 'About' },
   ]

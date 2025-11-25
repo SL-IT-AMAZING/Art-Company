@@ -51,6 +51,9 @@ export default async function ExhibitionViewerPage({
     title: artwork.title,
     description: artwork.description || '',
     imageUrl: artwork.image_url,
+    imageWidth: artwork.image_width,
+    imageHeight: artwork.image_height,
+    aspectRatio: artwork.aspect_ratio,
   })) || []
 
   // Create viewpoints for the parallax gallery (2D view)

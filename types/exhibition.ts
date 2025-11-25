@@ -23,6 +23,14 @@ export interface ExhibitionData {
   artworkDescriptions?: ArtworkDescription[]
   pressRelease?: string
   marketingReport?: MarketingReport
+  exhibitionDate?: string
+  exhibitionEndDate?: string
+  venue?: string
+  location?: string
+  artistName?: string
+  openingHours?: string
+  admissionFee?: string
+  contactInfo?: string
 }
 
 export interface Artwork {
@@ -30,6 +38,9 @@ export interface Artwork {
   title: string
   description: string
   imageUrl: string
+  imageWidth?: number
+  imageHeight?: number
+  aspectRatio?: number
   position?: { x: number; y: number }
   size?: { width: number; height: number }
 }

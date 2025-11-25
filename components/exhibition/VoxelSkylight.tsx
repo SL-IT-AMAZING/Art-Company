@@ -8,8 +8,8 @@ interface VoxelSkylightProps {
 }
 
 /**
- * Voxel-style skylight ceiling with light panels
- * Creates an illuminated ceiling similar to the reference gallery image
+ * Realistic skylight ceiling with bright light panels
+ * Creates an illuminated ceiling similar to modern gallery spaces
  */
 export default function VoxelSkylight({ width, depth, height }: VoxelSkylightProps) {
   const voxelSize = 0.1
@@ -32,64 +32,40 @@ export default function VoxelSkylight({ width, depth, height }: VoxelSkylightPro
 
   return (
     <group>
-      {/* Ceiling base - white voxel texture */}
+      {/* Ceiling base - smooth white surface */}
       <mesh position={[0, height, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[width, depth]} />
-        <meshStandardMaterial color="#f5f5f5" roughness={0.8} />
+        <meshStandardMaterial color="#f8f8f8" roughness={0.9} metalness={0} />
       </mesh>
 
       {/* Skylight panels - bright emissive rectangles */}
       {lightPanels.map((pos, index) => (
         <group key={index} position={pos.toArray()}>
-          {/* Light panel */}
+          {/* Light panel - brighter and more prominent */}
           <mesh rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[width * 0.8, depth * 0.15]} />
             <meshStandardMaterial
               color="#ffffff"
               emissive="#ffffff"
-              emissiveIntensity={0.8}
-              roughness={0.2}
-              metalness={0.1}
+              emissiveIntensity={1.5}
+              roughness={0.1}
+              metalness={0.05}
             />
           </mesh>
 
-          {/* Soft light source above panel */}
+          {/* Soft light source above panel - increased intensity */}
           <spotLight
             color="#ffffff"
-            intensity={100}
+            intensity={150}
             position={[0, 0.5, 0]}
             angle={Math.PI / 3}
             penumbra={1}
-            distance={10}
+            distance={12}
             castShadow={false}
           />
         </group>
       ))}
 
-      {/* Ceiling border - voxel detail */}
-      {/* North border */}
-      <mesh position={[0, height - voxelSize / 2, -depth / 2]}>
-        <boxGeometry args={[width, voxelSize, voxelSize * 2]} />
-        <meshStandardMaterial color="#e8e8e8" />
-      </mesh>
-
-      {/* South border */}
-      <mesh position={[0, height - voxelSize / 2, depth / 2]}>
-        <boxGeometry args={[width, voxelSize, voxelSize * 2]} />
-        <meshStandardMaterial color="#e8e8e8" />
-      </mesh>
-
-      {/* East border */}
-      <mesh position={[width / 2, height - voxelSize / 2, 0]}>
-        <boxGeometry args={[voxelSize * 2, voxelSize, depth]} />
-        <meshStandardMaterial color="#e8e8e8" />
-      </mesh>
-
-      {/* West border */}
-      <mesh position={[-width / 2, height - voxelSize / 2, 0]}>
-        <boxGeometry args={[voxelSize * 2, voxelSize, depth]} />
-        <meshStandardMaterial color="#e8e8e8" />
-      </mesh>
     </group>
   )
 }

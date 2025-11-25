@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Trash2, Plus, Edit2, Save, X } from 'lucide-react'
+import { Trash2, Plus, Edit2, Save, X, Globe, Lock, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import DeleteConfirmModal from './DeleteConfirmModal'
@@ -48,6 +48,7 @@ export default function ExhibitionManager({
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'exhibition' | 'artwork'; id?: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
 
   // Update exhibition title
   const handleSaveTitle = async () => {
@@ -67,6 +68,36 @@ export default function ExhibitionManager({
     } catch (error) {
       console.error('Error updating title:', error)
       alert('제목 수정 중 오류가 발생했습니다')
+    }
+  }
+
+  // Toggle exhibition publish status
+  const handleTogglePublish = async (publish: boolean) => {
+    setIsPublishing(true)
+    try {
+      const res = await fetch(`/api/exhibitions/${exhibition.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: publish ? 'completed' : 'draft',
+          is_public: publish
+        })
+      })
+
+      if (res.ok) {
+        setExhibition({
+          ...exhibition,
+          status: publish ? 'completed' : 'draft',
+          is_public: publish
+        })
+      } else {
+        alert(publish ? '전시 공개에 실패했습니다' : '비공개 전환에 실패했습니다')
+      }
+    } catch (error) {
+      console.error('Error toggling publish:', error)
+      alert('상태 변경 중 오류가 발생했습니다')
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -219,6 +250,54 @@ export default function ExhibitionManager({
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Publish Section */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-sm font-medium text-gray-500 mb-2">전시 공개 상태</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {exhibition.is_public ? (
+              <>
+                <Globe className="text-green-600" size={24} />
+                <div>
+                  <p className="font-medium text-green-700">공개중</p>
+                  <p className="text-sm text-gray-500">모든 사람이 이 전시를 볼 수 있습니다</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <Lock className="text-gray-400" size={24} />
+                <div>
+                  <p className="font-medium text-gray-700">비공개</p>
+                  <p className="text-sm text-gray-500">나만 이 전시를 볼 수 있습니다</p>
+                </div>
+              </>
+            )}
+          </div>
+          <Button
+            onClick={() => handleTogglePublish(!exhibition.is_public)}
+            disabled={isPublishing}
+            variant={exhibition.is_public ? 'outline' : 'default'}
+          >
+            {isPublishing ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                처리중...
+              </>
+            ) : exhibition.is_public ? (
+              <>
+                <Lock size={16} className="mr-2" />
+                비공개로 전환
+              </>
+            ) : (
+              <>
+                <Globe size={16} className="mr-2" />
+                전시 공개하기
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Artworks Section */}

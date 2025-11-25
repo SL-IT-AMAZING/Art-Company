@@ -29,6 +29,13 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           title: data.selectedTitle,
           keywords: data.keywords,
           mainImage: data.images[0],
+          artistName: data.artistName,
+          exhibitionDate: data.exhibitionDate,
+          exhibitionEndDate: data.exhibitionEndDate,
+          venue: data.venue,
+          location: data.location,
+          openingHours: data.openingHours,
+          admissionFee: data.admissionFee,
         }),
       })
 
