@@ -21,7 +21,7 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@react-three/drei": "^9.114.3",
     "@react-three/fiber": "^8.17.10",
-    "@sparticuz/chromium": "^141.0.0",
+    "@sparticuz/chromium-min": "^141.0.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
     "@tailwindcss/typography": "^0.5.19",

@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import puppeteer from 'puppeteer-core'
-import chromium from '@sparticuz/chromium'
+import chromium from '@sparticuz/chromium-min'
+
+// Remote chromium URL for Vercel serverless
+const CHROMIUM_URL = 'https://github.com/nicolekellydesign/chromium-brotli/releases/download/v133.0.6943.126/chromium-v133.0.6943.126-pack.tar'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -292,14 +295,15 @@ Do NOT include any text, titles, names, dates, or letters.`
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       })
     } else {
-      // Production (Vercel) - use puppeteer-core with chromium
+      // Production (Vercel) - use puppeteer-core with remote chromium
+      const executablePath = await chromium.executablePath(CHROMIUM_URL)
       browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: {
           width: 1024,
           height: 1792,
         },
-        executablePath: await chromium.executablePath(),
+        executablePath,
         headless: true,
       })
     }
