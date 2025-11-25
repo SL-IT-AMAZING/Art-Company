@@ -160,7 +160,7 @@ export function PosterGenerator({
                 src={posterUrl}
                 alt="Generated poster"
                 fill
-                className="object-cover"
+                className="object-contain"
                 unoptimized
               />
             </div>

@@ -190,8 +190,8 @@ export default function ExhibitionManager({
 
         if (res.ok) {
           const { artwork } = await res.json()
-          setArtworks([...artworks, artwork])
-          setArtworkTitles({ ...artworkTitles, [artwork.id]: artwork.title })
+          setArtworks(prev => [...prev, artwork])
+          setArtworkTitles(prev => ({ ...prev, [artwork.id]: artwork.title }))
         } else {
           const errorData = await res.json()
           console.error('Upload error:', errorData)
