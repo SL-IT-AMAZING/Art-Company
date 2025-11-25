@@ -14,6 +14,8 @@ export async function PATCH(
     const body = await req.json()
     const { title, status, is_public } = body
 
+    console.log('PATCH /api/exhibitions/[id] - Request:', { id, title, status, is_public })
+
     // At least one field must be provided
     if (title === undefined && status === undefined && is_public === undefined) {
       return new Response(
@@ -31,7 +33,7 @@ export async function PATCH(
     }
 
     // Validate status if provided
-    if (status !== undefined && !['draft', 'completed'].includes(status)) {
+    if (status !== undefined && !['draft', 'generating', 'complete'].includes(status)) {
       return new Response(
         JSON.stringify({ error: '유효하지 않은 상태입니다' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -41,10 +43,14 @@ export async function PATCH(
     const supabase = await createClient()
 
     // Verify user owns this exhibition
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    console.log('Auth result:', { userId: user?.id, authError })
+
+    if (authError || !user) {
+      console.error('Auth error:', authError)
       return new Response(
-        JSON.stringify({ error: '인증이 필요합니다' }),
+        JSON.stringify({ error: '인증이 필요합니다', details: authError?.message }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       )
     }
@@ -57,6 +63,8 @@ export async function PATCH(
     if (status !== undefined) updateData.status = status
     if (is_public !== undefined) updateData.is_public = is_public
 
+    console.log('Update data:', updateData)
+
     // Update exhibition
     const { data, error } = await supabase
       .from('exhibitions')
@@ -66,10 +74,12 @@ export async function PATCH(
       .select()
       .single()
 
+    console.log('Update result:', { data, error })
+
     if (error) {
       console.error('Error updating exhibition:', error)
       return new Response(
-        JSON.stringify({ error: '전시 수정에 실패했습니다' }),
+        JSON.stringify({ error: '전시 수정에 실패했습니다', details: error.message }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       )
     }
@@ -81,7 +91,10 @@ export async function PATCH(
   } catch (error) {
     console.error('Exhibition update error:', error)
     return new Response(
-      JSON.stringify({ error: '전시 수정 중 오류가 발생했습니다' }),
+      JSON.stringify({
+        error: '전시 수정 중 오류가 발생했습니다',
+        details: error instanceof Error ? error.message : String(error)
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }

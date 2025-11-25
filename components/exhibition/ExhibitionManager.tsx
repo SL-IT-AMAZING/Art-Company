@@ -80,7 +80,7 @@ export default function ExhibitionManager({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: publish ? 'completed' : 'draft',
+          status: publish ? 'complete' : 'draft',
           is_public: publish
         })
       })
@@ -88,7 +88,7 @@ export default function ExhibitionManager({
       if (res.ok) {
         setExhibition({
           ...exhibition,
-          status: publish ? 'completed' : 'draft',
+          status: publish ? 'complete' : 'draft',
           is_public: publish
         })
       } else {
