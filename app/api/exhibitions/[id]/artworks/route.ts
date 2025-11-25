@@ -49,7 +49,9 @@ export async function POST(
     }
 
     // Upload image to Supabase Storage
-    const fileName = `${Date.now()}-${file.name}`
+    // Use safe filename (avoid Korean/special characters)
+    const fileExt = file.name.split('.').pop() || 'jpg'
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('artworks')
       .upload(fileName, file)
