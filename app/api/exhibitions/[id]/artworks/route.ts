@@ -57,7 +57,11 @@ export async function POST(
     if (uploadError || !uploadData) {
       console.error('Storage upload error:', uploadError)
       return new Response(
-        JSON.stringify({ error: '이미지 업로드에 실패했습니다' }),
+        JSON.stringify({
+          error: '이미지 업로드에 실패했습니다',
+          details: uploadError?.message || 'Unknown storage error',
+          hint: 'Supabase Storage에 "artworks" bucket이 생성되어 있는지 확인하세요'
+        }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       )
     }

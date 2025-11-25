@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Trash2, Plus, Edit2, Save, X, Globe, Lock, Loader2 } from 'lucide-react'
@@ -34,6 +34,7 @@ export default function ExhibitionManager({
 }: ExhibitionManagerProps) {
   const router = useRouter()
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [exhibition, setExhibition] = useState(initialExhibition)
   const [artworks, setArtworks] = useState(initialArtworks)
@@ -192,7 +193,9 @@ export default function ExhibitionManager({
           setArtworks([...artworks, artwork])
           setArtworkTitles({ ...artworkTitles, [artwork.id]: artwork.title })
         } else {
-          alert(`${file.name} 업로드에 실패했습니다`)
+          const errorData = await res.json()
+          console.error('Upload error:', errorData)
+          alert(`${file.name} 업로드 실패: ${errorData.details || errorData.error}`)
         }
       } catch (error) {
         console.error('Error uploading artwork:', error)
@@ -304,12 +307,9 @@ export default function ExhibitionManager({
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">작품 관리 ({artworks.length}개)</h2>
-          <label>
-            <Button disabled={isUploading} className="cursor-pointer">
-              <Plus size={16} className="mr-1" />
-              {isUploading ? '업로드 중...' : '작품 추가'}
-            </Button>
+          <>
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               multiple
@@ -317,7 +317,14 @@ export default function ExhibitionManager({
               className="hidden"
               disabled={isUploading}
             />
-          </label>
+            <Button
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Plus size={16} className="mr-1" />
+              {isUploading ? '업로드 중...' : '작품 추가'}
+            </Button>
+          </>
         </div>
 
         {/* Artworks Grid */}

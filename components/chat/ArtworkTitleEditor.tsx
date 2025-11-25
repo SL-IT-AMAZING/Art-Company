@@ -92,15 +92,15 @@ export default function ArtworkTitleEditor({
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 mb-4">
         <h2 className="text-2xl font-bold mb-2">작품 정보 편집</h2>
         <p className="text-gray-600">
           각 작품의 제목과 설명을 입력할 수 있습니다. 건너뛰면 기본 제목("작품 1", "작품 2" 등)이 사용됩니다.
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-4">
         {artworks.map((artwork, index) => (
           <div
             key={artwork.id}
@@ -151,7 +151,7 @@ export default function ArtworkTitleEditor({
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-3 justify-end pt-4">
+      <div className="flex-shrink-0 flex gap-3 justify-end pt-4">
         <button
           onClick={onSkip}
           disabled={saving}
