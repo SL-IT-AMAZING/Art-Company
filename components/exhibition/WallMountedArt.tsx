@@ -135,7 +135,7 @@ export default function WallMountedArt({
         position={[0, 0, 1.5]}
         angle={0.5}
         penumbra={0.8}
-        intensity={hovered ? 80 : 50}
+        intensity={hovered ? 8 : 5}
         color="#ffffff"
         castShadow={false}
         target-position={[0, 0, 0]}
@@ -171,7 +171,9 @@ export default function WallMountedArt({
             className="text-white text-center line-clamp-2"
             style={{
               fontSize: '33px',
+              minWidth: '400px',
               maxWidth: '600px',
+              whiteSpace: 'normal',
               textShadow: '2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9), 2px -2px 4px rgba(0,0,0,0.9), -2px 2px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8)'
             }}
           >

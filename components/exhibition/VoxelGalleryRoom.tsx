@@ -73,20 +73,20 @@ export default function VoxelGalleryRoom({ dimensions }: VoxelGalleryRoomProps) 
       <VoxelSkylight width={width} depth={depth} height={height} />
 
       {/* Ambient lighting for soft fill */}
-      <ambientLight intensity={2} color="#ffffff" />
+      <ambientLight intensity={0.4} color="#ffffff" />
 
       {/* Hemisphere light for natural sky/ground gradient */}
       <hemisphereLight
         color="#ffffff"
         groundColor="#d4c4b0"
-        intensity={1.5}
+        intensity={0.5}
         position={[0, height, 0]}
       />
 
       {/* Main directional light from skylight (softer shadows) */}
       <directionalLight
         position={[0, height - 0.5, 0]}
-        intensity={1.5}
+        intensity={1.0}
         color="#f8f8ff"
         castShadow
         shadow-mapSize-width={2048}
@@ -100,10 +100,10 @@ export default function VoxelGalleryRoom({ dimensions }: VoxelGalleryRoomProps) 
       />
 
       {/* Soft fill lights from corners */}
-      <pointLight position={[width / 3, height * 0.7, depth / 3]} intensity={8} color="#fff5e6" distance={width} decay={2} />
-      <pointLight position={[-width / 3, height * 0.7, -depth / 3]} intensity={8} color="#fff5e6" distance={width} decay={2} />
-      <pointLight position={[width / 3, height * 0.7, -depth / 3]} intensity={6} color="#ffffff" distance={width} decay={2} />
-      <pointLight position={[-width / 3, height * 0.7, depth / 3]} intensity={6} color="#ffffff" distance={width} decay={2} />
+      <pointLight position={[width / 3, height * 0.7, depth / 3]} intensity={3} color="#fff5e6" distance={width} decay={2} />
+      <pointLight position={[-width / 3, height * 0.7, -depth / 3]} intensity={3} color="#fff5e6" distance={width} decay={2} />
+      <pointLight position={[width / 3, height * 0.7, -depth / 3]} intensity={2} color="#ffffff" distance={width} decay={2} />
+      <pointLight position={[-width / 3, height * 0.7, depth / 3]} intensity={2} color="#ffffff" distance={width} decay={2} />
     </group>
   )
 }

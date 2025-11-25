@@ -48,16 +48,16 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
     const newErrors: Partial<Record<keyof ExhibitionMetadata, string>> = {}
 
     if (!formData.exhibitionDate) {
-      newErrors.exhibitionDate = 'Exhibition start date is required'
+      newErrors.exhibitionDate = '전시 시작일을 입력해주세요'
     }
     if (!formData.venue) {
-      newErrors.venue = 'Venue name is required'
+      newErrors.venue = '전시 장소를 입력해주세요'
     }
     if (!formData.location) {
-      newErrors.location = 'Location is required'
+      newErrors.location = '주소를 입력해주세요'
     }
     if (!formData.artistName) {
-      newErrors.artistName = 'Artist name is required'
+      newErrors.artistName = '작가 이름을 입력해주세요'
     }
 
     // Validate date logic if end date is provided
@@ -65,7 +65,7 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
       const startDate = new Date(formData.exhibitionDate)
       const endDate = new Date(formData.exhibitionEndDate)
       if (endDate < startDate) {
-        newErrors.exhibitionEndDate = 'End date must be after start date'
+        newErrors.exhibitionEndDate = '종료일은 시작일 이후여야 합니다'
       }
     }
 
@@ -83,9 +83,9 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
   return (
     <div className="w-full max-w-2xl mx-auto p-6 space-y-6">
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">Exhibition Details</h2>
+        <h2 className="text-2xl font-semibold">전시 정보</h2>
         <p className="text-sm text-muted-foreground">
-          Please provide information about your exhibition. This will be used to create your poster and other materials.
+          전시 정보를 입력해주세요. 입력하신 정보는 포스터 및 기타 자료 제작에 활용됩니다.
         </p>
       </div>
 
@@ -93,14 +93,14 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
         {/* Artist Name */}
         <div className="space-y-2">
           <Label htmlFor="artistName" className="text-sm font-medium">
-            Artist Name <span className="text-red-500">*</span>
+            작가 이름 <span className="text-red-500">*</span>
           </Label>
           <Input
             id="artistName"
             type="text"
             value={formData.artistName}
             onChange={(e) => handleChange('artistName', e.target.value)}
-            placeholder="Enter artist name"
+            placeholder="작가 이름을 입력하세요"
             className={errors.artistName ? 'border-red-500' : ''}
           />
           {errors.artistName && (
@@ -112,7 +112,7 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="exhibitionDate" className="text-sm font-medium">
-              Start Date <span className="text-red-500">*</span>
+              시작일 <span className="text-red-500">*</span>
             </Label>
             <Input
               id="exhibitionDate"
@@ -128,7 +128,7 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
 
           <div className="space-y-2">
             <Label htmlFor="exhibitionEndDate" className="text-sm font-medium">
-              End Date (Optional)
+              종료일 (선택)
             </Label>
             <Input
               id="exhibitionEndDate"
@@ -146,14 +146,14 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
         {/* Venue */}
         <div className="space-y-2">
           <Label htmlFor="venue" className="text-sm font-medium">
-            Venue Name <span className="text-red-500">*</span>
+            전시 장소 <span className="text-red-500">*</span>
           </Label>
           <Input
             id="venue"
             type="text"
             value={formData.venue}
             onChange={(e) => handleChange('venue', e.target.value)}
-            placeholder="e.g., Seoul Museum of Art"
+            placeholder="예: 서울시립미술관"
             className={errors.venue ? 'border-red-500' : ''}
           />
           {errors.venue && (
@@ -164,14 +164,14 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
         {/* Location */}
         <div className="space-y-2">
           <Label htmlFor="location" className="text-sm font-medium">
-            Location <span className="text-red-500">*</span>
+            주소 <span className="text-red-500">*</span>
           </Label>
           <Input
             id="location"
             type="text"
             value={formData.location}
             onChange={(e) => handleChange('location', e.target.value)}
-            placeholder="e.g., 61 Deoksugung-gil, Jung-gu, Seoul"
+            placeholder="예: 서울시 중구 덕수궁길 61"
             className={errors.location ? 'border-red-500' : ''}
           />
           {errors.location && (
@@ -182,41 +182,41 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
         {/* Opening Hours */}
         <div className="space-y-2">
           <Label htmlFor="openingHours" className="text-sm font-medium">
-            Opening Hours (Optional)
+            운영 시간 (선택)
           </Label>
           <Input
             id="openingHours"
             type="text"
             value={formData.openingHours}
             onChange={(e) => handleChange('openingHours', e.target.value)}
-            placeholder="e.g., Tue-Sun 10:00-18:00"
+            placeholder="예: 화-일 10:00-18:00"
           />
         </div>
 
         {/* Admission Fee */}
         <div className="space-y-2">
           <Label htmlFor="admissionFee" className="text-sm font-medium">
-            Admission Fee (Optional)
+            입장료 (선택)
           </Label>
           <Input
             id="admissionFee"
             type="text"
             value={formData.admissionFee}
             onChange={(e) => handleChange('admissionFee', e.target.value)}
-            placeholder="e.g., Free, ₩10,000, $15"
+            placeholder="예: 무료, ₩10,000"
           />
         </div>
 
         {/* Contact Info */}
         <div className="space-y-2">
           <Label htmlFor="contactInfo" className="text-sm font-medium">
-            Contact Information (Optional)
+            연락처 (선택)
           </Label>
           <Textarea
             id="contactInfo"
             value={formData.contactInfo}
             onChange={(e) => handleChange('contactInfo', e.target.value)}
-            placeholder="e.g., Email, phone number, website"
+            placeholder="예: 이메일, 전화번호, 웹사이트"
             rows={3}
           />
         </div>
@@ -229,11 +229,11 @@ export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionM
               variant="outline"
               onClick={onBack}
             >
-              Back
+              이전
             </Button>
           )}
           <Button type="submit" className="min-w-32">
-            Continue
+            계속
           </Button>
         </div>
       </form>

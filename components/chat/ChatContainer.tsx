@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useChat } from 'ai/react'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
@@ -32,6 +32,7 @@ export function ChatContainer() {
   })
   const [chatInitialized, setChatInitialized] = useState(false)
   const [isGeneratingContent, setIsGeneratingContent] = useState(false)
+  const initRef = useRef(false)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
     api: '/api/chat',
@@ -71,18 +72,19 @@ export function ChatContainer() {
 
   // Initialize chat on mount
   const initializeChat = () => {
-    if (!chatInitialized) {
-      setMessages([
-        {
-          id: 'welcome-1',
-          role: 'assistant',
-          content: '안녕하세요! 저는 Art Wizard의 AI 큐레이터입니다. 🎨\n\n어떤 전시를 기획 중이신가요? 전시의 주제, 컨셉, 분위기 등 자유롭게 말씀해주세요!',
-          createdAt: new Date(),
-        },
-      ])
-      setChatInitialized(true)
-      initExhibition()
-    }
+    if (initRef.current) return  // Guard with ref to prevent StrictMode double-calls
+    initRef.current = true
+
+    setMessages([
+      {
+        id: 'welcome-1',
+        role: 'assistant',
+        content: '안녕하세요! 저는 Art Wizard의 AI 큐레이터입니다. 🎨\n\n어떤 전시를 기획 중이신가요? 전시의 주제, 컨셉, 분위기 등 자유롭게 말씀해주세요!',
+        createdAt: new Date(),
+      },
+    ])
+    setChatInitialized(true)
+    initExhibition()
   }
 
   const handleProceedToMetadata = () => {
@@ -181,6 +183,28 @@ export function ChatContainer() {
     setStep('images')
   }
 
+  // Sanitize filename for Supabase Storage (remove Korean/special characters)
+  const sanitizeFilename = (filename: string): string => {
+    // Get file extension
+    const lastDotIndex = filename.lastIndexOf('.')
+    const ext = lastDotIndex !== -1 ? filename.substring(lastDotIndex) : ''
+    const nameWithoutExt = lastDotIndex !== -1 ? filename.substring(0, lastDotIndex) : filename
+
+    // Replace non-ASCII characters and spaces with underscore
+    const sanitized = nameWithoutExt
+      .normalize('NFD') // Decompose accented characters
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/[^\w.-]/g, '_') // Replace non-alphanumeric with underscore
+      .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+      .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+      .substring(0, 50) // Limit length
+
+    // If sanitized name is empty, use 'image'
+    const finalName = sanitized || 'image'
+
+    return `${finalName}${ext}`.toLowerCase()
+  }
+
   const handleImagesUpload = async (files: File[]) => {
     const imageUrls: string[] = []
     const failedUploads: string[] = []
@@ -202,7 +226,9 @@ export function ChatContainer() {
         img.src = url
       }).catch(() => ({ width: 0, height: 0 }))
 
-      const fileName = `${Date.now()}-${file.name}`
+      // Sanitize filename to remove Korean characters and special characters
+      const sanitizedName = sanitizeFilename(file.name)
+      const fileName = `${Date.now()}-${sanitizedName}`
       const { data, error } = await supabase.storage
         .from('artworks')
         .upload(fileName, file)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState, type ComponentType } from 'react'
-import { Loader2, Github, Chrome } from 'lucide-react'
+import { Loader2, Chrome } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 
@@ -9,11 +9,10 @@ interface SocialLoginButtonsProps {
   nextPath?: string
 }
 
-type Provider = 'google' | 'github'
+type Provider = 'google'
 
 const PROVIDERS: { id: Provider; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: 'google', label: 'Google', icon: Chrome },
-  { id: 'github', label: 'GitHub', icon: Github },
 ]
 
 export function SocialLoginButtons({ nextPath = '/mypage' }: SocialLoginButtonsProps) {

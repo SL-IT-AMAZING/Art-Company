@@ -138,7 +138,7 @@ export default function Gallery3D({ artworks }: Gallery3DProps) {
               artwork={artwork}
               position={position.position}
               rotation={position.rotation}
-              onClick={() => setSelectedArtwork(artwork)}
+              onClick={() => isLocked && setSelectedArtwork(artwork)}
             />
           ))}
         </Suspense>
