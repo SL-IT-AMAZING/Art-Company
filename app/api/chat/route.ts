@@ -75,10 +75,17 @@ export async function POST(req: Request) {
     })
 
     return new StreamingTextResponse(stream)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat API error:', error)
+    const errorMessage = error?.message || 'Unknown error'
+    const errorDetails = {
+      error: 'Failed to process chat request',
+      message: errorMessage,
+      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    }
+    console.error('Error details:', errorDetails)
     return new Response(
-      JSON.stringify({ error: 'Failed to process chat request' }),
+      JSON.stringify(errorDetails),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
