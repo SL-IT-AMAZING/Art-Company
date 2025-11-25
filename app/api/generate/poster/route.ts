@@ -4,8 +4,8 @@ import OpenAI from 'openai'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium-min'
 
-// Remote chromium URL for Vercel serverless
-const CHROMIUM_URL = 'https://github.com/nicolekellydesign/chromium-brotli/releases/download/v133.0.6943.126/chromium-v133.0.6943.126-pack.tar'
+// Remote chromium URL for Vercel serverless (official Sparticuz release)
+const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
