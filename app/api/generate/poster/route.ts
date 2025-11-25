@@ -1,93 +1,196 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
-import sharp from 'sharp'
+import puppeteer from 'puppeteer-core'
+import chromium from '@sparticuz/chromium'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-// Helper to create text overlay SVG
-function createTextOverlaySVG(
-  width: number,
-  height: number,
+// Helper to create poster HTML with text overlay
+function createPosterHTML(
+  backgroundUrl: string,
   title: string,
   artistName: string,
   dateRange: string,
   venue: string,
   location: string
 ): string {
-  // Escape special XML characters
-  const escapeXml = (str: string) =>
-    str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;')
+  const safeTitle = title || '제목 없음'
+  const safeArtist = artistName || ''
+  const safeDateRange = dateRange || ''
+  const safeVenue = venue || ''
+  const safeLocation = location || ''
 
-  const safeTitle = escapeXml(title || '제목 없음')
-  const safeArtist = escapeXml(artistName || '')
-  const safeDateRange = escapeXml(dateRange || '')
-  const safeVenue = escapeXml(venue || '')
-  const safeLocation = escapeXml(location || '')
+  // Calculate appropriate font size based on title length
+  const getTitleFontSize = (text: string) => {
+    const len = text.length
+    if (len <= 8) return 72
+    if (len <= 12) return 64
+    if (len <= 18) return 54
+    if (len <= 25) return 46
+    if (len <= 35) return 38
+    return 32
+  }
 
-  // Calculate positions (portrait poster: 1024x1792)
-  const titleY = height * 0.35
-  const artistY = height * 0.45
-  const detailsStartY = height * 0.75
+  const titleFontSize = getTitleFontSize(safeTitle)
 
   return `
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <style>
-          @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-          .title {
-            font-family: 'Pretendard', sans-serif;
-            font-size: 72px;
-            font-weight: 700;
-            fill: #1E293B;
-          }
-          .artist {
-            font-family: 'Pretendard', sans-serif;
-            font-size: 36px;
-            font-weight: 500;
-            fill: #475569;
-          }
-          .details {
-            font-family: 'Pretendard', sans-serif;
-            font-size: 28px;
-            font-weight: 400;
-            fill: #64748B;
-          }
-        </style>
-        <!-- Semi-transparent overlay for text readability -->
-        <linearGradient id="textBg" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:rgba(255,255,255,0.7)"/>
-          <stop offset="50%" style="stop-color:rgba(255,255,255,0.85)"/>
-          <stop offset="100%" style="stop-color:rgba(255,255,255,0.7)"/>
-        </linearGradient>
-      </defs>
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
-      <!-- Semi-transparent background for text area -->
-      <rect x="0" y="${titleY - 100}" width="${width}" height="${height * 0.25}" fill="url(#textBg)"/>
-      <rect x="0" y="${detailsStartY - 60}" width="${width}" height="${height * 0.2}" fill="url(#textBg)"/>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
 
-      <!-- Title -->
-      <text x="${width / 2}" y="${titleY}" class="title" text-anchor="middle">${safeTitle}</text>
+        body {
+          width: 1024px;
+          height: 1792px;
+          overflow: hidden;
+          font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
 
-      <!-- Artist Name -->
-      ${safeArtist ? `<text x="${width / 2}" y="${artistY}" class="artist" text-anchor="middle">${safeArtist}</text>` : ''}
+        .poster-container {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
 
-      <!-- Exhibition Details -->
-      ${safeDateRange ? `<text x="${width / 2}" y="${detailsStartY}" class="details" text-anchor="middle">${safeDateRange}</text>` : ''}
-      ${safeVenue ? `<text x="${width / 2}" y="${detailsStartY + 45}" class="details" text-anchor="middle">${safeVenue}</text>` : ''}
-      ${safeLocation ? `<text x="${width / 2}" y="${detailsStartY + 90}" class="details" text-anchor="middle">${safeLocation}</text>` : ''}
-    </svg>
+        .background {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .text-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 60px 40px;
+        }
+
+        .title-section {
+          background: linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%);
+          padding: 50px 30px;
+          border-radius: 12px;
+          text-align: center;
+          max-width: 100%;
+          overflow: hidden;
+        }
+
+        .title {
+          font-size: ${titleFontSize}px;
+          font-weight: 700;
+          color: #1E293B;
+          line-height: 1.3;
+          margin-bottom: 20px;
+          word-break: keep-all;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .artist {
+          font-size: ${Math.max(24, titleFontSize * 0.5)}px;
+          font-weight: 500;
+          color: #475569;
+          word-break: keep-all;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .details-section {
+          background: linear-gradient(to top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%);
+          padding: 35px 30px;
+          border-radius: 12px;
+          text-align: center;
+          max-width: 100%;
+          overflow: hidden;
+        }
+
+        .details {
+          font-size: 26px;
+          font-weight: 400;
+          color: #64748B;
+          line-height: 1.6;
+        }
+
+        .details p {
+          margin: 6px 0;
+          word-break: keep-all;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .details .date {
+          font-size: 28px;
+          font-weight: 500;
+          color: #475569;
+          margin-bottom: 12px;
+        }
+
+        .details .venue {
+          font-size: 24px;
+        }
+
+        .details .location {
+          font-size: 22px;
+          color: #94A3B8;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="poster-container">
+        <img class="background" src="${backgroundUrl}" alt="Background" />
+
+        <div class="text-overlay">
+          <div class="title-section">
+            <h1 class="title">${safeTitle}</h1>
+            ${safeArtist ? `<p class="artist">${safeArtist}</p>` : ''}
+          </div>
+
+          <div class="details-section">
+            <div class="details">
+              ${safeDateRange ? `<p class="date">${safeDateRange}</p>` : ''}
+              ${safeVenue ? `<p class="venue">${safeVenue}</p>` : ''}
+              ${safeLocation ? `<p class="location">${safeLocation}</p>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
   `
 }
 
 export async function POST(req: NextRequest) {
+  let browser = null
+
   try {
     const supabase = await createClient()
 
@@ -166,24 +269,10 @@ Do NOT include any text, titles, names, dates, or letters.`
       throw new Error('No image URL returned from DALL-E')
     }
 
-    // Download the background image
-    console.log('[Poster] Downloading background image...')
-    const imageResponse = await fetch(backgroundUrl)
-    if (!imageResponse.ok) {
-      throw new Error('Failed to download background image')
-    }
-    const backgroundBuffer = Buffer.from(await imageResponse.arrayBuffer())
-
-    // Get image dimensions
-    const metadata = await sharp(backgroundBuffer).metadata()
-    const width = metadata.width || 1024
-    const height = metadata.height || 1792
-
-    // Create text overlay SVG
-    console.log('[Poster] Creating text overlay...')
-    const textSvg = createTextOverlaySVG(
-      width,
-      height,
+    // Create HTML with text overlay
+    console.log('[Poster] Creating poster HTML with Korean text...')
+    const posterHtml = createPosterHTML(
+      backgroundUrl,
       title,
       artistName || '',
       dateRange,
@@ -191,25 +280,54 @@ Do NOT include any text, titles, names, dates, or letters.`
       location || ''
     )
 
-    // Composite text over background
-    console.log('[Poster] Compositing final image...')
-    const finalImageBuffer = await sharp(backgroundBuffer)
-      .composite([
-        {
-          input: Buffer.from(textSvg),
-          top: 0,
-          left: 0,
+    // Launch Puppeteer - detect environment
+    console.log('[Poster] Launching browser for rendering...')
+    const isDev = process.env.NODE_ENV === 'development'
+
+    if (isDev) {
+      // Local development - use regular puppeteer
+      const puppeteerFull = await import('puppeteer')
+      browser = await puppeteerFull.default.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      })
+    } else {
+      // Production (Vercel) - use puppeteer-core with chromium
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: {
+          width: 1024,
+          height: 1792,
         },
-      ])
-      .png()
-      .toBuffer()
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      })
+    }
+
+    const page = await browser.newPage()
+    await page.setViewport({ width: 1024, height: 1792 })
+
+    // Set content and wait for fonts to load
+    await page.setContent(posterHtml, {
+      waitUntil: 'networkidle0', // Wait for all network requests (including fonts) to complete
+    })
+
+    // Take screenshot
+    console.log('[Poster] Taking screenshot...')
+    const imageBuffer = await page.screenshot({
+      type: 'png',
+      fullPage: true,
+    })
+
+    await browser.close()
+    browser = null
 
     // Upload to Supabase Storage
     console.log('[Poster] Uploading to Supabase Storage...')
     const fileName = `poster_${exhibitionId || 'temp'}_${Date.now()}.png`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('posters')
-      .upload(fileName, finalImageBuffer, {
+      .upload(fileName, imageBuffer, {
         contentType: 'image/png',
         upsert: false,
       })
@@ -217,7 +335,7 @@ Do NOT include any text, titles, names, dates, or letters.`
     if (uploadError) {
       console.error('[Poster] Upload error:', uploadError)
       // Fall back to returning a data URL if upload fails
-      const base64 = finalImageBuffer.toString('base64')
+      const base64 = Buffer.from(imageBuffer).toString('base64')
       const dataUrl = `data:image/png;base64,${base64}`
 
       return NextResponse.json({
@@ -252,6 +370,10 @@ Do NOT include any text, titles, names, dates, or letters.`
     })
   } catch (error: any) {
     console.error('[Poster] Generate poster error:', error)
+
+    if (browser) {
+      await browser.close()
+    }
 
     if (error?.status === 429) {
       return NextResponse.json(
