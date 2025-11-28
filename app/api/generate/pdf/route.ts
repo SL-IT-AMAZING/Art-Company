@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium-min'
-import { postProcessLLMOutput } from '@/lib/utils/textPostProcessor'
+import { postProcessLLMOutput, replaceTBDPlaceholders } from '@/lib/utils/textPostProcessor'
 
 // Remote chromium URL for Vercel serverless (official Sparticuz release)
 const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
@@ -119,8 +119,19 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Apply post-processing: removes gendered language, cleans JSON artifacts, normalizes tone
-      return postProcessLLMOutput(result)
+      // Apply post-processing: removes gendered language, cleans JSON artifacts, markdown, typos
+      result = postProcessLLMOutput(result)
+
+      // Replace [TBD] placeholders with actual exhibition data
+      result = replaceTBDPlaceholders(result, {
+        exhibition_date: exhibition.exhibition_date,
+        exhibition_end_date: exhibition.exhibition_end_date,
+        venue: exhibition.venue,
+        location: exhibition.location,
+        admission_fee: exhibition.admission_fee,
+      })
+
+      return result
     }
 
     // Create HTML with Korean font support

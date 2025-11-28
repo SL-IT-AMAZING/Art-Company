@@ -317,6 +317,14 @@ function SmoothFirstPersonControls({ onLock, onUnlock }: SmoothFirstPersonContro
   const smoothing = 0.12     // Interpolation factor (lower = smoother but slower response)
   const minPolarAngle = Math.PI * 0.05  // Looking up limit
   const maxPolarAngle = Math.PI * 0.95  // Looking down limit
+  const maxMouseDelta = 100  // Cap mouse movement to prevent jumps from browser event batching
+
+  // Helper function to normalize angle to [-PI, PI]
+  const normalizeAngle = (angle: number): number => {
+    while (angle > Math.PI) angle -= Math.PI * 2
+    while (angle < -Math.PI) angle += Math.PI * 2
+    return angle
+  }
 
   // Update callback refs when props change (without triggering effect re-run)
   useEffect(() => {
@@ -374,9 +382,16 @@ function SmoothFirstPersonControls({ onLock, onUnlock }: SmoothFirstPersonContro
     const onMouseMove = (e: MouseEvent) => {
       if (!isLockedRef.current) return
 
+      // Cap mouse movement to prevent jumps from browser event batching
+      const movementX = Math.max(-maxMouseDelta, Math.min(maxMouseDelta, e.movementX))
+      const movementY = Math.max(-maxMouseDelta, Math.min(maxMouseDelta, e.movementY))
+
       // Update target rotation based on mouse movement
-      targetEuler.current.y -= e.movementX * sensitivity
-      targetEuler.current.x -= e.movementY * sensitivity
+      targetEuler.current.y -= movementX * sensitivity
+      targetEuler.current.x -= movementY * sensitivity
+
+      // Normalize Y rotation to prevent floating-point precision issues
+      targetEuler.current.y = normalizeAngle(targetEuler.current.y)
 
       // Clamp vertical rotation (looking up/down)
       const halfPi = Math.PI / 2
@@ -391,12 +406,23 @@ function SmoothFirstPersonControls({ onLock, onUnlock }: SmoothFirstPersonContro
   }, [sensitivity, minPolarAngle, maxPolarAngle])
 
   // Smooth interpolation on each frame
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!isLockedRef.current) return
 
-    // Smoothly interpolate current rotation toward target
-    currentEuler.current.x += (targetEuler.current.x - currentEuler.current.x) * smoothing
-    currentEuler.current.y += (targetEuler.current.y - currentEuler.current.y) * smoothing
+    // Frame-rate independent smoothing
+    const smoothFactor = 1 - Math.pow(1 - smoothing, delta * 60)
+
+    // For X (pitch), simple interpolation is fine since it's clamped
+    currentEuler.current.x += (targetEuler.current.x - currentEuler.current.x) * smoothFactor
+
+    // For Y (yaw), take the shorter path around the circle to prevent skipping
+    let yDiff = targetEuler.current.y - currentEuler.current.y
+    if (yDiff > Math.PI) yDiff -= Math.PI * 2
+    if (yDiff < -Math.PI) yDiff += Math.PI * 2
+    currentEuler.current.y += yDiff * smoothFactor
+
+    // Normalize current Y rotation to keep it bounded
+    currentEuler.current.y = normalizeAngle(currentEuler.current.y)
 
     // Apply smoothed rotation to camera
     camera.quaternion.setFromEuler(currentEuler.current)

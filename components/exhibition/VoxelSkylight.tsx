@@ -32,9 +32,9 @@ export default function VoxelSkylight({ width, depth, height }: VoxelSkylightPro
 
   return (
     <group>
-      {/* Ceiling base - smooth white surface */}
-      <mesh position={[0, height, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[width, depth]} />
+      {/* Ceiling base - solid box geometry to prevent black void */}
+      <mesh position={[0, height + 0.05, 0]}>
+        <boxGeometry args={[width + 1, 0.1, depth + 1]} />
         <meshStandardMaterial color="#f8f8f8" roughness={0.9} metalness={0} />
       </mesh>
 

@@ -253,11 +253,16 @@ export async function POST(req: NextRequest) {
         : formatDate(exhibitionDate)
       : ''
 
-    // Create DALL-E prompt for BACKGROUND ONLY (no text)
+    // Create DALL-E prompt for FLAT 2D BACKGROUND (no mockup, no frame)
     const keywordList = keywords?.join(', ') || 'contemporary art, modern, abstract'
-    const backgroundPrompt = `Create an abstract, minimalist exhibition poster BACKGROUND design.
+    const backgroundPrompt = `Create a FLAT, 2D exhibition poster design for direct printing.
 
-IMPORTANT: NO TEXT, NO LETTERS, NO WORDS, NO TYPOGRAPHY of any kind.
+CRITICAL REQUIREMENTS:
+- Generate a FLAT, printable poster design - NOT a mockup
+- Do NOT show the poster hanging on a wall, in a frame, or in any 3D context
+- Do NOT include any frame, shadow, perspective effects, or environmental elements
+- The output must be a clean, flat image ready for direct printing
+- NO TEXT, NO LETTERS, NO WORDS, NO TYPOGRAPHY of any kind
 
 Style:
 - Elegant, museum-quality aesthetic
@@ -268,7 +273,7 @@ Style:
 - Inspired by: ${keywordList}
 
 The design should be a beautiful abstract background suitable for a high-end contemporary art exhibition poster.
-Do NOT include any text, titles, names, dates, or letters.`
+Output a flat 2D image only - no mockups, no frames, no 3D rendering.`
 
     // Generate background with DALL-E 3 (with retry)
     console.log('[Poster] Generating background with DALL-E 3...')
