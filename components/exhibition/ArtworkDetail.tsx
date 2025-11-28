@@ -2,15 +2,17 @@
 
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { X } from 'lucide-react'
+import Link from 'next/link'
+import { X, Maximize2, Share2, Download } from 'lucide-react'
 import { Artwork } from '@/types/exhibition'
 
 interface ArtworkDetailProps {
   artwork: Artwork
+  exhibitionId?: string
   onClose: () => void
 }
 
-export function ArtworkDetail({ artwork, onClose }: ArtworkDetailProps) {
+export function ArtworkDetail({ artwork, exhibitionId, onClose }: ArtworkDetailProps) {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
@@ -49,12 +51,28 @@ export function ArtworkDetail({ artwork, onClose }: ArtworkDetailProps) {
           <div className="flex-1 p-6 md:p-8 overflow-y-auto max-h-[60vh] md:max-h-none">
             <h2 className="text-3xl font-bold mb-4">{artwork.title}</h2>
             {artwork.description && (
-              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap mb-6">
                 {artwork.description}
               </p>
             )}
             {!artwork.description && (
-              <p className="text-gray-400 italic">작품 설명이 없습니다.</p>
+              <p className="text-gray-400 italic mb-6">작품 설명이 없습니다.</p>
+            )}
+
+            {/* Action buttons */}
+            {exhibitionId && (
+              <div className="pt-4 border-t border-gray-200">
+                <Link
+                  href={`/exhibition/${exhibitionId}/artwork/${artwork.id}`}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                  View Full Detail
+                </Link>
+                <p className="text-sm text-gray-500 mt-2">
+                  Zoom, share, and download options available
+                </p>
+              </div>
             )}
           </div>
         </div>

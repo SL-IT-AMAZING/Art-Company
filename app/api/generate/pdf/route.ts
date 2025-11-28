@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium-min'
+import { postProcessLLMOutput } from '@/lib/utils/textPostProcessor'
 
 // Remote chromium URL for Vercel serverless (official Sparticuz release)
 const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
@@ -9,15 +10,25 @@ const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v1
 export async function POST(req: NextRequest) {
   let browser = null
   try {
-    const { exhibitionId } = await req.json()
+    let requestBody
+    try {
+      requestBody = await req.json()
+    } catch (parseError) {
+      console.error('[PDF] Failed to parse request body:', parseError)
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+
+    const { exhibitionId } = requestBody
 
     if (!exhibitionId) {
+      console.error('[PDF] Missing exhibition ID')
       return NextResponse.json(
         { error: 'Exhibition ID is required' },
         { status: 400 }
       )
     }
 
+    console.log('[PDF] Starting PDF generation for exhibition:', exhibitionId)
     const supabase = await createClient()
 
     // Check authentication
@@ -65,12 +76,13 @@ export async function POST(req: NextRequest) {
       .eq('is_primary', true)
       .limit(1)
 
-    // Content mapping helper
+    // Content mapping helper with post-processing for gender-neutral language
     const getContent = (type: string) => {
       const item = content?.find((c: any) => c.content_type === type)
       if (!item?.content) return ''
 
       let text = typeof item.content === 'string' ? item.content : item.content.text || ''
+      let result = text
 
       // Remove JSON formatting if present
       if (text.trim().startsWith('{') || text.trim().startsWith('```json')) {
@@ -82,11 +94,11 @@ export async function POST(req: NextRequest) {
           const parsed = JSON.parse(text)
 
           // Extract the actual content from common JSON response formats
-          if (parsed.artistBio) return parsed.artistBio
-          if (parsed.introduction) return parsed.introduction
-          if (parsed.preface) return parsed.preface
-          if (parsed.pressRelease) return parsed.pressRelease
-          if (parsed.marketingReport) {
+          if (parsed.artistBio) result = parsed.artistBio
+          else if (parsed.introduction) result = parsed.introduction
+          else if (parsed.preface) result = parsed.preface
+          else if (parsed.pressRelease) result = parsed.pressRelease
+          else if (parsed.marketingReport) {
             // Format marketing report if it's an object
             if (typeof parsed.marketingReport === 'object') {
               const mr = parsed.marketingReport
@@ -96,16 +108,19 @@ export async function POST(req: NextRequest) {
               if (mr.marketingPoints) formatted += '<strong>마케팅 포인트:</strong><br>' + mr.marketingPoints.join('<br>') + '<br><br>'
               if (mr.pricingStrategy) formatted += '<strong>가격 전략:</strong><br>' + mr.pricingStrategy + '<br><br>'
               if (mr.promotionStrategy) formatted += '<strong>추천 홍보 전략:</strong><br>' + mr.promotionStrategy.join('<br>')
-              return formatted.trim()
+              result = formatted.trim()
+            } else {
+              result = parsed.marketingReport
             }
-            return parsed.marketingReport
           }
         } catch (e) {
-          // If parsing fails, return original text without JSON markers
+          // If parsing fails, use original text
+          result = text
         }
       }
 
-      return text
+      // Apply post-processing: removes gendered language, cleans JSON artifacts, normalizes tone
+      return postProcessLLMOutput(result)
     }
 
     // Create HTML with Korean font support
@@ -353,34 +368,48 @@ export async function POST(req: NextRequest) {
     `
 
     // Launch Puppeteer - detect environment
+    console.log('[PDF] Launching browser...')
     const isDev = process.env.NODE_ENV === 'development'
 
-    if (isDev) {
-      // Local development - use regular puppeteer
-      const puppeteerFull = await import('puppeteer')
-      browser = await puppeteerFull.default.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      })
-    } else {
-      // Production (Vercel) - use puppeteer-core with remote chromium
-      const executablePath = await chromium.executablePath(CHROMIUM_URL)
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: {
-          width: 1920,
-          height: 1080,
-        },
-        executablePath,
-        headless: true,
-      })
+    try {
+      if (isDev) {
+        // Local development - use regular puppeteer
+        const puppeteerFull = await import('puppeteer')
+        browser = await puppeteerFull.default.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        })
+      } else {
+        // Production (Vercel) - use puppeteer-core with remote chromium
+        console.log('[PDF] Fetching Chromium executable...')
+        const executablePath = await chromium.executablePath(CHROMIUM_URL)
+        console.log('[PDF] Chromium path:', executablePath)
+        browser = await puppeteer.launch({
+          args: chromium.args,
+          defaultViewport: {
+            width: 1920,
+            height: 1080,
+          },
+          executablePath,
+          headless: true,
+        })
+      }
+    } catch (browserError: any) {
+      console.error('[PDF] Failed to launch browser:', browserError)
+      return NextResponse.json(
+        { error: 'PDF 생성 서비스를 시작할 수 없습니다. 잠시 후 다시 시도해주세요.' },
+        { status: 503 }
+      )
     }
 
+    console.log('[PDF] Rendering HTML content...')
     const page = await browser.newPage()
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',
+      timeout: 30000, // 30 second timeout for content loading
     })
 
+    console.log('[PDF] Generating PDF...')
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -392,6 +421,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    console.log('[PDF] PDF generated successfully')
     await browser.close()
 
 
@@ -414,15 +444,28 @@ export async function POST(req: NextRequest) {
         'Content-Disposition': `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
       },
     })
-  } catch (error) {
-    console.error('Generate PDF error:', error)
+  } catch (error: any) {
+    console.error('[PDF] Generate PDF error:', error)
+    console.error('[PDF] Error stack:', error?.stack)
 
     if (browser) {
-      await browser.close()
+      try {
+        await browser.close()
+      } catch (closeError) {
+        console.error('[PDF] Error closing browser:', closeError)
+      }
+    }
+
+    // Provide more specific error messages
+    let errorMessage = 'PDF 생성 중 오류가 발생했습니다.'
+    if (error?.message?.includes('timeout')) {
+      errorMessage = 'PDF 생성 시간이 초과되었습니다. 이미지가 너무 많거나 크기가 클 수 있습니다.'
+    } else if (error?.message?.includes('memory')) {
+      errorMessage = '메모리 부족으로 PDF 생성에 실패했습니다.'
     }
 
     return NextResponse.json(
-      { error: 'Failed to generate PDF' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

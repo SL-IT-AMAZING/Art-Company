@@ -207,6 +207,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    let requestBody
+    try {
+      requestBody = await req.json()
+    } catch (parseError) {
+      console.error('[Poster] Failed to parse request body:', parseError)
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+
     const {
       exhibitionId,
       title,
@@ -216,7 +224,13 @@ export async function POST(req: NextRequest) {
       exhibitionEndDate,
       venue,
       location,
-    } = await req.json()
+    } = requestBody
+
+    // Validate exhibition ID
+    if (!exhibitionId) {
+      console.error('[Poster] Missing exhibition ID')
+      return NextResponse.json({ error: 'Exhibition ID is required' }, { status: 400 })
+    }
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -256,20 +270,54 @@ Style:
 The design should be a beautiful abstract background suitable for a high-end contemporary art exhibition poster.
 Do NOT include any text, titles, names, dates, or letters.`
 
-    // Generate background with DALL-E 3
+    // Generate background with DALL-E 3 (with retry)
     console.log('[Poster] Generating background with DALL-E 3...')
-    const response = await openai.images.generate({
-      model: 'dall-e-3',
-      prompt: backgroundPrompt,
-      size: '1024x1792', // Portrait format for poster
-      quality: 'hd',
-      n: 1,
-      style: 'natural',
-    })
+    let backgroundUrl: string | null = null
+    let lastError: any = null
+    const maxRetries = 2
 
-    const backgroundUrl = response.data?.[0]?.url
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[Poster] DALL-E attempt ${attempt}/${maxRetries}`)
+        const response = await openai.images.generate({
+          model: 'dall-e-3',
+          prompt: backgroundPrompt,
+          size: '1024x1792', // Portrait format for poster
+          quality: 'hd',
+          n: 1,
+          style: 'natural',
+        })
+
+        backgroundUrl = response.data?.[0]?.url ?? null
+        if (backgroundUrl) {
+          console.log('[Poster] DALL-E generation successful')
+          break
+        }
+      } catch (dalleError: any) {
+        lastError = dalleError
+        console.error(`[Poster] DALL-E attempt ${attempt} failed:`, dalleError?.message || dalleError)
+
+        // Don't retry on certain errors
+        if (dalleError?.status === 400 || dalleError?.status === 401) {
+          break
+        }
+
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
+        }
+      }
+    }
+
     if (!backgroundUrl) {
-      throw new Error('No image URL returned from DALL-E')
+      console.error('[Poster] All DALL-E attempts failed')
+      return NextResponse.json(
+        {
+          error: 'Failed to generate poster background. Please try again later.',
+          details: lastError?.message || 'Image generation service unavailable'
+        },
+        { status: 503 }
+      )
     }
 
     // Create HTML with text overlay

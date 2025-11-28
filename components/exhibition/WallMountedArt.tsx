@@ -141,17 +141,20 @@ export default function WallMountedArt({
         target-position={[0, 0, 0]}
       />
 
-      {/* Title label above artwork */}
+      {/* Title label above artwork - 40px above frame */}
       <Html
-        position={[0, artworkHeight / 2 + frameThickness + 0.15, 0]}
+        position={[0, artworkHeight / 2 + frameThickness + 0.12, 0]} // Approximately 40px above frame
         center
         distanceFactor={1.5}
         style={{ pointerEvents: 'none' }}
       >
         <p
-          className="text-white font-bold whitespace-nowrap"
+          className="text-white whitespace-nowrap"
           style={{
-            fontSize: '48px',
+            fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontSize: '42px',
+            fontWeight: 600, // Semi-bold
+            letterSpacing: '0.2em',
             textShadow: '2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9), 2px -2px 4px rgba(0,0,0,0.9), -2px 2px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8)'
           }}
         >

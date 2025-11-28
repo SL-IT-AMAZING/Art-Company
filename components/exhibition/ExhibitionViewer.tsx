@@ -9,6 +9,7 @@ import type { ViewPoint, Artwork } from '@/types/exhibition'
 interface ExhibitionViewerProps {
   viewPoints: ViewPoint[]
   exhibitionTitle: string
+  exhibitionId?: string
   artworks: Artwork[]
 }
 
@@ -21,6 +22,7 @@ const STORAGE_KEY = 'exhibition-view-mode'
 export default function ExhibitionViewer({
   viewPoints,
   exhibitionTitle,
+  exhibitionId,
   artworks
 }: ExhibitionViewerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('2d')
@@ -57,9 +59,9 @@ export default function ExhibitionViewer({
 
       {/* Render current view */}
       {viewMode === '2d' ? (
-        <ParallaxGallery viewPoints={viewPoints} exhibitionTitle={exhibitionTitle} />
+        <ParallaxGallery viewPoints={viewPoints} exhibitionTitle={exhibitionTitle} exhibitionId={exhibitionId} />
       ) : (
-        <Gallery3D artworks={artworks} />
+        <Gallery3D artworks={artworks} exhibitionId={exhibitionId} />
       )}
     </div>
   )

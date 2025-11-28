@@ -21,7 +21,7 @@ export async function Header() {
         {/* Logo */}
         <div className="mr-4 md:mr-8">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-lg sm:text-xl md:text-2xl font-bold">Art Wizard</span>
+            <span className="text-lg sm:text-xl md:text-2xl font-bold">ART WIZARD</span>
           </Link>
         </div>
 

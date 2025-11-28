@@ -83,6 +83,7 @@ export default async function ExhibitionViewerPage({
       <ExhibitionViewer
         viewPoints={viewPoints}
         exhibitionTitle={exhibition.title || '제목 없음'}
+        exhibitionId={id}
         artworks={transformedArtworks}
       />
     </div>

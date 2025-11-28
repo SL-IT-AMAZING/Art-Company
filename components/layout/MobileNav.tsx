@@ -25,8 +25,6 @@ export function MobileNav({ user, logoutAction }: MobileNavProps) {
   const navItems = [
     { href: '/curation', label: 'AI 큐레이터' },
     { href: '/exhibition', label: '온라인 전시' },
-    { href: '/salon', label: 'Art Salon' },
-    { href: '/pricing', label: '요금제' },
     { href: '/notice', label: '공지사항' },
     { href: '/about', label: 'About' },
   ]
@@ -43,7 +41,7 @@ export function MobileNav({ user, logoutAction }: MobileNavProps) {
         <SheetHeader>
           <SheetTitle>
             <Link href="/" className="text-xl font-bold">
-              Art Wizard
+              ART WIZARD
             </Link>
           </SheetTitle>
         </SheetHeader>

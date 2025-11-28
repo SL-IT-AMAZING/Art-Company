@@ -39,15 +39,26 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         }),
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        throw new Error('Failed to generate poster')
+        console.error('Poster generation failed:', result)
+        const errorMessage = result.error || 'Failed to generate poster'
+        const details = result.details || ''
+        throw new Error(details ? `${errorMessage}: ${details}` : errorMessage)
       }
 
-      const result = await response.json()
+      if (!result.posterUrl) {
+        throw new Error('No poster URL returned')
+      }
+
       setPosterUrl(result.posterUrl)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error generating poster:', err)
-      setError('포스터 생성 중 오류가 발생했습니다.')
+      const message = err?.message || '포스터 생성 중 오류가 발생했습니다.'
+      setError(message.includes('Failed') || message.includes('서비스')
+        ? '포스터 생성 서비스에 일시적인 문제가 있습니다. 잠시 후 다시 시도해주세요.'
+        : `포스터 생성 중 오류: ${message}`)
     } finally {
       setIsGenerating(false)
     }

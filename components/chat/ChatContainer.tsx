@@ -208,6 +208,7 @@ export function ChatContainer() {
   const handleImagesUpload = async (files: File[]) => {
     const imageUrls: string[] = []
     const failedUploads: string[] = []
+    const uploadedPaths: string[] = [] // Track uploaded file paths for cleanup
 
     // Upload to Supabase Storage and save artwork records
     for (const file of files) {
@@ -228,7 +229,7 @@ export function ChatContainer() {
 
       // Sanitize filename to remove Korean characters and special characters
       const sanitizedName = sanitizeFilename(file.name)
-      const fileName = `${Date.now()}-${sanitizedName}`
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${sanitizedName}`
       const { data, error } = await supabase.storage
         .from('artworks')
         .upload(fileName, file)
@@ -237,7 +238,9 @@ export function ChatContainer() {
         const {
           data: { publicUrl },
         } = supabase.storage.from('artworks').getPublicUrl(data.path)
-        imageUrls.push(publicUrl)
+
+        // Track the path for potential cleanup
+        uploadedPaths.push(data.path)
 
         // Calculate aspect ratio
         const aspectRatio = imageData.width > 0 ? imageData.width / imageData.height : 1
@@ -249,8 +252,8 @@ export function ChatContainer() {
             .insert({
               exhibition_id: exhibitionData.id,
               image_url: publicUrl,
-              title: `작품 ${imageUrls.length}`, // Use numbered title as default
-              order_index: imageUrls.length - 1,
+              title: `작품 ${imageUrls.length + 1}`, // Use numbered title as default
+              order_index: imageUrls.length,
               image_width: imageData.width,
               image_height: imageData.height,
               aspect_ratio: aspectRatio,
@@ -258,9 +261,20 @@ export function ChatContainer() {
 
           if (artworkError) {
             console.error('Error saving artwork to database:', artworkError)
-            alert(`작품 정보 저장 실패: ${file.name}. 다시 시도해주세요.`)
+            // Clean up the uploaded file since DB insert failed
+            await supabase.storage.from('artworks').remove([data.path])
+            uploadedPaths.pop() // Remove from tracking since we deleted it
             failedUploads.push(file.name)
+          } else {
+            // Only add to imageUrls after BOTH storage and DB succeed
+            imageUrls.push(publicUrl)
           }
+        } else {
+          // No exhibition ID - this shouldn't happen, but handle it
+          await supabase.storage.from('artworks').remove([data.path])
+          uploadedPaths.pop()
+          failedUploads.push(file.name)
+          console.error('No exhibition ID available for artwork upload')
         }
       } else {
         console.error('Error uploading image to storage:', error)
@@ -281,13 +295,29 @@ export function ChatContainer() {
       }
     }
 
-    // Only proceed if all uploads succeeded
+    // Handle partial or complete failure
     if (failedUploads.length > 0) {
+      // Clean up all successfully uploaded files on any failure (atomic operation)
+      if (uploadedPaths.length > 0) {
+        console.log('Cleaning up uploaded files due to partial failure...')
+        await supabase.storage.from('artworks').remove(uploadedPaths)
+
+        // Also clean up database records
+        if (exhibitionData.id && imageUrls.length > 0) {
+          await supabase
+            .from('artworks')
+            .delete()
+            .eq('exhibition_id', exhibitionData.id)
+            .in('image_url', imageUrls)
+        }
+      }
+
       console.error('Failed to upload files:', failedUploads)
       alert(
         `${failedUploads.length}개의 이미지 업로드에 실패했습니다.\n\n` +
         `실패한 파일:\n${failedUploads.join('\n')}\n\n` +
-        '모든 이미지가 성공적으로 업로드되어야 진행할 수 있습니다.'
+        '모든 이미지가 성공적으로 업로드되어야 진행할 수 있습니다.\n' +
+        '다시 시도해주세요.'
       )
       return // Don't proceed to next step
     }
