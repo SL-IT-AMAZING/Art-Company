@@ -88,23 +88,23 @@ function createPosterHTML(
         }
 
         .title-section {
-          background: linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%);
-          padding: 50px 30px;
-          border-radius: 12px;
+          background: transparent;
+          padding: 60px 50px;
           text-align: center;
           max-width: 100%;
-          overflow: hidden;
         }
 
         .title {
           font-size: ${titleFontSize}px;
           font-weight: 700;
-          color: #1E293B;
-          line-height: 1.3;
-          margin-bottom: 20px;
+          color: #FFFFFF;
+          line-height: 1.2;
+          margin-bottom: 24px;
           word-break: keep-all;
           overflow-wrap: break-word;
           max-width: 100%;
+          text-shadow: 0 2px 20px rgba(0,0,0,0.5), 0 4px 40px rgba(0,0,0,0.3);
+          letter-spacing: -0.02em;
           display: -webkit-box;
           -webkit-line-clamp: 4;
           -webkit-box-orient: vertical;
@@ -112,12 +112,14 @@ function createPosterHTML(
         }
 
         .artist {
-          font-size: ${Math.max(24, titleFontSize * 0.5)}px;
-          font-weight: 500;
-          color: #475569;
+          font-size: ${Math.max(28, titleFontSize * 0.45)}px;
+          font-weight: 400;
+          color: #FFFFFF;
           word-break: keep-all;
           overflow-wrap: break-word;
           max-width: 100%;
+          text-shadow: 0 2px 15px rgba(0,0,0,0.5);
+          letter-spacing: 0.05em;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
@@ -125,23 +127,22 @@ function createPosterHTML(
         }
 
         .details-section {
-          background: linear-gradient(to top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.75) 100%);
-          padding: 35px 30px;
-          border-radius: 12px;
+          background: transparent;
+          padding: 50px;
           text-align: center;
           max-width: 100%;
-          overflow: hidden;
         }
 
         .details {
           font-size: 26px;
           font-weight: 400;
-          color: #64748B;
+          color: #FFFFFF;
           line-height: 1.6;
+          text-shadow: 0 2px 15px rgba(0,0,0,0.5);
         }
 
         .details p {
-          margin: 6px 0;
+          margin: 8px 0;
           word-break: keep-all;
           overflow-wrap: break-word;
           max-width: 100%;
@@ -151,19 +152,22 @@ function createPosterHTML(
         }
 
         .details .date {
-          font-size: 28px;
+          font-size: 30px;
           font-weight: 500;
-          color: #475569;
-          margin-bottom: 12px;
+          color: #FFFFFF;
+          margin-bottom: 16px;
+          letter-spacing: 0.02em;
         }
 
         .details .venue {
-          font-size: 24px;
+          font-size: 26px;
+          font-weight: 400;
         }
 
         .details .location {
           font-size: 22px;
-          color: #94A3B8;
+          color: rgba(255,255,255,0.85);
+          margin-top: 8px;
         }
       </style>
     </head>
@@ -255,25 +259,35 @@ export async function POST(req: NextRequest) {
 
     // Create DALL-E prompt for FLAT 2D BACKGROUND (no mockup, no frame)
     const keywordList = keywords?.join(', ') || 'contemporary art, modern, abstract'
-    const backgroundPrompt = `Create a FLAT, 2D exhibition poster design for direct printing.
+    const backgroundPrompt = `Create a FLAT, 2D exhibition poster background design for direct printing.
 
-CRITICAL REQUIREMENTS:
-- Generate a FLAT, printable poster design - NOT a mockup
-- Do NOT show the poster hanging on a wall, in a frame, or in any 3D context
-- Do NOT include any frame, shadow, perspective effects, or environmental elements
-- The output must be a clean, flat image ready for direct printing
+CRITICAL REQUIREMENTS - MUST FOLLOW:
+- Generate a FLAT, printable poster design - NOT a mockup or product shot
+- This is a DIGITAL GRAPHIC DESIGN, not a photograph of a poster
+
+ABSOLUTELY NO:
+- Frames, borders, or mounting of any kind
+- Wall textures, gallery environments, or room settings
+- 3D perspective, depth effects, or shadows suggesting physical print
+- Mockup or product photography style (no showing poster "in context")
+- Any environmental elements (no hands holding, no hanging on walls)
 - NO TEXT, NO LETTERS, NO WORDS, NO TYPOGRAPHY of any kind
+
+REQUIRED OUTPUT:
+- A flat, digital-native graphic design
+- Pure abstract or artistic background pattern
+- Clean edges that go to the boundary of the image
+- Ready for direct printing without any cropping needed
 
 Style:
 - Elegant, museum-quality aesthetic
-- Subtle artistic patterns or gradients
+- Subtle artistic patterns, gradients, or abstract forms
 - Color palette: warm beige (#F5F3F0), deep navy (#1E293B), muted earth tones
-- Clean, sophisticated gallery feel
-- Leave space in the center and bottom for text overlay
+- Clean, sophisticated contemporary art gallery feel
+- Leave visual space in upper and lower portions for text overlay
 - Inspired by: ${keywordList}
 
-The design should be a beautiful abstract background suitable for a high-end contemporary art exhibition poster.
-Output a flat 2D image only - no mockups, no frames, no 3D rendering.`
+OUTPUT MUST BE: A flat, digital-native poster background design ready for direct printing. Think graphic design, NOT product photography.`
 
     // Generate background with DALL-E 3 (with retry)
     console.log('[Poster] Generating background with DALL-E 3...')

@@ -68,12 +68,12 @@ export async function POST(req: NextRequest) {
       .eq('exhibition_id', exhibitionId)
       .order('order_index', { ascending: true })
 
-    // Fetch posters
+    // Fetch posters - get the latest poster (not filtering by is_primary to ensure we always get one)
     const { data: posters } = await supabase
       .from('posters')
       .select('*')
       .eq('exhibition_id', exhibitionId)
-      .eq('is_primary', true)
+      .order('created_at', { ascending: false })
       .limit(1)
 
     // Content mapping helper with post-processing for gender-neutral language
@@ -218,18 +218,30 @@ export async function POST(req: NextRequest) {
           }
 
           .artwork {
-            margin: 40px 0;
-            padding: 24px;
+            padding: 40px;
             background: #F8F9FA;
             border-radius: 8px;
+            page-break-after: always;
             page-break-inside: avoid;
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .artwork:last-child {
+            page-break-after: auto;
           }
 
           .artwork img {
             max-width: 100%;
+            max-height: 60vh;
+            width: auto;
             height: auto;
+            object-fit: contain;
             border-radius: 4px;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
           }
 
           .artwork-title {
@@ -242,6 +254,22 @@ export async function POST(req: NextRequest) {
           .artwork-desc {
             font-size: 15px;
             color: #64748B;
+          }
+
+          .planning-section {
+            background: #F8F9FA;
+            padding: 32px;
+            border-radius: 8px;
+            margin-top: 24px;
+          }
+
+          .planning-section p {
+            margin: 12px 0;
+            font-size: 16px;
+          }
+
+          .planning-section strong {
+            color: #1E293B;
           }
 
           .poster-page {
@@ -318,25 +346,41 @@ export async function POST(req: NextRequest) {
             : ''
         }
 
-        <!-- Artworks -->
+        <!-- Exhibition Planning -->
+        <div class="page">
+          <h2>전시 기획</h2>
+          <div class="planning-section">
+            ${exhibition.keywords && exhibition.keywords.length > 0 ? `<p><strong>전시 키워드:</strong> ${exhibition.keywords.join(', ')}</p>` : ''}
+            ${exhibition.exhibition_date ? `<p><strong>전시 기간:</strong> ${exhibition.exhibition_date}${exhibition.exhibition_end_date ? ` ~ ${exhibition.exhibition_end_date}` : ''}</p>` : ''}
+            ${exhibition.venue ? `<p><strong>전시 장소:</strong> ${exhibition.venue}</p>` : ''}
+            ${exhibition.location ? `<p><strong>주소:</strong> ${exhibition.location}</p>` : ''}
+            ${exhibition.opening_hours ? `<p><strong>운영 시간:</strong> ${exhibition.opening_hours}</p>` : ''}
+            ${exhibition.admission_fee ? `<p><strong>입장료:</strong> ${exhibition.admission_fee}</p>` : ''}
+            ${exhibition.contact_info ? `<p><strong>문의:</strong> ${exhibition.contact_info}</p>` : ''}
+          </div>
+        </div>
+
+        <!-- Artworks - One per page -->
         ${
           artworks && artworks.length > 0
-            ? `
+            ? artworks
+                .map((artwork: any) => {
+                  // Filter out default titles (작품 N pattern)
+                  const isDefaultTitle = /^작품\s*\d+$/.test(artwork.title || '')
+                  const displayTitle = isDefaultTitle ? '' : (artwork.title || '')
+
+                  return `
         <div class="page">
           <h2>작품</h2>
-          ${artworks
-            .map(
-              (artwork: any) => `
-            <div class="artwork">
-              ${artwork.image_url ? `<img src="${artwork.image_url}" alt="${artwork.title || ''}">` : ''}
-              <div class="artwork-title">${artwork.title || '무제'}</div>
-              <div class="artwork-desc">${artwork.description || ''}</div>
-            </div>
-          `
-            )
-            .join('')}
+          <div class="artwork">
+            ${artwork.image_url ? `<img src="${artwork.image_url}" alt="${displayTitle}">` : ''}
+            ${displayTitle ? `<div class="artwork-title">${displayTitle}</div>` : ''}
+            <div class="artwork-desc">${artwork.description || ''}</div>
+          </div>
         </div>
         `
+                })
+                .join('')
             : ''
         }
 
@@ -364,12 +408,15 @@ export async function POST(req: NextRequest) {
             : ''
         }
 
-        <!-- Poster -->
+        <!-- Main Poster -->
         ${
           posters && posters.length > 0 && posters[0].image_url
             ? `
-        <div class="page poster-page">
-          <img src="${posters[0].image_url}" alt="Exhibition Poster">
+        <div class="page">
+          <h2>전시 포스터</h2>
+          <div class="poster-page">
+            <img src="${posters[0].image_url}" alt="Exhibition Poster">
+          </div>
         </div>
         `
             : ''

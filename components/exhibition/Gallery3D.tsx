@@ -314,9 +314,9 @@ function SmoothFirstPersonControls({ onLock, onUnlock }: SmoothFirstPersonContro
 
   // Settings
   const sensitivity = 0.0015 // Mouse sensitivity (reduced for less motion sickness)
-  const smoothing = 0.12     // Interpolation factor (lower = smoother but slower response)
-  const minPolarAngle = Math.PI * 0.05  // Looking up limit
-  const maxPolarAngle = Math.PI * 0.95  // Looking down limit
+  const smoothing = 1.0      // Instant response (no smoothing delay)
+  const minPolarAngle = Math.PI * 0.5   // Lock vertical rotation (looking straight)
+  const maxPolarAngle = Math.PI * 0.5   // Lock vertical rotation (looking straight)
   const maxMouseDelta = 100  // Cap mouse movement to prevent jumps from browser event batching
 
   // Helper function to normalize angle to [-PI, PI]

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Download } from 'lucide-react'
 import { ExhibitionData } from '@/types/exhibition'
 
 interface PosterGeneratorProps {
@@ -15,6 +15,28 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [posterUrl, setPosterUrl] = useState<string>('')
   const [error, setError] = useState('')
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  const handleDownload = async () => {
+    if (!posterUrl) return
+    setIsDownloading(true)
+    try {
+      const response = await fetch(posterUrl)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `poster-${data.selectedTitle || 'exhibition'}-${Date.now()}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Download failed:', err)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   const generatePoster = async () => {
     setIsGenerating(true)
@@ -104,17 +126,29 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         {posterUrl && (
           <div className="space-y-4">
             <div className="flex justify-center">
-              <div className="relative w-1/4 aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
+              <div className="relative max-w-sm w-full aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                 <img
                   src={posterUrl}
                   alt="Generated Poster"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={generatePoster}>
                 다시 생성
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDownload}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                다운로드
               </Button>
               <Button onClick={onComplete} size="lg" className="flex-1">
                 포스터 확정

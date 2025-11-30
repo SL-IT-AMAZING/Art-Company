@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
@@ -30,24 +30,39 @@ export default function ArtworkTitleEditor({
   const [artworks, setArtworks] = useState<Artwork[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
+
+  // Memoize supabase client to prevent recreation on every render
+  const supabase = useMemo(() => createClient(), [])
+
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true)
 
   useEffect(() => {
-    loadArtworks()
-  }, [exhibitionId])
+    isMounted.current = true
 
-  const loadArtworks = async () => {
-    const { data, error } = await supabase
-      .from('artworks')
-      .select('id, title, description, image_url, order_index')
-      .eq('exhibition_id', exhibitionId)
-      .order('order_index', { ascending: true })
+    const loadArtworks = async () => {
+      const { data, error } = await supabase
+        .from('artworks')
+        .select('id, title, description, image_url, order_index')
+        .eq('exhibition_id', exhibitionId)
+        .order('order_index', { ascending: true })
 
-    if (!error && data) {
-      setArtworks(data)
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        if (!error && data) {
+          setArtworks(data)
+        }
+        setLoading(false)
+      }
     }
-    setLoading(false)
-  }
+
+    loadArtworks()
+
+    // Cleanup: mark component as unmounted
+    return () => {
+      isMounted.current = false
+    }
+  }, [exhibitionId, supabase])
 
   const handleTitleChange = (id: string, newTitle: string) => {
     setArtworks(prev =>

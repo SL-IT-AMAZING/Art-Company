@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { ExhibitionData, MarketingReport } from '@/types/exhibition'
+import { createClient } from '@/lib/supabase/client'
 
 interface MarketingReportGeneratorProps {
   data: ExhibitionData
@@ -42,6 +43,18 @@ export function MarketingReportGenerator({
 
       const result = await response.json()
       setReport(result.marketingReport)
+
+      // Save to database for PDF generation
+      if (data.id && result.marketingReport) {
+        const supabase = createClient()
+        await supabase
+          .from('exhibition_content')
+          .upsert({
+            exhibition_id: data.id,
+            content_type: 'marketing_report',
+            content: result.marketingReport,
+          }, { onConflict: 'exhibition_id,content_type' })
+      }
     } catch (err) {
       console.error('Error generating marketing report:', err)
       setError('마케팅 리포트 생성 중 오류가 발생했습니다.')

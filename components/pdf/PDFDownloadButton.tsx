@@ -25,7 +25,7 @@ export function PDFDownloadButton({
     setIsGenerating(true)
 
     try {
-      const response = await fetch('/api/pdf/generate', {
+      const response = await fetch('/api/generate/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ exhibitionId }),
@@ -35,26 +35,20 @@ export function PDFDownloadButton({
         throw new Error('Failed to generate PDF')
       }
 
-      // Get HTML content
-      const htmlContent = await response.text()
-
-      // Open in new window for PDF print
-      const printWindow = window.open('', '_blank')
-      if (printWindow) {
-        printWindow.document.write(htmlContent)
-        printWindow.document.close()
-
-        // Trigger print dialog after load
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.print()
-          }, 500)
-        }
-      }
+      // Get PDF blob and download directly
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${exhibitionTitle || 'exhibition'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
 
       toast({
-        title: 'PDF 생성 완료',
-        description: '인쇄 대화상자에서 "PDF로 저장"을 선택하세요.',
+        title: 'PDF 다운로드 완료',
+        description: 'PDF 파일이 다운로드되었습니다.',
       })
     } catch (error) {
       console.error('PDF generation error:', error)
