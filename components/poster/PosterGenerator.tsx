@@ -126,7 +126,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         {posterUrl && (
           <div className="space-y-4">
             <div className="flex justify-center">
-              <div className="relative max-w-sm w-full aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+              <div className="relative max-w-sm w-full aspect-[1024/1448] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                 <img
                   src={posterUrl}
                   alt="Generated Poster"

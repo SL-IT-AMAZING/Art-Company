@@ -78,8 +78,36 @@ export async function POST(req: NextRequest) {
 
     // Content mapping helper with post-processing for gender-neutral language
     const getContent = (type: string) => {
-      const item = content?.find((c: any) => c.content_type === type)
+      // Check for both snake_case and camelCase versions (database has inconsistent naming)
+      const snakeCase = type
+      const camelCase = type.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+
+      const item = content?.find((c: any) =>
+        c.content_type === snakeCase || c.content_type === camelCase
+      )
       if (!item?.content) return ''
+
+      // Handle marketing report object format (saved directly as object, not wrapped in {text: ...})
+      if (type === 'marketing_report' && typeof item.content === 'object' && !item.content.text) {
+        const mr = item.content
+        let formatted = ''
+        if (mr.overview) formatted += mr.overview + '<br><br>'
+        if (mr.targetAudience?.length) formatted += '<strong>주요 타깃:</strong><br>' + mr.targetAudience.join('<br>') + '<br><br>'
+        if (mr.marketingPoints?.length) formatted += '<strong>마케팅 포인트:</strong><br>' + mr.marketingPoints.join('<br>') + '<br><br>'
+        if (mr.pricingStrategy) formatted += '<strong>가격 전략:</strong><br>' + mr.pricingStrategy + '<br><br>'
+        if (mr.promotionStrategy?.length) formatted += '<strong>추천 홍보 전략:</strong><br>' + mr.promotionStrategy.join('<br>')
+
+        let result = formatted.trim()
+        result = postProcessLLMOutput(result)
+        result = replaceTBDPlaceholders(result, {
+          exhibition_date: exhibition.exhibition_date,
+          exhibition_end_date: exhibition.exhibition_end_date,
+          venue: exhibition.venue,
+          location: exhibition.location,
+          admission_fee: exhibition.admission_fee,
+        })
+        return result
+      }
 
       let text = typeof item.content === 'string' ? item.content : item.content.text || ''
       let result = text
@@ -310,6 +338,20 @@ export async function POST(req: NextRequest) {
           </div>
         </div>
 
+        <!-- Main Poster (moved here - after cover) -->
+        ${
+          posters && posters.length > 0 && posters[0].image_url
+            ? `
+        <div class="page">
+          <h2>전시 포스터</h2>
+          <div class="poster-page">
+            <img src="${posters[0].image_url}" alt="Exhibition Poster">
+          </div>
+        </div>
+        `
+            : ''
+        }
+
         <!-- Introduction -->
         ${
           getContent('introduction')
@@ -403,20 +445,6 @@ export async function POST(req: NextRequest) {
         <div class="page">
           <h2>컬렉팅 포인트</h2>
           <p>${getContent('marketing_report')}</p>
-        </div>
-        `
-            : ''
-        }
-
-        <!-- Main Poster -->
-        ${
-          posters && posters.length > 0 && posters[0].image_url
-            ? `
-        <div class="page">
-          <h2>전시 포스터</h2>
-          <div class="poster-page">
-            <img src="${posters[0].image_url}" alt="Exhibition Poster">
-          </div>
         </div>
         `
             : ''

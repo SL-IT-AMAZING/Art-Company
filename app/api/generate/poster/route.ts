@@ -55,7 +55,7 @@ function createPosterHTML(
 
         body {
           width: 1024px;
-          height: 1792px;
+          height: 1448px;  /* A4 ratio (1:1.414) */
           overflow: hidden;
           font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
         }
@@ -257,37 +257,17 @@ export async function POST(req: NextRequest) {
         : formatDate(exhibitionDate)
       : ''
 
-    // Create DALL-E prompt for FLAT 2D BACKGROUND (no mockup, no frame)
+    // Create DALL-E prompt - SHORT and DIRECT to avoid mockup generation
     const keywordList = keywords?.join(', ') || 'contemporary art, modern, abstract'
-    const backgroundPrompt = `Create a FLAT, 2D exhibition poster background design for direct printing.
+    const backgroundPrompt = `A flat digital graphic design for printing. Abstract art background.
 
-CRITICAL REQUIREMENTS - MUST FOLLOW:
-- Generate a FLAT, printable poster design - NOT a mockup or product shot
-- This is a DIGITAL GRAPHIC DESIGN, not a photograph of a poster
+STYLE: Minimalist, elegant gradients, geometric patterns
+COLORS: Inspired by ${keywordList}
+FORMAT: Edge-to-edge design filling entire canvas
 
-ABSOLUTELY NO:
-- Frames, borders, or mounting of any kind
-- Wall textures, gallery environments, or room settings
-- 3D perspective, depth effects, or shadows suggesting physical print
-- Mockup or product photography style (no showing poster "in context")
-- Any environmental elements (no hands holding, no hanging on walls)
-- NO TEXT, NO LETTERS, NO WORDS, NO TYPOGRAPHY of any kind
+DO NOT INCLUDE: frames, walls, mockups, 3D effects, shadows, paper texture, environmental elements, text, letters
 
-REQUIRED OUTPUT:
-- A flat, digital-native graphic design
-- Pure abstract or artistic background pattern
-- Clean edges that go to the boundary of the image
-- Ready for direct printing without any cropping needed
-
-Style:
-- Elegant, museum-quality aesthetic
-- Subtle artistic patterns, gradients, or abstract forms
-- Color palette: warm beige (#F5F3F0), deep navy (#1E293B), muted earth tones
-- Clean, sophisticated contemporary art gallery feel
-- Leave visual space in upper and lower portions for text overlay
-- Inspired by: ${keywordList}
-
-OUTPUT MUST BE: A flat, digital-native poster background design ready for direct printing. Think graphic design, NOT product photography.`
+This is a DIGITAL FILE for direct printing, not a photograph.`
 
     // Generate background with DALL-E 3 (with retry)
     console.log('[Poster] Generating background with DALL-E 3...')
@@ -304,7 +284,7 @@ OUTPUT MUST BE: A flat, digital-native poster background design ready for direct
           size: '1024x1792', // Portrait format for poster
           quality: 'hd',
           n: 1,
-          style: 'natural',
+          style: 'vivid',  // More graphic design feel, less photographic
         })
 
         backgroundUrl = response.data?.[0]?.url ?? null
@@ -368,7 +348,7 @@ OUTPUT MUST BE: A flat, digital-native poster background design ready for direct
         args: chromium.args,
         defaultViewport: {
           width: 1024,
-          height: 1792,
+          height: 1448,  // A4 ratio
         },
         executablePath,
         headless: true,
@@ -376,7 +356,7 @@ OUTPUT MUST BE: A flat, digital-native poster background design ready for direct
     }
 
     const page = await browser.newPage()
-    await page.setViewport({ width: 1024, height: 1792 })
+    await page.setViewport({ width: 1024, height: 1448 })  // A4 ratio
 
     // Set content and wait for fonts to load
     await page.setContent(posterHtml, {
@@ -408,6 +388,22 @@ OUTPUT MUST BE: A flat, digital-native poster background design ready for direct
       // Fall back to returning a data URL if upload fails
       const base64 = Buffer.from(imageBuffer).toString('base64')
       const dataUrl = `data:image/png;base64,${base64}`
+
+      // Still save to database with data URL so PDF can find it
+      if (exhibitionId) {
+        const { error: dbError } = await supabase.from('posters').insert({
+          exhibition_id: exhibitionId,
+          image_url: dataUrl,
+          is_primary: true,
+          created_at: new Date().toISOString(),
+        })
+
+        if (dbError) {
+          console.error('[Poster] Failed to save poster to database:', dbError)
+        } else {
+          console.log('[Poster] Saved poster with data URL to database')
+        }
+      }
 
       return NextResponse.json({
         posterUrl: dataUrl,

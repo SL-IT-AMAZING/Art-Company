@@ -83,6 +83,14 @@ The poster should evoke a sense of sophistication and artistic excellence, suita
           updated_at: new Date().toISOString(),
         })
         .eq('id', exhibitionId)
+
+      // ALSO save to posters table so PDF can find it
+      await supabase.from('posters').insert({
+        exhibition_id: exhibitionId,
+        image_url: imageUrl,
+        is_primary: true,
+        created_at: new Date().toISOString(),
+      })
     }
 
     return NextResponse.json({

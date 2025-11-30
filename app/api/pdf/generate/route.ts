@@ -37,6 +37,20 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Fetch posters from posters table
+    const { data: posters } = await supabase
+      .from('posters')
+      .select('image_url')
+      .eq('exhibition_id', exhibitionId)
+      .order('created_at', { ascending: false })
+
+    // Fetch artworks from artworks table
+    const { data: artworks } = await supabase
+      .from('artworks')
+      .select('title, description, image_url, order_index')
+      .eq('exhibition_id', exhibitionId)
+      .order('order_index', { ascending: true })
+
     // Get all content
     const { data: contents } = await supabase
       .from('exhibition_content')
@@ -103,8 +117,8 @@ export async function POST(req: NextRequest) {
       artistBio: getContentText('artistBio'),
       pressRelease: getContentText('pressRelease'),
       marketingReport: getContentText('marketingReport'),
-      images: exhibition.images || [],
-      posters: exhibition.posters || [],
+      artworks: artworks || [],
+      posters: posters || [],
     })
 
     // For MVP: Return HTML for client-side PDF generation
@@ -124,7 +138,28 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function generatePDFHTML(data: any): string {
+interface Artwork {
+  title: string
+  description: string | null
+  image_url: string
+  order_index: number
+}
+
+interface Poster {
+  image_url: string
+}
+
+function generatePDFHTML(data: {
+  title: string | null
+  keywords: string[]
+  introduction: string
+  preface: string
+  artistBio: string
+  pressRelease: string
+  marketingReport: string
+  artworks: Artwork[]
+  posters: Poster[]
+}): string {
   const {
     title,
     keywords,
@@ -133,7 +168,7 @@ function generatePDFHTML(data: any): string {
     artistBio,
     pressRelease,
     marketingReport,
-    images,
+    artworks,
     posters,
   } = data
 
@@ -225,17 +260,46 @@ function generatePDFHTML(data: any): string {
       page-break-inside: avoid;
     }
 
-    .artwork-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin: 1rem 0;
+    .artwork-page {
+      min-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
     }
 
-    .artwork img {
-      width: 100%;
-      height: auto;
+    .artwork-page:last-of-type {
+      page-break-after: auto;
+    }
+
+    .artwork-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .artwork-content img {
+      max-width: 100%;
+      max-height: 60vh;
+      object-fit: contain;
       border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .artwork-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0.5rem 0;
+      text-align: center;
+    }
+
+    .artwork-desc {
+      font-size: 1rem;
+      color: #64748B;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.6;
     }
 
     @media print {
@@ -266,8 +330,8 @@ function generatePDFHTML(data: any): string {
   ${posters.length > 0 ? `
     <div class="section page-break">
       <h2>전시 포스터</h2>
-      ${posters.map((url: string) => `
-        <img src="${url}" alt="전시 포스터" class="poster" />
+      ${posters.map((poster: Poster) => `
+        <img src="${poster.image_url}" alt="전시 포스터" class="poster" />
       `).join('')}
     </div>
   ` : ''}
@@ -293,18 +357,16 @@ function generatePDFHTML(data: any): string {
     </div>
   ` : ''}
 
-  ${images.length > 0 ? `
-    <div class="section page-break">
-      <h2>전시 작품</h2>
-      <div class="artwork-grid">
-        ${images.map((url: string, idx: number) => `
-          <div class="artwork">
-            <img src="${url}" alt="작품 ${idx + 1}" />
-          </div>
-        `).join('')}
+  ${artworks.length > 0 ? artworks.map((artwork: Artwork, idx: number) => `
+    <div class="section artwork-page ${idx > 0 ? 'page-break' : ''}">
+      <h2>작품</h2>
+      <div class="artwork-content">
+        <img src="${artwork.image_url}" alt="${artwork.title}" />
+        ${!/^작품\s*\d+$/.test(artwork.title) ? `<h3 class="artwork-title">${artwork.title}</h3>` : ''}
+        ${artwork.description ? `<p class="artwork-desc">${artwork.description}</p>` : ''}
       </div>
     </div>
-  ` : ''}
+  `).join('') : ''}
 
   ${pressRelease ? `
     <div class="section page-break">

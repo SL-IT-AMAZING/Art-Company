@@ -26,7 +26,10 @@
       "mcp__serena__list_memories",
       "mcp__serena__find_file",
       "Bash(xargs:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "WebFetch(domain:ai.google.dev)",
+      "mcp__serena__find_symbol",
+      "mcp__serena__write_memory"
     ],
     "deny": [],
     "ask": []
