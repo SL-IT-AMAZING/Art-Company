@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
       .select('*')
       .eq('exhibition_id', exhibitionId)
 
+    console.log('[PDF] exhibition_content types found:', content?.map(c => c.content_type))
+
     // Fetch artworks
     const { data: artworks } = await supabase
       .from('artworks')

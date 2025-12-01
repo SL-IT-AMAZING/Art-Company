@@ -45,15 +45,35 @@ export function MarketingReportGenerator({
       setReport(result.marketingReport)
 
       // Save to database for PDF generation
+      // Using delete-then-insert because the DB is missing UNIQUE constraint for upsert to work
       if (data.id && result.marketingReport) {
         const supabase = createClient()
+
+        // First, delete any existing marketing report for this exhibition
         await supabase
           .from('exhibition_content')
-          .upsert({
+          .delete()
+          .eq('exhibition_id', data.id)
+          .eq('content_type', 'marketing_report')
+
+        // Then insert the new one
+        const { error: saveError } = await supabase
+          .from('exhibition_content')
+          .insert({
             exhibition_id: data.id,
             content_type: 'marketing_report',
             content: result.marketingReport,
-          }, { onConflict: 'exhibition_id,content_type' })
+          })
+
+        if (saveError) {
+          console.error('Failed to save marketing report:', saveError)
+          throw new Error('마케팅 리포트 저장에 실패했습니다.')
+        }
+
+        console.log('Marketing report saved successfully for exhibition:', data.id)
+      } else if (!data.id) {
+        console.warn('Marketing report not saved - missing exhibition ID')
+        throw new Error('전시 ID가 없어 마케팅 리포트를 저장할 수 없습니다.')
       }
     } catch (err) {
       console.error('Error generating marketing report:', err)
