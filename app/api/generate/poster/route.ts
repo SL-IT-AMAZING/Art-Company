@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium-min'
+import { analyzeArtworksForPoster, ArtworkStyleAnalysis } from '@/lib/openai/artwork-analysis'
 
 // Remote chromium URL for Vercel serverless (official Sparticuz release)
 const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
@@ -55,7 +56,7 @@ function createPosterHTML(
 
         body {
           width: 1024px;
-          height: 1448px;  /* A4 ratio (1:1.414) */
+          height: 1792px;  /* DALL-E 3 portrait ratio */
           overflow: hidden;
           font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
         }
@@ -257,19 +258,63 @@ export async function POST(req: NextRequest) {
         : formatDate(exhibitionDate)
       : ''
 
-    // Create DALL-E prompt - SHORT and DIRECT to avoid mockup generation
+    // Fetch artworks for the exhibition (for style analysis)
+    let artworkImageUrls: string[] = []
+    const { data: artworks, error: artworksError } = await supabase
+      .from('artworks')
+      .select('image_url')
+      .eq('exhibition_id', exhibitionId)
+      .order('order_index', { ascending: true })
+
+    if (artworksError) {
+      console.error('[Poster] Failed to fetch artworks:', artworksError)
+    } else {
+      artworkImageUrls = artworks?.map((a) => a.image_url).filter(Boolean) || []
+      console.log(`[Poster] Found ${artworkImageUrls.length} artworks for analysis`)
+    }
+
+    // Analyze artworks for style-informed poster generation
+    let artworkAnalysis: ArtworkStyleAnalysis | null = null
+
+    if (artworkImageUrls.length > 0) {
+      try {
+        console.log(`[Poster] Analyzing ${Math.min(artworkImageUrls.length, 4)} artworks for style...`)
+        artworkAnalysis = await analyzeArtworksForPoster(artworkImageUrls)
+        console.log('[Poster] Artwork analysis complete:', JSON.stringify(artworkAnalysis, null, 2))
+      } catch (analysisError: unknown) {
+        const errorMessage = analysisError instanceof Error ? analysisError.message : String(analysisError)
+        console.error('[Poster] Artwork analysis failed, proceeding without:', errorMessage)
+      }
+    }
+
+    // Create DALL-E 3 prompt with strong anti-mockup instructions
     const keywordList = keywords?.join(', ') || 'contemporary art, modern, abstract'
-    const backgroundPrompt = `A flat digital graphic design for printing. Abstract art background.
+    let backgroundPrompt: string
 
-STYLE: Minimalist, elegant gradients, geometric patterns
-COLORS: Inspired by ${keywordList}
-FORMAT: Edge-to-edge design filling entire canvas
+    if (artworkAnalysis) {
+      backgroundPrompt = `Create a PURE PAINTING, NOT a mockup or product image.
 
-DO NOT INCLUDE: frames, walls, mockups, 3D effects, shadows, paper texture, environmental elements, text, letters
+Style: ${artworkAnalysis.artStyle}
+Colors: ${artworkAnalysis.dominantColors.join(', ')}
+Mood: ${artworkAnalysis.mood}
+Visual elements: ${artworkAnalysis.visualElements.join(', ')}
 
-This is a DIGITAL FILE for direct printing, not a photograph.`
+CRITICAL REQUIREMENTS:
+- This must be a flat, 2D artistic painting that fills the ENTIRE canvas
+- Paint directly on the canvas surface with no borders or edges visible
+- NO frames, NO borders, NO shadows, NO 3D effects
+- NO mockups, NO posters-on-walls, NO gallery scenes
+- NO white space, NO margins
+- The artwork must extend to ALL four edges seamlessly
+- Think of this as an original abstract painting, not a poster design`
+    } else {
+      backgroundPrompt = `Create a PURE ABSTRACT PAINTING for exhibition background.
+Theme: ${keywordList}
 
-    // Generate background with DALL-E 3 (with retry)
+CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, fills entire canvas edge-to-edge seamlessly. This is NOT a poster mockup, it's an original painting.`
+    }
+
+    // Generate background with DALL-E 3
     console.log('[Poster] Generating background with DALL-E 3...')
     let backgroundUrl: string | null = null
     let lastError: any = null
@@ -277,27 +322,27 @@ This is a DIGITAL FILE for direct printing, not a photograph.`
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`[Poster] DALL-E attempt ${attempt}/${maxRetries}`)
+        console.log(`[Poster] DALL-E 3 attempt ${attempt}/${maxRetries}`)
+
         const response = await openai.images.generate({
           model: 'dall-e-3',
           prompt: backgroundPrompt,
-          size: '1024x1792', // Portrait format for poster
+          size: '1024x1792',
           quality: 'hd',
           n: 1,
-          style: 'vivid',  // More graphic design feel, less photographic
         })
 
         backgroundUrl = response.data?.[0]?.url ?? null
         if (backgroundUrl) {
-          console.log('[Poster] DALL-E generation successful')
+          console.log('[Poster] DALL-E 3 generation successful')
           break
         }
-      } catch (dalleError: any) {
-        lastError = dalleError
-        console.error(`[Poster] DALL-E attempt ${attempt} failed:`, dalleError?.message || dalleError)
+      } catch (imageError: any) {
+        lastError = imageError
+        console.error(`[Poster] DALL-E 3 attempt ${attempt} failed:`, imageError?.message || imageError)
 
         // Don't retry on certain errors
-        if (dalleError?.status === 400 || dalleError?.status === 401) {
+        if (imageError?.status === 400 || imageError?.status === 401) {
           break
         }
 
@@ -309,7 +354,7 @@ This is a DIGITAL FILE for direct printing, not a photograph.`
     }
 
     if (!backgroundUrl) {
-      console.error('[Poster] All DALL-E attempts failed')
+      console.error('[Poster] All DALL-E 3 attempts failed')
       return NextResponse.json(
         {
           error: 'Failed to generate poster background. Please try again later.',
@@ -348,7 +393,7 @@ This is a DIGITAL FILE for direct printing, not a photograph.`
         args: chromium.args,
         defaultViewport: {
           width: 1024,
-          height: 1448,  // A4 ratio
+          height: 1792,  // DALL-E 3 portrait ratio
         },
         executablePath,
         headless: true,
@@ -356,7 +401,7 @@ This is a DIGITAL FILE for direct printing, not a photograph.`
     }
 
     const page = await browser.newPage()
-    await page.setViewport({ width: 1024, height: 1448 })  // A4 ratio
+    await page.setViewport({ width: 1024, height: 1792 })  // DALL-E 3 portrait ratio
 
     // Set content and wait for fonts to load
     await page.setContent(posterHtml, {

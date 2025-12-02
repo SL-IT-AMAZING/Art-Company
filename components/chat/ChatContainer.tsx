@@ -210,6 +210,21 @@ export function ChatContainer() {
     const failedUploads: string[] = []
     const uploadedPaths: string[] = [] // Track uploaded file paths for cleanup
 
+    // Get current max order_index BEFORE starting uploads to prevent race condition
+    let nextOrderIndex = 0
+    if (exhibitionData.id) {
+      const { data: existingArtworks } = await supabase
+        .from('artworks')
+        .select('order_index')
+        .eq('exhibition_id', exhibitionData.id)
+        .order('order_index', { ascending: false })
+        .limit(1)
+
+      nextOrderIndex = existingArtworks?.[0]?.order_index != null
+        ? existingArtworks[0].order_index + 1
+        : 0
+    }
+
     // Upload to Supabase Storage and save artwork records
     for (const file of files) {
       // Load image to get dimensions
@@ -252,8 +267,8 @@ export function ChatContainer() {
             .insert({
               exhibition_id: exhibitionData.id,
               image_url: publicUrl,
-              title: `작품 ${imageUrls.length + 1}`, // Use numbered title as default
-              order_index: imageUrls.length,
+              title: `작품 ${nextOrderIndex + 1}`, // Use counter-based title
+              order_index: nextOrderIndex,
               image_width: imageData.width,
               image_height: imageData.height,
               aspect_ratio: aspectRatio,
@@ -268,6 +283,8 @@ export function ChatContainer() {
           } else {
             // Only add to imageUrls after BOTH storage and DB succeed
             imageUrls.push(publicUrl)
+            // Increment counter for next artwork
+            nextOrderIndex++
           }
         } else {
           // No exhibition ID - this shouldn't happen, but handle it

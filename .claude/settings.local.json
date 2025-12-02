@@ -29,7 +29,15 @@
       "Bash(cd:*)",
       "WebFetch(domain:ai.google.dev)",
       "mcp__serena__find_symbol",
-      "mcp__serena__write_memory"
+      "mcp__serena__write_memory",
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__think_about_whether_you_are_done",
+      "WebFetch(domain:ideogram.ai)",
+      "WebFetch(domain:developer.ideogram.ai)",
+      "WebFetch(domain:openai.com)",
+      "WebFetch(domain:platform.stability.ai)",
+      "mcp__serena__think_about_task_adherence",
+      "WebFetch(domain:platform.openai.com)"
     ],
     "deny": [],
     "ask": []
