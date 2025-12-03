@@ -91,10 +91,7 @@ export const swissMinimalistTemplate: TemplateDefinition = {
       display: flex;
       flex-direction: column;
       gap: 20px;
-      background: rgba(0, 0, 0, 0.85);
       padding: 30px 40px;
-      border-radius: 8px;
-      backdrop-filter: blur(10px);
     }
 
     /* Typography */

@@ -133,10 +133,7 @@ export const classicElegantTemplate: TemplateDefinition = {
       flex: 0 0 auto;
       max-width: 100%;
       margin-bottom: 3%;
-      background: rgba(0, 0, 0, 0.85);
       padding: 30px 40px;
-      border-radius: 8px;
-      backdrop-filter: blur(10px);
     }
 
 

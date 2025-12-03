@@ -145,15 +145,11 @@ export async function POST(req: NextRequest) {
       let backgroundPrompt: string
 
       if (artworkAnalysis) {
-        backgroundPrompt = `Create an exhibition poster background using the reference artwork.
+        backgroundPrompt = `Use the reference image as-is for a poster background.
 
-Style: ${artworkAnalysis.artStyle}
-Colors: ${artworkAnalysis.dominantColors.join(', ')}
-
-- Use similar style and colors from the reference
-- Full-bleed vertical poster (1024x1792)
-- No text, borders, or frames
-- Suitable for text overlay`
+- Minimal changes to the original image
+- Fill vertical poster (1024x1792)
+- No text or borders`
       } else {
         backgroundPrompt = `Create an abstract painting for exhibition poster.
 

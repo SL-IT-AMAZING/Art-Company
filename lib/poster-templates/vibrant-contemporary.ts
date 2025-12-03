@@ -129,11 +129,7 @@ export const vibrantContemporaryTemplate: TemplateDefinition = {
       margin-top: auto;
       position: relative;
       z-index: 2;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(20px);
       padding: 30px 40px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
       width: 100%;
     }
 
