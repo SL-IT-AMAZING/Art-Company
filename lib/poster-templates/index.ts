@@ -130,8 +130,7 @@ export function generatePosterHTML(
           artistName || '',
           dateRange,
           venue || '',
-          location || '',
-          customFonts
+          location || ''
         )
       case 'vibrant-contemporary':
         return generateVibrantContemporaryHTML(
@@ -140,8 +139,7 @@ export function generatePosterHTML(
           artistName || '',
           dateRange,
           venue || '',
-          location || '',
-          customFonts
+          location || ''
         )
       default:
         return generateSwissMinimalistHTML(
@@ -211,8 +209,7 @@ export function generatePosterHTML(
           artistName || '',
           dateRange,
           venue || '',
-          location || '',
-          customFonts
+          location || ''
         )
       case 'vibrant-contemporary':
         return generateVibrantContemporaryHTML(
@@ -221,8 +218,7 @@ export function generatePosterHTML(
           artistName || '',
           dateRange,
           venue || '',
-          location || '',
-          customFonts
+          location || ''
         )
       default:
         return generateSwissMinimalistHTML(
