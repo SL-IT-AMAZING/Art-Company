@@ -1,21 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Download, ChevronLeft, Edit2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ExhibitionData } from '@/types/exhibition'
-import { PosterMode, TemplateStyle, FontPresetId } from '@/lib/poster-templates'
-import { PosterModeSelector } from './PosterModeSelector'
-import { TemplatePreview } from './TemplatePreview'
-import { FontSelector } from './FontSelector'
 import { ReferencePosterSelector } from './ReferencePosterSelector'
+import { cn } from '@/lib/utils/helpers'
 
 interface PosterGeneratorProps {
   data: ExhibitionData
   onComplete: () => void
+}
+
+// 타이틀에서 한글/영어 분리
+function parseBilingualTitle(title: string): { korean: string; english: string } | null {
+  // 패턴 1: "한글 제목 / English Title" (슬래시 구분)
+  const slashMatch = title.match(/^(.+?)\s*[\/／]\s*(.+?)$/)
+  if (slashMatch) {
+    const part1 = slashMatch[1].trim()
+    const part2 = slashMatch[2].trim()
+    // part2가 영어로 시작하는지 확인
+    if (/^[A-Za-z]/.test(part2)) {
+      return { korean: part1, english: part2 }
+    }
+  }
+
+  // 패턴 2: "한글 제목 (English Title)" (괄호 구분)
+  const parenMatch = title.match(/^(.+?)\s*[\(（](.+?)[\)）]$/)
+  if (parenMatch) {
+    const korean = parenMatch[1].trim()
+    const english = parenMatch[2].trim()
+    if (/^[A-Za-z]/.test(english)) {
+      return { korean, english }
+    }
+  }
+
+  return null
 }
 
 export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
@@ -24,11 +47,6 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
   const [error, setError] = useState('')
   const [isDownloading, setIsDownloading] = useState(false)
 
-  // New state for poster configuration
-  const [posterMode, setPosterMode] = useState<PosterMode>('ai-background')
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateStyle>('swiss-minimalist')
-  const [selectedFont, setSelectedFont] = useState<FontPresetId>('helvetica-clean')
-  const [recommendedTemplate, setRecommendedTemplate] = useState<TemplateStyle>()
   const [showConfig, setShowConfig] = useState(true)
   const [referenceImage, setReferenceImage] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
@@ -39,15 +57,25 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
   const [editableStartDate, setEditableStartDate] = useState(data.exhibitionDate || '')
   const [editableEndDate, setEditableEndDate] = useState(data.exhibitionEndDate || '')
   const [editableVenue, setEditableVenue] = useState(data.venue || '')
-  const [editableLocation, setEditableLocation] = useState(data.location || '')
   const [isEditing, setIsEditing] = useState(false)
+  const [titleLanguage, setTitleLanguage] = useState<'korean' | 'english'>('korean')
 
-  const allTemplates: TemplateStyle[] = [
-    'swiss-minimalist',
-    'vibrant-contemporary',
-    'bold-brutalist',
-    'classic-elegant',
-  ]
+  // 원본 타이틀이 한글/영어 병기인지 확인 (직접 수정하지 않은 경우에만)
+  const bilingualTitle = useMemo(() => {
+    // 타이틀을 수정하지 않은 경우에만 병기 옵션 제공
+    if (editableTitle === data.selectedTitle) {
+      return parseBilingualTitle(editableTitle)
+    }
+    return null
+  }, [editableTitle, data.selectedTitle])
+
+  // 실제 포스터에 사용할 타이틀
+  const posterTitle = useMemo(() => {
+    if (bilingualTitle) {
+      return titleLanguage === 'korean' ? bilingualTitle.korean : bilingualTitle.english
+    }
+    return editableTitle
+  }, [bilingualTitle, titleLanguage, editableTitle])
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return ''
@@ -91,6 +119,11 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
   }
 
   const generatePoster = async () => {
+    if (!referenceImage) {
+      setError('포스터에 사용할 이미지를 선택해주세요.')
+      return
+    }
+
     setIsGenerating(true)
     setError('')
     setShowConfig(false)
@@ -102,22 +135,12 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           exhibitionId: data.id,
-          title: editableTitle,
-          keywords: data.keywords,
-          mainImage: data.images[0],
+          title: posterTitle,
           artistName: editableArtist,
           exhibitionDate: editableStartDate,
           exhibitionEndDate: editableEndDate,
           venue: editableVenue,
-          location: editableLocation,
-          openingHours: data.openingHours,
-          admissionFee: data.admissionFee,
-          // New parameters
-          mode: posterMode,
-          template: selectedTemplate,
-          font: selectedFont,
-          artworkUrls: data.images, // Send all uploaded images
-          referenceImage: referenceImage, // Send selected reference image
+          referenceImage: referenceImage,
         }),
       })
 
@@ -126,8 +149,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
       if (!response.ok) {
         console.error('Poster generation failed:', result)
         const errorMessage = result.error || 'Failed to generate poster'
-        const details = result.details || ''
-        throw new Error(details ? `${errorMessage}: ${details}` : errorMessage)
+        throw new Error(errorMessage)
       }
 
       if (!result.posters || result.posters.length === 0) {
@@ -135,14 +157,9 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
       }
 
       setPosters(result.posters)
-
-      // Save recommended template if provided
-      if (result.recommendedTemplate) {
-        setRecommendedTemplate(result.recommendedTemplate)
-      }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error generating poster:', err)
-      const message = err?.message || '포스터 생성 중 오류가 발생했습니다.'
+      const message = err instanceof Error ? err.message : '포스터 생성 중 오류가 발생했습니다.'
       setError(message.includes('Failed') || message.includes('서비스')
         ? '포스터 생성 서비스에 일시적인 문제가 있습니다. 잠시 후 다시 시도해주세요.'
         : `포스터 생성 중 오류: ${message}`)
@@ -159,13 +176,6 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
     setShowPreview(false)
   }
 
-  const templateNames: Record<string, string> = {
-    'swiss-minimalist': 'Swiss Minimalist',
-    'bold-brutalist': 'Bold Brutalist',
-    'classic-elegant': 'Classic Elegant',
-    'vibrant-contemporary': 'Vibrant Contemporary'
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -180,9 +190,9 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           <div className="space-y-6">
             {/* Description */}
             <div className="text-center space-y-2 py-4">
-              <h3 className="font-semibold text-lg">작품 영감 배경</h3>
+              <h3 className="font-semibold text-lg">포스터 이미지 선택</h3>
               <p className="text-sm text-muted-foreground">
-                작품 스타일을 분석하여<br />4가지 분위기의 포스터를 생성합니다
+                포스터에 사용할 이미지를 선택하세요
               </p>
             </div>
 
@@ -194,7 +204,12 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
             />
 
             {/* Generate Button */}
-            <Button onClick={handleShowPreview} size="lg" className="w-full">
+            <Button
+              onClick={handleShowPreview}
+              size="lg"
+              className="w-full"
+              disabled={!referenceImage}
+            >
               다음: 정보 확인
             </Button>
           </div>
@@ -232,7 +247,35 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
                       className="mt-1"
                     />
                   ) : (
-                    <p className="text-lg font-bold mt-1">{editableTitle || '제목 없음'}</p>
+                    <p className="text-lg font-bold mt-1">{posterTitle || '제목 없음'}</p>
+                  )}
+
+                  {/* 한글/영어 선택 (병기 타이틀인 경우에만) */}
+                  {bilingualTitle && !isEditing && (
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => setTitleLanguage('korean')}
+                        className={cn(
+                          'px-3 py-1 text-sm rounded-full border transition-all',
+                          titleLanguage === 'korean'
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                        )}
+                      >
+                        한글
+                      </button>
+                      <button
+                        onClick={() => setTitleLanguage('english')}
+                        className={cn(
+                          'px-3 py-1 text-sm rounded-full border transition-all',
+                          titleLanguage === 'english'
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                        )}
+                      >
+                        English
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -291,29 +334,14 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
                   )}
                 </div>
 
-                {/* Location */}
-                <div>
-                  <Label className="text-xs font-medium text-gray-500">위치</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editableLocation}
-                      onChange={(e) => setEditableLocation(e.target.value)}
-                      className="mt-1"
-                      placeholder="위치 입력 (선택사항)"
-                    />
-                  ) : (
-                    <p className="text-base mt-1">{editableLocation || '-'}</p>
-                  )}
-                </div>
-
                 {/* Reference Image */}
                 {referenceImage && (
                   <div>
-                    <Label className="text-xs font-medium text-gray-500">참고 이미지</Label>
+                    <Label className="text-xs font-medium text-gray-500">선택한 이미지</Label>
                     <div className="mt-2">
                       <img
                         src={referenceImage}
-                        alt="참고 이미지"
+                        alt="선택한 이미지"
                         className="w-32 h-32 object-cover rounded border"
                       />
                     </div>
@@ -340,7 +368,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
             <p className="text-muted-foreground">포스터를 생성하고 있습니다...</p>
             <p className="text-sm font-medium text-primary mt-2">
-              예상 소요시간: 약 1-2분
+              예상 소요시간: 약 10초
             </p>
           </div>
         )}
@@ -381,10 +409,10 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
             <div className="flex flex-col items-center gap-6">
               {posters.map((poster) => (
                 <div key={poster.template} className="w-full max-w-xs space-y-3">
-                  <div className="relative aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
+                  <div className="relative aspect-[4961/7016] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
                     <img
                       src={poster.url}
-                      alt={`${templateNames[poster.template]} Poster`}
+                      alt="생성된 포스터"
                       className="w-full h-full object-contain"
                     />
                   </div>
