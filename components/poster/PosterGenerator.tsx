@@ -20,7 +20,7 @@ interface PosterGeneratorProps {
 
 export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
-  const [posterUrl, setPosterUrl] = useState<string>('')
+  const [posters, setPosters] = useState<Array<{ template: string; url: string }>>([])
   const [error, setError] = useState('')
   const [isDownloading, setIsDownloading] = useState(false)
 
@@ -69,7 +69,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
     setShowConfig(true)
   }
 
-  const handleDownload = async () => {
+  const handleDownload = async (posterUrl: string, templateName: string) => {
     if (!posterUrl) return
     setIsDownloading(true)
     try {
@@ -78,7 +78,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
       const blobUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = blobUrl
-      a.download = `poster-${data.selectedTitle || 'exhibition'}-${Date.now()}.png`
+      a.download = `poster-${data.selectedTitle || 'exhibition'}-${templateName}-${Date.now()}.png`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -130,11 +130,11 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         throw new Error(details ? `${errorMessage}: ${details}` : errorMessage)
       }
 
-      if (!result.posterUrl) {
-        throw new Error('No poster URL returned')
+      if (!result.posters || result.posters.length === 0) {
+        throw new Error('No posters returned')
       }
 
-      setPosterUrl(result.posterUrl)
+      setPosters(result.posters)
 
       // Save recommended template if provided
       if (result.recommendedTemplate) {
@@ -153,7 +153,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
   }
 
   const handleRegenerate = () => {
-    setPosterUrl('')
+    setPosters([])
     setError('')
     setShowConfig(true)
     setShowPreview(false)
@@ -176,7 +176,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Configuration Section */}
-        {showConfig && !posterUrl && !isGenerating && (
+        {showConfig && posters.length === 0 && !isGenerating && (
           <div className="space-y-6">
             {/* Description */}
             <div className="text-center space-y-2 py-4">
@@ -201,7 +201,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         )}
 
         {/* Information Preview Section */}
-        {showPreview && !posterUrl && !isGenerating && (
+        {showPreview && posters.length === 0 && !isGenerating && (
           <div className="space-y-6">
             <div className="flex items-center justify-between py-4">
               <div>
@@ -369,36 +369,49 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           </div>
         )}
 
-        {/* Result State - Show single poster */}
-        {posterUrl && (
+        {/* Result State - Show all 4 posters */}
+        {posters.length > 0 && (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="font-semibold text-lg mb-2">생성된 포스터</h3>
-              <p className="text-sm text-muted-foreground">포스터를 다운로드하세요</p>
+              <h3 className="font-semibold text-lg mb-2">생성된 포스터 (4가지 템플릿)</h3>
+              <p className="text-sm text-muted-foreground">마음에 드는 포스터를 다운로드하세요</p>
             </div>
 
-            <div className="space-y-4">
-              <div className="relative aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
-                <img
-                  src={posterUrl}
-                  alt="Generated Poster"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleDownload}
-                disabled={isDownloading}
-                className="w-full"
-              >
-                {isDownloading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Download className="w-4 h-4 mr-2" />
-                )}
-                다운로드
-              </Button>
+            {/* Grid of 4 posters - 2x2 layout */}
+            <div className="grid grid-cols-2 gap-4">
+              {posters.map((poster) => (
+                <div key={poster.template} className="space-y-2">
+                  <div className="relative aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
+                    <img
+                      src={poster.url}
+                      alt={`${templateNames[poster.template]} Poster`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-center">
+                      {templateNames[poster.template]}
+                      {poster.template === recommendedTemplate && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">추천</span>
+                      )}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(poster.url, poster.template)}
+                      disabled={isDownloading}
+                      className="w-full"
+                    >
+                      {isDownloading ? (
+                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                      ) : (
+                        <Download className="w-3 h-3 mr-1" />
+                      )}
+                      다운로드
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="flex gap-2">
@@ -414,7 +427,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         )}
 
         {/* Skip option */}
-        {!posterUrl && !isGenerating && (
+        {posters.length === 0 && !isGenerating && (
           <div className="text-center pt-4">
             <Button variant="ghost" onClick={onComplete}>
               포스터 생성 건너뛰기
