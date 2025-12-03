@@ -380,7 +380,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
             {/* Center-aligned posters */}
             <div className="flex flex-col items-center gap-6">
               {posters.map((poster) => (
-                <div key={poster.template} className="w-full max-w-md space-y-3">
+                <div key={poster.template} className="w-full max-w-xs space-y-3">
                   <div className="relative aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
                     <img
                       src={poster.url}
