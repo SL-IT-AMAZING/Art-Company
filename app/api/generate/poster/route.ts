@@ -288,9 +288,10 @@ TECHNICAL REQUIREMENTS:
       }
     }
 
-    // Generate single poster with the selected template
-    console.log(`[Poster] Generating poster with ${template} template`)
-    let posterUrl: string | null = null
+    // Generate posters with all 4 templates
+    console.log(`[Poster] Generating posters with all 4 templates`)
+    const allTemplates: TemplateStyle[] = ['swiss-minimalist', 'vibrant-contemporary', 'classic-elegant', 'bold-brutalist']
+    const posterUrls: { template: string; url: string }[] = []
 
     // Launch Puppeteer - detect environment
     console.log('[Poster] Launching browser for rendering...')
@@ -310,81 +311,83 @@ TECHNICAL REQUIREMENTS:
         args: chromium.args,
         defaultViewport: {
           width: 1024,
-          height: 1792,  // DALL-E 3 portrait ratio
+          height: 1792,
         },
         executablePath,
         headless: true,
       })
     }
 
-    // Generate single poster
-    console.log(`[Poster] Generating ${template} poster...`)
+    // Generate posters for all templates
+    for (const templateName of allTemplates) {
+      console.log(`[Poster] Generating ${templateName} poster...`)
 
-    const posterHtml = generatePosterHTML(
-      mode,
-      template,
-      posterData,
-      backgroundUrl || '',
-      undefined,
-      font
-    )
+      const posterHtml = generatePosterHTML(
+        mode,
+        templateName,
+        posterData,
+        backgroundUrl || '',
+        undefined,
+        font
+      )
 
-    const page = await browser.newPage()
-    await page.setViewport({ width: 1024, height: 1792 })
+      const page = await browser.newPage()
+      await page.setViewport({ width: 1024, height: 1792 })
 
-    await page.setContent(posterHtml, {
-      waitUntil: 'networkidle0',
-    })
-
-    const imageBuffer = await page.screenshot({
-      type: 'png',
-      fullPage: true,
-    })
-
-    await page.close()
-
-    // Upload to Supabase Storage
-    const fileName = `poster_${exhibitionId || 'temp'}_${template}_${Date.now()}.png`
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('posters')
-      .upload(fileName, imageBuffer, {
-        contentType: 'image/png',
-        upsert: false,
+      await page.setContent(posterHtml, {
+        waitUntil: 'networkidle0',
       })
 
-    if (!uploadError) {
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('posters').getPublicUrl(uploadData.path)
-      posterUrl = publicUrl
-    } else {
-      console.error(`[Poster] Upload error:`, uploadError)
-      const base64 = Buffer.from(imageBuffer).toString('base64')
-      posterUrl = `data:image/png;base64,${base64}`
+      const imageBuffer = await page.screenshot({
+        type: 'png',
+        fullPage: true,
+      })
+
+      await page.close()
+
+      // Upload to Supabase Storage
+      const fileName = `poster_${exhibitionId || 'temp'}_${templateName}_${Date.now()}.png`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('posters')
+        .upload(fileName, imageBuffer, {
+          contentType: 'image/png',
+          upsert: false,
+        })
+
+      if (!uploadError) {
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('posters').getPublicUrl(uploadData.path)
+        posterUrls.push({ template: templateName, url: publicUrl })
+
+        // Save poster to database
+        if (exhibitionId) {
+          const { error: dbError } = await supabase.from('posters').insert({
+            exhibition_id: exhibitionId,
+            image_url: publicUrl,
+            template_name: templateName,
+            is_primary: templateName === recommendedTemplate,
+            created_at: new Date().toISOString(),
+          })
+
+          if (dbError) {
+            console.error(`[Poster] Failed to save ${templateName} to database:`, dbError)
+          }
+        }
+      } else {
+        console.error(`[Poster] Upload error for ${templateName}:`, uploadError)
+        const base64 = Buffer.from(imageBuffer).toString('base64')
+        posterUrls.push({ template: templateName, url: `data:image/png;base64,${base64}` })
+      }
     }
 
     await browser.close()
     browser = null
 
-    // Save poster to database
-    if (exhibitionId && posterUrl) {
-      const { error: dbError } = await supabase.from('posters').insert({
-        exhibition_id: exhibitionId,
-        image_url: posterUrl,
-        is_primary: true,
-        created_at: new Date().toISOString(),
-      })
-
-      if (dbError) {
-        console.error(`[Poster] Failed to save to database:`, dbError)
-      }
-    }
-
-    console.log('[Poster] Success! Generated poster')
+    console.log('[Poster] Success! Generated all 4 posters')
     return NextResponse.json({
-      posterUrl,
-      message: `Generated poster successfully`,
-      template,
+      posters: posterUrls,
+      message: `Generated ${posterUrls.length} posters successfully`,
       mode,
       recommendedTemplate,
     })
