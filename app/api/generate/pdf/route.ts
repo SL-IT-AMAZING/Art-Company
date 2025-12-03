@@ -161,6 +161,9 @@ export async function POST(req: NextRequest) {
         admission_fee: exhibition.admission_fee,
       })
 
+      // Convert newlines to <br> tags for HTML rendering
+      result = result.replace(/\n/g, '<br>')
+
       return result
     }
 
@@ -245,45 +248,44 @@ export async function POST(req: NextRequest) {
             color: #475569;
             text-align: justify;
             word-break: keep-all;
+            white-space: pre-wrap;
           }
 
-          .artwork {
-            padding: 40px;
-            background: #F8F9FA;
-            border-radius: 8px;
-            page-break-after: always;
-            page-break-inside: avoid;
-            min-height: 85vh;
+          .artworks-grid {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: flex-start;
           }
 
-          .artwork:last-child {
-            page-break-after: auto;
+          .artwork-item {
+            width: calc(50% - 12px);
+            text-align: center;
+            page-break-inside: avoid;
+            margin-bottom: 20px;
           }
 
-          .artwork img {
+          .artwork-item img {
             max-width: 100%;
-            max-height: 60vh;
+            max-height: 200px;
             width: auto;
             height: auto;
             object-fit: contain;
             border-radius: 4px;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
           }
 
           .artwork-title {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: #1E293B;
           }
 
           .artwork-desc {
-            font-size: 15px;
+            font-size: 12px;
             color: #64748B;
+            line-height: 1.5;
           }
 
           .planning-section {
@@ -306,11 +308,15 @@ export async function POST(req: NextRequest) {
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 70vh;
           }
 
           .poster-page img {
-            max-width: 100%;
-            max-height: 90vh;
+            max-width: 80%;
+            max-height: 65vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             border-radius: 8px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
           }
@@ -404,27 +410,27 @@ export async function POST(req: NextRequest) {
           </div>
         </div>
 
-        <!-- Artworks - One per page -->
+        <!-- Artworks -->
         ${
           artworks && artworks.length > 0
-            ? artworks
-                .map((artwork: any) => {
-                  // Filter out default titles (작품 N pattern)
-                  const isDefaultTitle = /^작품\s*\d+$/.test(artwork.title || '')
-                  const displayTitle = isDefaultTitle ? '' : (artwork.title || '')
-
-                  return `
+            ? `
         <div class="page">
           <h2>작품</h2>
-          <div class="artwork">
-            ${artwork.image_url ? `<img src="${artwork.image_url}" alt="${displayTitle}">` : ''}
-            ${displayTitle ? `<div class="artwork-title">${displayTitle}</div>` : ''}
-            <div class="artwork-desc">${artwork.description || ''}</div>
+          <div class="artworks-grid">
+            ${artworks.map((artwork: any) => {
+              const isDefaultTitle = /^작품\s*\d+$/.test(artwork.title || '')
+              const displayTitle = isDefaultTitle ? '' : (artwork.title || '')
+              return `
+              <div class="artwork-item">
+                ${artwork.image_url ? `<img src="${artwork.image_url}" alt="${displayTitle}">` : ''}
+                ${displayTitle ? `<div class="artwork-title">${displayTitle}</div>` : ''}
+                ${artwork.description ? `<div class="artwork-desc">${artwork.description}</div>` : ''}
+              </div>
+              `
+            }).join('')}
           </div>
         </div>
         `
-                })
-                .join('')
             : ''
         }
 
@@ -445,7 +451,7 @@ export async function POST(req: NextRequest) {
           getContent('marketing_report')
             ? `
         <div class="page">
-          <h2>컬렉팅 포인트</h2>
+          <h2>마케팅 리포트</h2>
           <p>${getContent('marketing_report')}</p>
         </div>
         `
