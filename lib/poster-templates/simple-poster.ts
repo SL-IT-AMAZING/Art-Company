@@ -20,21 +20,34 @@ export interface SimplePosterData {
 
 /**
  * 제목 파싱 함수
- * - 한글과 영어를 분리 (: 또는 - 구분자 기준)
- * - 예: "빛의 여정: Journey of Light" → { korean: "빛의 여정", english: "Journey of Light" }
- * - 뒷부분이 실제 영어인 경우에만 분리
+ * - / 구분자로 한글 전체 / 영어 전체 분리
+ * - 예: "오월의 향기: 한강과 함께하는 여정 / Scent of May: Journey with the Han River"
+ *   → { korean: "오월의 향기: 한강과 함께하는 여정", english: "Scent of May: Journey with the Han River" }
  */
 function parseTitle(title: string): { korean: string; english: string } {
   if (!title) return { korean: '', english: '' }
 
   const hasKorean = (str: string) => /[가-힣]/.test(str)
   const hasEnglish = (str: string) => /[a-zA-Z]/.test(str)
-  const isMainlyEnglish = (str: string) => {
-    // 영어가 있고 한글이 없으면 영어로 판단
-    return hasEnglish(str) && !hasKorean(str)
+  const isMainlyKorean = (str: string) => hasKorean(str)
+  const isMainlyEnglish = (str: string) => hasEnglish(str) && !hasKorean(str)
+
+  // 먼저 / 구분자로 분리 시도 (한글 전체 / 영어 전체)
+  if (title.includes(' / ')) {
+    const parts = title.split(' / ').map(p => p.trim())
+    if (parts.length >= 2) {
+      const part1 = parts[0]
+      const part2 = parts.slice(1).join(' / ')
+
+      if (isMainlyKorean(part1) && isMainlyEnglish(part2)) {
+        return { korean: part1, english: part2 }
+      } else if (isMainlyEnglish(part1) && isMainlyKorean(part2)) {
+        return { korean: part2, english: part1 }
+      }
+    }
   }
 
-  // : 또는 - 로 분리 시도
+  // / 없으면 : 또는 - 로 분리 시도
   const separators = [':', ' - ', ' – ']
   for (const sep of separators) {
     if (title.includes(sep)) {
@@ -44,12 +57,11 @@ function parseTitle(title: string): { korean: string; english: string } {
         const part2 = parts.slice(1).join(sep)
 
         // 한글 + 영어 조합인 경우에만 분리
-        if (hasKorean(part1) && isMainlyEnglish(part2)) {
+        if (isMainlyKorean(part1) && isMainlyEnglish(part2)) {
           return { korean: part1, english: part2 }
-        } else if (isMainlyEnglish(part1) && hasKorean(part2)) {
+        } else if (isMainlyEnglish(part1) && isMainlyKorean(part2)) {
           return { korean: part2, english: part1 }
         }
-        // 둘 다 한글이면 분리하지 않음
       }
     }
   }

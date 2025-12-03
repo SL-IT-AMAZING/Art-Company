@@ -62,6 +62,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    console.log('[PDF] curator_conversation:', exhibition.curator_conversation?.length || 0, 'messages')
+    if (exhibition.curator_conversation?.length > 0) {
+      console.log('[PDF] First message:', JSON.stringify(exhibition.curator_conversation[0]).substring(0, 100))
+    }
+
     // Fetch exhibition content
     const { data: content } = await supabase
       .from('exhibition_content')
