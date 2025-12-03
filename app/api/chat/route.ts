@@ -71,6 +71,45 @@ export async function POST(req: Request) {
             console.error('Error saving to database:', error)
           }
         }
+
+        // Save conversation history to exhibitions table
+        if (exhibitionId) {
+          try {
+            // Get current conversation
+            const { data: exhibition } = await supabase
+              .from('exhibitions')
+              .select('curator_conversation')
+              .eq('id', exhibitionId)
+              .single()
+
+            const currentConversation = exhibition?.curator_conversation || []
+
+            // Add new messages
+            const newConversation = [
+              ...currentConversation,
+              ...messages.map((msg: any) => ({
+                role: msg.role,
+                content: msg.content,
+                timestamp: new Date().toISOString(),
+                step,
+              })),
+              {
+                role: 'assistant',
+                content: completion,
+                timestamp: new Date().toISOString(),
+                step,
+              }
+            ]
+
+            // Update exhibition with new conversation
+            await supabase
+              .from('exhibitions')
+              .update({ curator_conversation: newConversation })
+              .eq('id', exhibitionId)
+          } catch (error) {
+            console.error('Error saving conversation:', error)
+          }
+        }
       },
     })
 

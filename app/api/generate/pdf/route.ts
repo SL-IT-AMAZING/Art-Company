@@ -407,6 +407,26 @@ export async function POST(req: NextRequest) {
             ${exhibition.opening_hours ? `<p><strong>운영 시간:</strong> ${exhibition.opening_hours}</p>` : ''}
             ${exhibition.admission_fee ? `<p><strong>입장료:</strong> ${exhibition.admission_fee}</p>` : ''}
             ${exhibition.contact_info ? `<p><strong>문의:</strong> ${exhibition.contact_info}</p>` : ''}
+
+            ${exhibition.curator_conversation && exhibition.curator_conversation.length > 0 ? `
+            <div style="margin-top: 30px;">
+              <h3 style="font-size: 18px; margin-bottom: 15px; color: #1E293B;">AI 큐레이터와의 대화</h3>
+              <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border-left: 4px solid #3B82F6;">
+                ${exhibition.curator_conversation
+                  .filter((msg: any) => msg.role !== 'system')
+                  .map((msg: any) => `
+                    <div style="margin-bottom: 15px;">
+                      <strong style="color: ${msg.role === 'user' ? '#059669' : '#3B82F6'};">
+                        ${msg.role === 'user' ? '사용자' : 'AI 큐레이터'}:
+                      </strong>
+                      <p style="margin: 5px 0 0 0; color: #475569; line-height: 1.6;">
+                        ${msg.content}
+                      </p>
+                    </div>
+                  `).join('')}
+              </div>
+            </div>
+            ` : ''}
           </div>
         </div>
 
