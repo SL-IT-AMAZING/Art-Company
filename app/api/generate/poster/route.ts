@@ -136,24 +136,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generate single background based on the artwork
-    let backgroundUrl: string | null = null
-
-    if (mode === 'ai-background' || mode === 'artwork-photo') {
-      console.log(`[Poster] Generating background based on artwork...`)
+    // Helper function to generate a single background
+    const generateBackground = async (): Promise<string | null> => {
+      if (mode !== 'ai-background' && mode !== 'artwork-photo') {
+        return null
+      }
 
       let backgroundPrompt: string
 
       if (artworkAnalysis) {
-        // Build exhibition info for context
-        const exhibitionInfo = [
-          title && `Title: ${title}`,
-          artistName && `Artist: ${artistName}`,
-          exhibitionDate && `Date: ${exhibitionDate}`,
-          venue && `Venue: ${venue}`,
-          location && `Location: ${location}`,
-        ].filter(Boolean).join('\n')
-
         backgroundPrompt = `Create a stunning vertical exhibition poster inspired by this reference artwork.
 
 Exhibition: ${title || 'Art Exhibition'}
@@ -191,7 +182,6 @@ TECHNICAL REQUIREMENTS:
       }
 
       try {
-        // Use Ideogram API
         const ideogramApiKey = process.env.IDEOGRAM_API_KEY
 
         if (!ideogramApiKey) {
@@ -203,93 +193,66 @@ TECHNICAL REQUIREMENTS:
             quality: 'hd',
             n: 1,
           })
-          backgroundUrl = response.data?.[0]?.url ?? null
+          return response.data?.[0]?.url ?? null
+        }
+
+        console.log('[Poster] Using Ideogram API')
+        let response
+
+        if (referenceImage) {
+          console.log('[Poster] Using Ideogram Remix API with reference image')
+          const imageResponse = await fetch(referenceImage)
+          const imageBlob = await imageResponse.blob()
+
+          const formData = new FormData()
+          formData.append('image_file', imageBlob, 'reference.png')
+          formData.append('image_request', JSON.stringify({
+            prompt: backgroundPrompt,
+            aspect_ratio: 'ASPECT_9_16',
+            model: 'V_2',
+            image_weight: 65,
+            magic_prompt_option: 'OFF',
+          }))
+
+          response = await fetch('https://api.ideogram.ai/remix', {
+            method: 'POST',
+            headers: { 'Api-Key': ideogramApiKey },
+            body: formData
+          })
         } else {
-          console.log('[Poster] Using Ideogram API')
-
-          let response
-
-          // Use remix endpoint if reference image provided
-          if (referenceImage) {
-            console.log('[Poster] Using Ideogram Remix API with reference image')
-
-            // Download the reference image
-            const imageResponse = await fetch(referenceImage)
-            const imageBlob = await imageResponse.blob()
-
-            // Create multipart form data
-            const formData = new FormData()
-            formData.append('image_file', imageBlob, 'reference.png')
-            formData.append('image_request', JSON.stringify({
-              prompt: backgroundPrompt,
-              aspect_ratio: 'ASPECT_9_16',
-              model: 'V_2',
-              image_weight: 65, // 0-100, 65 = stronger reference with creative adaptation
-              magic_prompt_option: 'OFF', // Don't modify our prompt
-            }))
-
-            response = await fetch('https://api.ideogram.ai/remix', {
-              method: 'POST',
-              headers: {
-                'Api-Key': ideogramApiKey,
-              },
-              body: formData
+          response = await fetch('https://api.ideogram.ai/generate', {
+            method: 'POST',
+            headers: {
+              'Api-Key': ideogramApiKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              image_request: {
+                prompt: backgroundPrompt,
+                aspect_ratio: 'ASPECT_9_16',
+                model: 'V_2',
+                magic_prompt_option: 'AUTO',
+              }
             })
-          } else {
-            console.log('[Poster] Using Ideogram Generate API')
-            response = await fetch('https://api.ideogram.ai/generate', {
-              method: 'POST',
-              headers: {
-                'Api-Key': ideogramApiKey,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                image_request: {
-                  prompt: backgroundPrompt,
-                  aspect_ratio: 'ASPECT_9_16',
-                  model: 'V_2',
-                  magic_prompt_option: 'AUTO',
-                }
-              })
-            })
-          }
-
-          if (!response.ok) {
-            const errorText = await response.text()
-            console.error('[Poster] Ideogram API error:', response.status, errorText)
-            throw new Error(`Ideogram API error: ${response.status}`)
-          }
-
-          const data = await response.json()
-          backgroundUrl = data.data?.[0]?.url ?? null
+          })
         }
 
-        if (backgroundUrl) {
-          console.log(`[Poster] Background generated successfully`)
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('[Poster] Ideogram API error:', response.status, errorText)
+          throw new Error(`Ideogram API error: ${response.status}`)
         }
-      } catch (imageError: any) {
-        console.error(`[Poster] Failed to generate background:`, imageError?.message)
-        return NextResponse.json(
-          {
-            error: 'Failed to generate poster background. Please try again later.',
-          },
-          { status: 503 }
-        )
-      }
 
-      if (!backgroundUrl) {
-        console.error('[Poster] Background generation failed')
-        return NextResponse.json(
-          {
-            error: 'Failed to generate poster background. Please try again later.',
-          },
-          { status: 503 }
-        )
+        const data = await response.json()
+        return data.data?.[0]?.url ?? null
+      } catch (error: any) {
+        console.error('[Poster] Failed to generate background:', error?.message)
+        throw error
       }
     }
 
     // Generate posters with all 4 templates
-    console.log(`[Poster] Generating posters with all 4 templates`)
+    console.log(`[Poster] Generating posters with all 4 templates (each with unique background)`)
     const allTemplates: TemplateStyle[] = ['swiss-minimalist', 'vibrant-contemporary', 'classic-elegant', 'bold-brutalist']
     const posterUrls: { template: string; url: string }[] = []
 
@@ -321,6 +284,34 @@ TECHNICAL REQUIREMENTS:
     // Generate posters for all templates
     for (const templateName of allTemplates) {
       console.log(`[Poster] Generating ${templateName} poster...`)
+
+      // Generate unique background for each template
+      let backgroundUrl: string | null = null
+      try {
+        console.log(`[Poster] Generating unique background for ${templateName}...`)
+        backgroundUrl = await generateBackground()
+        if (backgroundUrl) {
+          console.log(`[Poster] Background for ${templateName} generated successfully`)
+        }
+      } catch (imageError: any) {
+        console.error(`[Poster] Failed to generate background for ${templateName}:`, imageError?.message)
+        return NextResponse.json(
+          {
+            error: 'Failed to generate poster background. Please try again later.',
+          },
+          { status: 503 }
+        )
+      }
+
+      if (!backgroundUrl && (mode === 'ai-background' || mode === 'artwork-photo')) {
+        console.error(`[Poster] Background generation failed for ${templateName}`)
+        return NextResponse.json(
+          {
+            error: 'Failed to generate poster background. Please try again later.',
+          },
+          { status: 503 }
+        )
+      }
 
       const posterHtml = generatePosterHTML(
         mode,
