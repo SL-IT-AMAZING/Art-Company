@@ -145,15 +145,17 @@ export async function POST(req: NextRequest) {
       let backgroundPrompt: string
 
       if (artworkAnalysis) {
-        backgroundPrompt = `Create a poster background based on the reference image.
+        backgroundPrompt = `Create a full poster background painting in the style of the reference image.
 
-CRITICAL: The image MUST fill the ENTIRE canvas from edge to edge
-- Full-bleed composition with NO empty space, NO margins, NO borders
-- Extend the artwork to completely fill vertical 1024x1792 format
-- Every pixel of the canvas must be filled with the artwork
-- The image should bleed off all four edges
-- No white space, no gaps, no borders whatsoever
-- Keep the style and colors of the reference`
+CRITICAL REQUIREMENTS:
+- DO NOT create a framed picture or artwork mockup
+- DO NOT show the image as an object with edges or borders
+- The painting itself IS the poster - fill the ENTIRE vertical canvas (1024x1792)
+- All-over abstract/artistic composition extending to all edges
+- No frames, no walls, no display context - just the artwork filling everything
+- Think "wallpaper" or "mural" not "framed picture"
+- Use the reference's style, colors, and mood
+- Every pixel must be part of the painting`
       } else {
         backgroundPrompt = `Create an abstract painting for exhibition poster.
 
