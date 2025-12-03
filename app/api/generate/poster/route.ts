@@ -224,7 +224,7 @@ TECHNICAL REQUIREMENTS:
               prompt: backgroundPrompt,
               aspect_ratio: 'ASPECT_9_16',
               model: 'V_2',
-              image_weight: 50, // 0-100, 50 = balanced between reference and creative adaptation
+              image_weight: 65, // 0-100, 65 = stronger reference with creative adaptation
               magic_prompt_option: 'OFF', // Don't modify our prompt
             }))
 
