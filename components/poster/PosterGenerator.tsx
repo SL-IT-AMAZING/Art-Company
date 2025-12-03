@@ -17,11 +17,11 @@ interface PosterGeneratorProps {
 
 // 타이틀에서 한글/영어 분리
 function parseBilingualTitle(title: string): { korean: string; english: string } | null {
-  // 패턴 1: "한글 제목 / English Title" (슬래시 구분)
-  const slashMatch = title.match(/^(.+?)\s*[\/／]\s*(.+?)$/)
-  if (slashMatch) {
-    const part1 = slashMatch[1].trim()
-    const part2 = slashMatch[2].trim()
+  // 패턴 1: "한글 제목 / English Title" (슬래시, 콜론, 파이프 등 구분)
+  const separatorMatch = title.match(/^(.+?)\s*[\/／\|｜:：]\s*(.+?)$/)
+  if (separatorMatch) {
+    const part1 = separatorMatch[1].trim()
+    const part2 = separatorMatch[2].trim()
     // part2가 영어로 시작하는지 확인
     if (/^[A-Za-z]/.test(part2)) {
       return { korean: part1, english: part2 }
