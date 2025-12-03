@@ -75,14 +75,22 @@ export async function POST(req: Request) {
         // Save conversation history to exhibitions table
         if (exhibitionId) {
           try {
+            console.log('[Chat] Saving conversation for exhibition:', exhibitionId)
+
             // Get current conversation
-            const { data: exhibition } = await supabase
+            const { data: exhibition, error: fetchError } = await supabase
               .from('exhibitions')
               .select('curator_conversation')
               .eq('id', exhibitionId)
               .single()
 
+            if (fetchError) {
+              console.error('[Chat] Error fetching exhibition:', fetchError)
+              return
+            }
+
             const currentConversation = exhibition?.curator_conversation || []
+            console.log('[Chat] Current conversation length:', currentConversation.length)
 
             // Add new messages
             const newConversation = [
@@ -101,14 +109,24 @@ export async function POST(req: Request) {
               }
             ]
 
+            console.log('[Chat] New conversation length:', newConversation.length)
+
             // Update exhibition with new conversation
-            await supabase
+            const { error: updateError } = await supabase
               .from('exhibitions')
               .update({ curator_conversation: newConversation })
               .eq('id', exhibitionId)
+
+            if (updateError) {
+              console.error('[Chat] Error updating conversation:', updateError)
+            } else {
+              console.log('[Chat] Conversation saved successfully')
+            }
           } catch (error) {
-            console.error('Error saving conversation:', error)
+            console.error('[Chat] Error saving conversation:', error)
           }
+        } else {
+          console.log('[Chat] No exhibitionId provided, skipping conversation save')
         }
       },
     })
