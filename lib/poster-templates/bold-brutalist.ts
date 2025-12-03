@@ -241,14 +241,14 @@ export function generateBoldBrutalistHTML(
           letter-spacing: ${typography.letterSpacing};
           color: ${colorScheme.primary};
           text-shadow:
-            0 0 40px rgba(0, 0, 0, 0.8),
-            0 0 80px rgba(0, 0, 0, 0.5);
+            0 2px 20px rgba(0, 0, 0, 0.6),
+            0 4px 40px rgba(0, 0, 0, 0.4);
         }
 
         .artist {
           font-size: ${typography.subtitleSize.default}px;
           color: ${colorScheme.accent};
-          text-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+          text-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
         }
 
         .details {
@@ -259,6 +259,10 @@ export function generateBoldBrutalistHTML(
 
         .date, .venue, .location, .artist {
           color: #FFFFFF !important;
+        }
+
+        .date, .venue, .location {
+          text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
         }
       </style>
     </head>
