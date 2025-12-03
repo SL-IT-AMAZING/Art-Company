@@ -69,36 +69,20 @@ JSON 형식으로 응답:
 `,
 
   generatePressRelease: (exhibitionData: any, context: string) => `
-당신은 미술 전문 홍보 담당자입니다.
-다음 전시 정보를 바탕으로 보도자료를 작성해주세요.
+당신은 신문 기사를 작성하는 기자입니다. 아래 전시 정보로 짧은 뉴스 기사를 작성하세요.
 
-전시 정보:
-${JSON.stringify(exhibitionData, null, 2)}
+전시명: ${exhibitionData.title || ''}
+작가: ${exhibitionData.artistName || ''}
+기간: ${exhibitionData.exhibition_date || ''}${exhibitionData.exhibition_end_date ? ' - ' + exhibitionData.exhibition_end_date : ''}
+장소: ${exhibitionData.venue || ''}
+주소: ${exhibitionData.location || ''}
 
-**출력 형식 (반드시 준수):**
-- 문단으로만 구성된 연속된 글
-- "헤드라인", "리드", "본문", "전시 정보" 같은 레이블/제목 절대 금지
-- 첫 문장부터 바로 내용 시작
+기사 형식:
+- 3~4개의 문단으로 구성된 일반 뉴스 기사
+- 섹션 제목이나 라벨 없이 바로 본문만 작성
+- 400~600자
 
-**올바른 예시:**
-"서울 시립 미술관에서 12월 12일부터 개최되는 '빛의 여정' 전시는 현대 도시와 자연의 관계를 탐구한다. 작가 홍길동은 이번 전시를 통해... 전시는 12월 30일까지 진행되며, 화요일부터 일요일 오전 10시부터 오후 6시까지 무료로 관람할 수 있다."
-
-**잘못된 예시 (절대 금지):**
-"헤드라인:
-제목...
-
-리드:
-내용...
-
-본문:
-내용..."
-
-작성 원칙:
-- 400~600자 분량
-- 성별 대명사 사용 금지 (작가, 아티스트 등 중립 표현만 사용)
-
-JSON 형식으로 응답:
-{ "pressRelease": "보도자료 내용" }
+{ "pressRelease": "기사 본문만 여기에 작성. 제목이나 섹션 구분 없이 문단만." }
 `,
 
   generateMarketingReport: (exhibitionData: any, context: string) => `
@@ -156,5 +140,24 @@ ${JSON.stringify(artistInfo, null, 2)}
 
 JSON 형식으로 응답:
 { "artistBio": "작가 소개 내용" }
+`,
+
+  summarizeConversation: (conversation: any[], exhibitionTitle: string) => `
+당신은 전시 기획 전문가입니다.
+다음은 전시 "${exhibitionTitle}" 기획 과정에서 큐레이터와 사용자 간의 대화입니다.
+이 대화 내용을 전시 기획 의도와 컨셉을 중심으로 요약해주세요.
+
+대화 내용:
+${conversation.map(msg => `${msg.role === 'user' ? '사용자' : '큐레이터'}: ${msg.content}`).join('\n\n')}
+
+요약 원칙:
+- 200~400자 분량
+- 전시의 핵심 컨셉과 기획 의도를 명확히 정리
+- 사용자가 원했던 방향성과 큐레이터의 제안을 종합
+- 객관적이고 전문적인 톤 유지
+- 불필요한 인사말이나 부가적인 대화는 제외
+
+JSON 형식으로 응답:
+{ "summary": "요약 내용" }
 `
 }

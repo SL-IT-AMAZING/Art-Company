@@ -4,6 +4,8 @@ import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium-min'
 import { postProcessLLMOutput, replaceTBDPlaceholders } from '@/lib/utils/textPostProcessor'
 import { marked } from 'marked'
+import { openai } from '@/lib/openai/client'
+import { PROMPTS } from '@/lib/openai/prompts'
 
 // Configure marked for safe HTML output
 marked.setOptions({
@@ -65,6 +67,36 @@ export async function POST(req: NextRequest) {
     console.log('[PDF] curator_conversation:', exhibition.curator_conversation?.length || 0, 'messages')
     if (exhibition.curator_conversation?.length > 0) {
       console.log('[PDF] First message:', JSON.stringify(exhibition.curator_conversation[0]).substring(0, 100))
+    }
+
+    // Summarize conversation if exists
+    let conversationSummary = ''
+    if (exhibition.curator_conversation && exhibition.curator_conversation.length > 0) {
+      try {
+        console.log('[PDF] Summarizing conversation...')
+        const summaryResponse = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: PROMPTS.summarizeConversation(exhibition.curator_conversation, exhibition.title || '무제')
+            }
+          ],
+          temperature: 0.5,
+          max_tokens: 1000,
+        })
+
+        const summaryText = summaryResponse.choices[0]?.message?.content || ''
+        try {
+          const parsed = JSON.parse(summaryText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim())
+          conversationSummary = parsed.summary || ''
+        } catch {
+          conversationSummary = summaryText
+        }
+        console.log('[PDF] Conversation summary generated:', conversationSummary.substring(0, 100))
+      } catch (error) {
+        console.error('[PDF] Failed to summarize conversation:', error)
+      }
     }
 
     // Fetch exhibition content
@@ -465,15 +497,12 @@ export async function POST(req: NextRequest) {
             ${exhibition.admission_fee ? `<p><strong>입장료:</strong> ${exhibition.admission_fee}</p>` : ''}
             ${exhibition.contact_info ? `<p><strong>문의:</strong> ${exhibition.contact_info}</p>` : ''}
 
-            ${exhibition.curator_conversation && exhibition.curator_conversation.length > 0 ? `
+            ${conversationSummary ? `
               <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #E2E8F0;">
-                ${exhibition.curator_conversation
-                  .filter((msg: any) => msg.role !== 'system')
-                  .map((msg: any) => `
-                    <p style="margin-bottom: 16px; color: #475569; line-height: 1.8;">
-                      ${msg.content}
-                    </p>
-                  `).join('')}
+                <h3 style="font-size: 16px; margin-bottom: 12px; color: #1E293B;">기획 의도</h3>
+                <p style="color: #475569; line-height: 1.8; text-align: justify; word-break: keep-all;">
+                  ${conversationSummary}
+                </p>
               </div>
             ` : ''}
           </div>

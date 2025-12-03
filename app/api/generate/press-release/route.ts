@@ -62,44 +62,51 @@ export async function POST(req: Request) {
     // Get RAG context for press releases
     const ragContext = await getRAGContext('press_release')
 
-    const prompt = `당신은 전문 미술 전시 보도자료 작성자입니다.
+    const prompt = `당신은 신문 기사를 작성하는 기자입니다.
 
-아래 정보를 바탕으로 전문적인 보도자료를 작성해주세요:
+아래 전시 정보를 바탕으로 뉴스 기사 형태의 보도자료를 작성해주세요.
 
 전시 제목: ${title}
 ${artistName ? `작가: ${artistName}` : ''}
 키워드: ${keywords.join(', ')}
 ${introduction ? `전시 소개: ${introduction}` : ''}
-${preface ? `서문: ${preface}` : ''}
 ${exhibitionInfoText}
 
 ${ragContext}
 
-보도자료는 다음 형식을 따라야 합니다:
-- 헤드라인 (간결하고 임팩트 있게)
-- 리드 (핵심 내용 요약)
-- 본문 (전시 상세 정보, 작가 소개, 전시 의의)
-- 전시 정보 (위에 제공된 날짜, 장소, 입장료 정보를 정확히 포함)
-
-한국어로 작성하고, 전문적이고 공식적인 톤을 유지하세요.`
+**중요 규칙:**
+- "헤드라인", "리드", "본문", "전시 정보" 같은 섹션 제목/라벨 없이 작성
+- 3~4개 문단으로 구성된 연속된 글로 작성
+- 첫 문장부터 바로 내용 시작
+- 마지막 문단에 전시 기간, 장소, 운영시간 등을 자연스럽게 포함
+- 400~600자 분량
+- 전문적이고 공식적인 톤 유지`
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: '당신은 전문 미술 전시 보도자료 작성자입니다.',
+          content: '당신은 뉴스 기사를 작성하는 기자입니다. 절대로 "헤드라인:", "리드:", "본문:", "전시 정보:" 같은 섹션 제목을 사용하지 마세요. 바로 기사 내용만 작성하세요.',
         },
         {
           role: 'user',
           content: prompt,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.5,
       max_tokens: 1500,
     })
 
-    const pressRelease = completion.choices[0]?.message?.content || ''
+    let pressRelease = completion.choices[0]?.message?.content || ''
+
+    // 후처리: 섹션 제목 제거
+    pressRelease = pressRelease
+      .replace(/^#+\s*.+\n+/gm, '') // 마크다운 헤딩 제거
+      .replace(/^(헤드라인|리드|본문|전시\s*정보)\s*[:：]\s*\n?/gim, '') // 섹션 라벨 제거
+      .replace(/^(Headline|Lead|Body)\s*[:：]\s*\n?/gim, '') // 영문 라벨 제거
+      .replace(/\n{3,}/g, '\n\n') // 3줄 이상 빈줄을 2줄로
+      .trim()
 
     return new Response(
       JSON.stringify({ pressRelease }),
