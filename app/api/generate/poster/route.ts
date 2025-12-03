@@ -4,6 +4,15 @@ import OpenAI from 'openai'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium-min'
 import { analyzeArtworksForPoster, ArtworkStyleAnalysis } from '@/lib/openai/artwork-analysis'
+import {
+  PosterMode,
+  TemplateStyle,
+  ArtworkLayout,
+  PosterData,
+  FontPresetId,
+  generatePosterHTML,
+  selectTemplateFromAnalysis,
+} from '@/lib/poster-templates'
 
 // Remote chromium URL for Vercel serverless (official Sparticuz release)
 const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
@@ -11,190 +20,6 @@ const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v1
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
-
-// Helper to create poster HTML with text overlay
-function createPosterHTML(
-  backgroundUrl: string,
-  title: string,
-  artistName: string,
-  dateRange: string,
-  venue: string,
-  location: string
-): string {
-  const safeTitle = title || '제목 없음'
-  const safeArtist = artistName || ''
-  const safeDateRange = dateRange || ''
-  const safeVenue = venue || ''
-  const safeLocation = location || ''
-
-  // Calculate appropriate font size based on title length
-  const getTitleFontSize = (text: string) => {
-    const len = text.length
-    if (len <= 8) return 72
-    if (len <= 12) return 64
-    if (len <= 18) return 54
-    if (len <= 25) return 46
-    if (len <= 35) return 38
-    return 32
-  }
-
-  const titleFontSize = getTitleFontSize(safeTitle)
-
-  return `
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        body {
-          width: 1024px;
-          height: 1792px;  /* DALL-E 3 portrait ratio */
-          overflow: hidden;
-          font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        .poster-container {
-          position: relative;
-          width: 100%;
-          height: 100%;
-        }
-
-        .background {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .text-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 60px 40px;
-        }
-
-        .title-section {
-          background: transparent;
-          padding: 60px 50px;
-          text-align: center;
-          max-width: 100%;
-        }
-
-        .title {
-          font-size: ${titleFontSize}px;
-          font-weight: 700;
-          color: #FFFFFF;
-          line-height: 1.2;
-          margin-bottom: 24px;
-          word-break: keep-all;
-          overflow-wrap: break-word;
-          max-width: 100%;
-          text-shadow: 0 2px 20px rgba(0,0,0,0.5), 0 4px 40px rgba(0,0,0,0.3);
-          letter-spacing: -0.02em;
-          display: -webkit-box;
-          -webkit-line-clamp: 4;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .artist {
-          font-size: ${Math.max(28, titleFontSize * 0.45)}px;
-          font-weight: 400;
-          color: #FFFFFF;
-          word-break: keep-all;
-          overflow-wrap: break-word;
-          max-width: 100%;
-          text-shadow: 0 2px 15px rgba(0,0,0,0.5);
-          letter-spacing: 0.05em;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .details-section {
-          background: transparent;
-          padding: 50px;
-          text-align: center;
-          max-width: 100%;
-        }
-
-        .details {
-          font-size: 26px;
-          font-weight: 400;
-          color: #FFFFFF;
-          line-height: 1.6;
-          text-shadow: 0 2px 15px rgba(0,0,0,0.5);
-        }
-
-        .details p {
-          margin: 8px 0;
-          word-break: keep-all;
-          overflow-wrap: break-word;
-          max-width: 100%;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .details .date {
-          font-size: 30px;
-          font-weight: 500;
-          color: #FFFFFF;
-          margin-bottom: 16px;
-          letter-spacing: 0.02em;
-        }
-
-        .details .venue {
-          font-size: 26px;
-          font-weight: 400;
-        }
-
-        .details .location {
-          font-size: 22px;
-          color: rgba(255,255,255,0.85);
-          margin-top: 8px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="poster-container">
-        <img class="background" src="${backgroundUrl}" alt="Background" />
-
-        <div class="text-overlay">
-          <div class="title-section">
-            <h1 class="title">${safeTitle}</h1>
-            ${safeArtist ? `<p class="artist">${safeArtist}</p>` : ''}
-          </div>
-
-          <div class="details-section">
-            <div class="details">
-              ${safeDateRange ? `<p class="date">${safeDateRange}</p>` : ''}
-              ${safeVenue ? `<p class="venue">${safeVenue}</p>` : ''}
-              ${safeLocation ? `<p class="location">${safeLocation}</p>` : ''}
-            </div>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
-}
 
 export async function POST(req: NextRequest) {
   let browser = null
@@ -229,6 +54,12 @@ export async function POST(req: NextRequest) {
       exhibitionEndDate,
       venue,
       location,
+      // New parameters
+      mode = 'ai-background' as PosterMode,
+      template = 'swiss-minimalist' as TemplateStyle,
+      font = 'helvetica-clean' as FontPresetId,
+      artworkLayout = 'single-large' as ArtworkLayout,
+      artworkUrls = [] as string[],
     } = requestBody
 
     // Validate exhibition ID
@@ -241,22 +72,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Format dates for display
-    const formatDate = (dateStr: string) => {
-      if (!dateStr) return ''
-      const date = new Date(dateStr)
-      return date.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    }
+    console.log(`[Poster] Mode: ${mode}, Template: ${template}, Layout: ${artworkLayout}`)
 
-    const dateRange = exhibitionDate
-      ? exhibitionEndDate
-        ? `${formatDate(exhibitionDate)} - ${formatDate(exhibitionEndDate)}`
-        : formatDate(exhibitionDate)
-      : ''
+    // Create poster data object
+    const posterData: PosterData = {
+      exhibitionId,
+      title,
+      artistName,
+      exhibitionDate,
+      exhibitionEndDate,
+      venue,
+      location,
+      keywords,
+      artworkUrls: artworkUrls.filter(Boolean),
+    }
 
     // Fetch artworks for the exhibition (for style analysis)
     let artworkImageUrls: string[] = []
@@ -275,104 +104,122 @@ export async function POST(req: NextRequest) {
 
     // Analyze artworks for style-informed poster generation
     let artworkAnalysis: ArtworkStyleAnalysis | null = null
+    let recommendedTemplate: TemplateStyle | undefined = undefined
 
     if (artworkImageUrls.length > 0) {
       try {
         console.log(`[Poster] Analyzing ${Math.min(artworkImageUrls.length, 4)} artworks for style...`)
         artworkAnalysis = await analyzeArtworksForPoster(artworkImageUrls)
         console.log('[Poster] Artwork analysis complete:', JSON.stringify(artworkAnalysis, null, 2))
+
+        // Auto-select template based on artwork analysis
+        recommendedTemplate = selectTemplateFromAnalysis(artworkAnalysis)
+        console.log(`[Poster] Recommended template: ${recommendedTemplate}`)
       } catch (analysisError: unknown) {
         const errorMessage = analysisError instanceof Error ? analysisError.message : String(analysisError)
         console.error('[Poster] Artwork analysis failed, proceeding without:', errorMessage)
       }
     }
 
-    // Create DALL-E 3 prompt with strong anti-mockup instructions
-    const keywordList = keywords?.join(', ') || 'contemporary art, modern, abstract'
-    let backgroundPrompt: string
+    // Determine background URL based on mode
+    let backgroundUrl: string | null = null
 
-    if (artworkAnalysis) {
-      backgroundPrompt = `Create a PURE PAINTING, NOT a mockup or product image.
+    // Both modes now generate AI backgrounds based on artwork analysis
+    if (mode === 'ai-background' || mode === 'artwork-photo') {
+      console.log(`[Poster] Generating background with DALL-E 3 (mode: ${mode})...`)
+
+      const keywordList = keywords?.join(', ') || 'contemporary art, modern, abstract'
+      let backgroundPrompt: string
+
+      if (artworkAnalysis) {
+        // Use artwork analysis to create inspired background
+        const inspirationNote = mode === 'artwork-photo'
+          ? 'This background is INSPIRED BY the artwork style but creates a new composition suitable for a poster background.'
+          : 'This background complements the exhibition theme.'
+
+        backgroundPrompt = `Create a PURE PAINTING for exhibition poster background, NOT a mockup.
+
+${inspirationNote}
 
 Style: ${artworkAnalysis.artStyle}
-Colors: ${artworkAnalysis.dominantColors.join(', ')}
+Color palette: ${artworkAnalysis.dominantColors.join(', ')}
 Mood: ${artworkAnalysis.mood}
-Visual elements: ${artworkAnalysis.visualElements.join(', ')}
+Visual elements to incorporate: ${artworkAnalysis.visualElements.join(', ')}
 
 CRITICAL REQUIREMENTS:
+- Create a NEW composition inspired by these elements
 - This must be a flat, 2D artistic painting that fills the ENTIRE canvas
 - Paint directly on the canvas surface with no borders or edges visible
 - NO frames, NO borders, NO shadows, NO 3D effects
-- NO mockups, NO posters-on-walls, NO gallery scenes
+- NO mockups, NO posters-on-walls, NO gallery scenes, NO text
 - NO white space, NO margins
 - The artwork must extend to ALL four edges seamlessly
-- Think of this as an original abstract painting, not a poster design`
-    } else {
-      backgroundPrompt = `Create a PURE ABSTRACT PAINTING for exhibition background.
+- Suitable as a background for overlaying exhibition text
+- Abstract or semi-abstract style that won't compete with text overlay`
+      } else {
+        backgroundPrompt = `Create a PURE ABSTRACT PAINTING for exhibition poster background.
 Theme: ${keywordList}
 
-CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, fills entire canvas edge-to-edge seamlessly. This is NOT a poster mockup, it's an original painting.`
-    }
+CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, NO text. Fills entire canvas edge-to-edge seamlessly. This is a background suitable for text overlay.`
+      }
 
-    // Generate background with DALL-E 3
-    console.log('[Poster] Generating background with DALL-E 3...')
-    let backgroundUrl: string | null = null
-    let lastError: any = null
-    const maxRetries = 2
+      let lastError: any = null
+      const maxRetries = 2
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`[Poster] DALL-E 3 attempt ${attempt}/${maxRetries}`)
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[Poster] DALL-E 3 attempt ${attempt}/${maxRetries}`)
 
-        const response = await openai.images.generate({
-          model: 'dall-e-3',
-          prompt: backgroundPrompt,
-          size: '1024x1792',
-          quality: 'hd',
-          n: 1,
-        })
+          const response = await openai.images.generate({
+            model: 'dall-e-3',
+            prompt: backgroundPrompt,
+            size: '1024x1792',
+            quality: 'hd',
+            n: 1,
+          })
 
-        backgroundUrl = response.data?.[0]?.url ?? null
-        if (backgroundUrl) {
-          console.log('[Poster] DALL-E 3 generation successful')
-          break
+          backgroundUrl = response.data?.[0]?.url ?? null
+          if (backgroundUrl) {
+            console.log('[Poster] DALL-E 3 generation successful')
+            break
+          }
+        } catch (imageError: any) {
+          lastError = imageError
+          console.error(`[Poster] DALL-E 3 attempt ${attempt} failed:`, imageError?.message || imageError)
+
+          // Don't retry on certain errors
+          if (imageError?.status === 400 || imageError?.status === 401) {
+            break
+          }
+
+          // Wait before retry (exponential backoff)
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
+          }
         }
-      } catch (imageError: any) {
-        lastError = imageError
-        console.error(`[Poster] DALL-E 3 attempt ${attempt} failed:`, imageError?.message || imageError)
+      }
 
-        // Don't retry on certain errors
-        if (imageError?.status === 400 || imageError?.status === 401) {
-          break
-        }
-
-        // Wait before retry (exponential backoff)
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
-        }
+      if (!backgroundUrl) {
+        console.error('[Poster] All DALL-E 3 attempts failed')
+        return NextResponse.json(
+          {
+            error: 'Failed to generate poster background. Please try again later.',
+            details: lastError?.message || 'Image generation service unavailable'
+          },
+          { status: 503 }
+        )
       }
     }
 
-    if (!backgroundUrl) {
-      console.error('[Poster] All DALL-E 3 attempts failed')
-      return NextResponse.json(
-        {
-          error: 'Failed to generate poster background. Please try again later.',
-          details: lastError?.message || 'Image generation service unavailable'
-        },
-        { status: 503 }
-      )
-    }
-
-    // Create HTML with text overlay
-    console.log('[Poster] Creating poster HTML with Korean text...')
-    const posterHtml = createPosterHTML(
-      backgroundUrl,
-      title,
-      artistName || '',
-      dateRange,
-      venue || '',
-      location || ''
+    // Generate HTML using new template system
+    console.log(`[Poster] Generating HTML with template: ${template}, font: ${font}`)
+    const posterHtml = generatePosterHTML(
+      mode,
+      template,
+      posterData,
+      backgroundUrl || undefined,
+      undefined, // artworkLayout is no longer used
+      font
     )
 
     // Launch Puppeteer - detect environment
@@ -453,6 +300,7 @@ CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, fills entire canv
       return NextResponse.json({
         posterUrl: dataUrl,
         message: 'Poster generated (upload failed, using data URL)',
+        recommendedTemplate,
       })
     }
 
@@ -478,7 +326,10 @@ CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, fills entire canv
     console.log('[Poster] Success!')
     return NextResponse.json({
       posterUrl: publicUrl,
-      message: 'Poster generated successfully with perfect Korean text',
+      message: `Poster generated successfully with ${template} template`,
+      template,
+      mode,
+      recommendedTemplate,
     })
   } catch (error: any) {
     console.error('[Poster] Generate poster error:', error)
