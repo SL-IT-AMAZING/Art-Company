@@ -232,7 +232,7 @@ export function generateClassicElegantHTML(
           width: 100%;
           height: 100%;
           object-fit: cover;
-          opacity: 0.25;
+          opacity: 1;
         }
 
         /* Subtle vignette effect */
@@ -259,7 +259,7 @@ export function generateClassicElegantHTML(
           height: 100%;
           padding: ${layout.padding.top}px ${layout.padding.right}px ${layout.padding.bottom}px ${layout.padding.left}px;
           z-index: 1;
-          background: rgba(250, 250, 249, ${colorScheme.backgroundOpacity});
+          background: transparent;
         }
 
         ${template.customCSS}
