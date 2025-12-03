@@ -399,7 +399,10 @@ export async function POST(req: NextRequest) {
         <!-- Exhibition Planning -->
         <div class="page">
           <h2>전시 기획</h2>
+
+          <!-- Basic Information -->
           <div class="planning-section">
+            <h3 style="font-size: 18px; margin-bottom: 15px; color: #1E293B;">전시 개요</h3>
             ${exhibition.keywords && exhibition.keywords.length > 0 ? `<p><strong>전시 키워드:</strong> ${exhibition.keywords.join(', ')}</p>` : ''}
             ${exhibition.exhibition_date ? `<p><strong>전시 기간:</strong> ${exhibition.exhibition_date}${exhibition.exhibition_end_date ? ` ~ ${exhibition.exhibition_end_date}` : ''}</p>` : ''}
             ${exhibition.venue ? `<p><strong>전시 장소:</strong> ${exhibition.venue}</p>` : ''}
@@ -407,27 +410,38 @@ export async function POST(req: NextRequest) {
             ${exhibition.opening_hours ? `<p><strong>운영 시간:</strong> ${exhibition.opening_hours}</p>` : ''}
             ${exhibition.admission_fee ? `<p><strong>입장료:</strong> ${exhibition.admission_fee}</p>` : ''}
             ${exhibition.contact_info ? `<p><strong>문의:</strong> ${exhibition.contact_info}</p>` : ''}
-
-            ${exhibition.curator_conversation && exhibition.curator_conversation.length > 0 ? `
-            <div style="margin-top: 30px;">
-              <h3 style="font-size: 18px; margin-bottom: 15px; color: #1E293B;">AI 큐레이터와의 대화</h3>
-              <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border-left: 4px solid #3B82F6;">
-                ${exhibition.curator_conversation
-                  .filter((msg: any) => msg.role !== 'system')
-                  .map((msg: any) => `
-                    <div style="margin-bottom: 15px;">
-                      <strong style="color: ${msg.role === 'user' ? '#059669' : '#3B82F6'};">
-                        ${msg.role === 'user' ? '사용자' : 'AI 큐레이터'}:
-                      </strong>
-                      <p style="margin: 5px 0 0 0; color: #475569; line-height: 1.6;">
-                        ${msg.content}
-                      </p>
-                    </div>
-                  `).join('')}
-              </div>
-            </div>
-            ` : ''}
           </div>
+
+          <!-- AI Curator Conversation -->
+          ${exhibition.curator_conversation && exhibition.curator_conversation.length > 0 ? `
+          <div class="planning-section" style="margin-top: 30px;">
+            <h3 style="font-size: 18px; margin-bottom: 15px; color: #1E293B;">AI 큐레이터와의 대화</h3>
+            <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border-left: 4px solid #3B82F6;">
+              ${exhibition.curator_conversation
+                .filter((msg: any) => msg.role !== 'system')
+                .map((msg: any) => `
+                  <div style="margin-bottom: 15px;">
+                    <strong style="color: ${msg.role === 'user' ? '#059669' : '#3B82F6'};">
+                      ${msg.role === 'user' ? '사용자' : 'AI 큐레이터'}:
+                    </strong>
+                    <p style="margin: 5px 0 0 0; color: #475569; line-height: 1.6;">
+                      ${msg.content}
+                    </p>
+                  </div>
+                `).join('')}
+            </div>
+          </div>
+          ` : `
+          <div class="planning-section" style="margin-top: 30px;">
+            <h3 style="font-size: 18px; margin-bottom: 15px; color: #1E293B;">전시 기획 노트</h3>
+            <div style="background: #F8FAFC; padding: 20px; border-radius: 8px; border-left: 4px solid #94A3B8;">
+              <p style="margin: 0; color: #64748B; line-height: 1.6;">
+                이 전시는 ${exhibition.keywords && exhibition.keywords.length > 0 ? exhibition.keywords.join(', ') : '다양한 주제'}를 바탕으로 기획되었습니다.
+              </p>
+            </div>
+          </div>
+          `}
+        </div>
         </div>
 
         <!-- Artworks -->
