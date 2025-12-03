@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium-min'
 import { postProcessLLMOutput, replaceTBDPlaceholders } from '@/lib/utils/textPostProcessor'
+import { marked } from 'marked'
+
+// Configure marked for safe HTML output
+marked.setOptions({
+  breaks: true, // Convert \n to <br>
+  gfm: true, // GitHub Flavored Markdown
+})
 
 // Remote chromium URL for Vercel serverless (official Sparticuz release)
 const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
@@ -70,13 +77,17 @@ export async function POST(req: NextRequest) {
       .eq('exhibition_id', exhibitionId)
       .order('order_index', { ascending: true })
 
+    console.log('[PDF] Artworks found:', artworks?.length || 0, artworks?.map(a => ({ title: a.title, desc: a.description?.substring(0, 30) })))
+
     // Fetch posters - get the latest poster (not filtering by is_primary to ensure we always get one)
-    const { data: posters } = await supabase
+    const { data: posters, error: postersError } = await supabase
       .from('posters')
       .select('*')
       .eq('exhibition_id', exhibitionId)
       .order('created_at', { ascending: false })
       .limit(1)
+
+    console.log('[PDF] Posters found:', posters?.length || 0, postersError ? `Error: ${postersError.message}` : '')
 
     // Content mapping helper with post-processing for gender-neutral language
     const getContent = (type: string) => {
@@ -161,8 +172,8 @@ export async function POST(req: NextRequest) {
         admission_fee: exhibition.admission_fee,
       })
 
-      // Convert newlines to <br> tags for HTML rendering
-      result = result.replace(/\n/g, '<br>')
+      // Convert markdown to HTML
+      result = marked.parse(result) as string
 
       return result
     }
@@ -248,44 +259,82 @@ export async function POST(req: NextRequest) {
             color: #475569;
             text-align: justify;
             word-break: keep-all;
-            white-space: pre-wrap;
+          }
+
+          /* Markdown content styles */
+          .content-area {
+            font-size: 16px;
+            line-height: 1.9;
+            color: #475569;
+          }
+
+          .content-area h1, .content-area h2, .content-area h3 {
+            margin-top: 24px;
+            margin-bottom: 12px;
+            color: #1E293B;
+          }
+
+          .content-area h1 { font-size: 24px; }
+          .content-area h2 { font-size: 20px; border-bottom: none; }
+          .content-area h3 { font-size: 18px; }
+
+          .content-area ul, .content-area ol {
+            margin: 16px 0;
+            padding-left: 24px;
+          }
+
+          .content-area li {
+            margin-bottom: 8px;
+          }
+
+          .content-area strong {
+            color: #1E293B;
+            font-weight: 600;
+          }
+
+          .content-area blockquote {
+            border-left: 4px solid #D4C5B9;
+            padding-left: 16px;
+            margin: 16px 0;
+            color: #64748B;
+            font-style: italic;
           }
 
           .artworks-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 24px;
-            justify-content: flex-start;
+            gap: 32px;
+            justify-content: center;
           }
 
           .artwork-item {
-            width: calc(50% - 12px);
+            width: calc(50% - 16px);
             text-align: center;
             page-break-inside: avoid;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
           }
 
           .artwork-item img {
             max-width: 100%;
-            max-height: 200px;
+            max-height: 400px;
             width: auto;
             height: auto;
             object-fit: contain;
             border-radius: 4px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
           }
 
           .artwork-title {
-            font-size: 14px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 4px;
-            color: #1E293B;
+            margin-bottom: 8px;
+            color: #000000;
           }
 
           .artwork-desc {
-            font-size: 12px;
-            color: #64748B;
-            line-height: 1.5;
+            font-size: 16px;
+            color: #000000;
+            line-height: 1.6;
           }
 
           .planning-section {
@@ -366,7 +415,7 @@ export async function POST(req: NextRequest) {
             ? `
         <div class="page">
           <h2>전시 소개</h2>
-          <p>${getContent('introduction')}</p>
+          <div class="content-area">${getContent('introduction')}</div>
         </div>
         `
             : ''
@@ -378,7 +427,7 @@ export async function POST(req: NextRequest) {
             ? `
         <div class="page">
           <h2>전시 서문</h2>
-          <p>${getContent('preface')}</p>
+          <div class="content-area">${getContent('preface')}</div>
         </div>
         `
             : ''
@@ -390,7 +439,7 @@ export async function POST(req: NextRequest) {
             ? `
         <div class="page">
           <h2>작가 소개</h2>
-          <p>${getContent('artist_bio')}</p>
+          <div class="content-area">${getContent('artist_bio')}</div>
         </div>
         `
             : ''
@@ -432,13 +481,12 @@ export async function POST(req: NextRequest) {
         <div class="page">
           <h2>작품</h2>
           <div class="artworks-grid">
-            ${artworks.map((artwork: any) => {
-              const isDefaultTitle = /^작품\s*\d+$/.test(artwork.title || '')
-              const displayTitle = isDefaultTitle ? '' : (artwork.title || '')
+            ${artworks.map((artwork: any, index: number) => {
+              const displayTitle = artwork.title || `작품 ${index + 1}`
               return `
               <div class="artwork-item">
                 ${artwork.image_url ? `<img src="${artwork.image_url}" alt="${displayTitle}">` : ''}
-                ${displayTitle ? `<div class="artwork-title">${displayTitle}</div>` : ''}
+                <div class="artwork-title">${displayTitle}</div>
                 ${artwork.description ? `<div class="artwork-desc">${artwork.description}</div>` : ''}
               </div>
               `
@@ -455,7 +503,7 @@ export async function POST(req: NextRequest) {
             ? `
         <div class="page">
           <h2>보도자료</h2>
-          <p>${getContent('press_release')}</p>
+          <div class="content-area">${getContent('press_release')}</div>
         </div>
         `
             : ''
@@ -467,7 +515,7 @@ export async function POST(req: NextRequest) {
             ? `
         <div class="page">
           <h2>마케팅 리포트</h2>
-          <p>${getContent('marketing_report')}</p>
+          <div class="content-area">${getContent('marketing_report')}</div>
         </div>
         `
             : ''

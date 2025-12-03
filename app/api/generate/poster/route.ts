@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Reference image is required' }, { status: 400 })
     }
 
-    console.log(`[Poster] Generating simple poster with original image`)
+    console.log(`[Poster] Generating simple poster with original image, exhibitionId: ${exhibitionId}`)
 
     // 이미지 비율 체크 및 여백 계산 (A2 규격: 4961 x 7016px)
     const POSTER_WIDTH = 4961
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 이미지가 포스터에 맞춰졌을 때 실제 크기 계산
-    const MIN_MARGIN = 720 // 최소 여백 높이 (A2 기준)
+    const MIN_MARGIN = 1080 // 최소 여백 높이 (A2 기준, 720 * 1.5)
     let headerHeight = MIN_MARGIN
     let footerHeight = MIN_MARGIN
 
@@ -188,6 +188,9 @@ export async function POST(req: NextRequest) {
       })
 
     let posterUrl: string
+    let savedToDb = false
+    let dbErrorMsg = ''
+    let uploadErrorMsg = ''
 
     if (!uploadError) {
       const {
@@ -206,9 +209,14 @@ export async function POST(req: NextRequest) {
 
       if (dbError) {
         console.error('[Poster] Failed to save to database:', dbError)
+        dbErrorMsg = dbError.message
+      } else {
+        console.log(`[Poster] Successfully saved poster to database for exhibition: ${exhibitionId}`)
+        savedToDb = true
       }
     } else {
       console.error('[Poster] Upload error:', uploadError)
+      uploadErrorMsg = uploadError.message
       const base64 = Buffer.from(imageBuffer).toString('base64')
       posterUrl = `data:image/png;base64,${base64}`
     }
@@ -220,6 +228,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       posters: [{ template: 'simple', url: posterUrl }],
       message: 'Generated simple poster successfully',
+      savedToDb,
+      dbError: dbErrorMsg,
+      uploadError: uploadErrorMsg,
+      exhibitionId,
     })
   } catch (error: unknown) {
     console.error('[Poster] Generate poster error:', error)

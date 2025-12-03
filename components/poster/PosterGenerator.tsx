@@ -129,6 +129,12 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
     setShowConfig(false)
     setShowPreview(false)
 
+    console.log('[PosterGenerator] Starting poster generation with:', {
+      exhibitionId: data.id,
+      title: posterTitle,
+      referenceImage: referenceImage?.substring(0, 50) + '...',
+    })
+
     try {
       const response = await fetch('/api/generate/poster', {
         method: 'POST',
@@ -155,6 +161,13 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
       if (!result.posters || result.posters.length === 0) {
         throw new Error('No posters returned')
       }
+
+      console.log('[PosterGenerator] API Response:', {
+        savedToDb: result.savedToDb,
+        dbError: result.dbError,
+        uploadError: result.uploadError,
+        exhibitionId: result.exhibitionId,
+      })
 
       setPosters(result.posters)
     } catch (err: unknown) {
@@ -368,7 +381,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
             <p className="text-muted-foreground">포스터를 생성하고 있습니다...</p>
             <p className="text-sm font-medium text-primary mt-2">
-              예상 소요시간: 약 30초
+              예상 소요시간: 약 1분
             </p>
           </div>
         )}

@@ -19,6 +19,52 @@ export interface SimplePosterData {
 }
 
 /**
+ * 제목 파싱 함수
+ * - 한글과 영어를 분리 (: 또는 - 구분자 기준)
+ * - 예: "빛의 여정: Journey of Light" → { korean: "빛의 여정", english: "Journey of Light" }
+ * - 뒷부분이 실제 영어인 경우에만 분리
+ */
+function parseTitle(title: string): { korean: string; english: string } {
+  if (!title) return { korean: '', english: '' }
+
+  const hasKorean = (str: string) => /[가-힣]/.test(str)
+  const hasEnglish = (str: string) => /[a-zA-Z]/.test(str)
+  const isMainlyEnglish = (str: string) => {
+    // 영어가 있고 한글이 없으면 영어로 판단
+    return hasEnglish(str) && !hasKorean(str)
+  }
+
+  // : 또는 - 로 분리 시도
+  const separators = [':', ' - ', ' – ']
+  for (const sep of separators) {
+    if (title.includes(sep)) {
+      const parts = title.split(sep).map(p => p.trim())
+      if (parts.length >= 2) {
+        const part1 = parts[0]
+        const part2 = parts.slice(1).join(sep)
+
+        // 한글 + 영어 조합인 경우에만 분리
+        if (hasKorean(part1) && isMainlyEnglish(part2)) {
+          return { korean: part1, english: part2 }
+        } else if (isMainlyEnglish(part1) && hasKorean(part2)) {
+          return { korean: part2, english: part1 }
+        }
+        // 둘 다 한글이면 분리하지 않음
+      }
+    }
+  }
+
+  // 구분자로 분리 안 되면 전체를 하나의 타이틀로
+  if (hasKorean(title)) {
+    return { korean: title, english: '' }
+  } else if (hasEnglish(title)) {
+    return { korean: '', english: title }
+  }
+
+  return { korean: title, english: '' }
+}
+
+/**
  * 날짜 포맷 함수
  * - 같은 년도: 2025.11.12 - 11.25
  * - 다른 년도: 2024.12.25 - 2025.01.15
@@ -63,6 +109,7 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
 
   const dateRange = formatDateRange(exhibitionDate, exhibitionEndDate)
   const imageContainerClass = isVertical ? 'image-container vertical' : 'image-container horizontal'
+  const { korean: koreanTitle, english: englishTitle } = parseTitle(title)
 
   return `<!DOCTYPE html>
 <html>
@@ -135,13 +182,30 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
       background: #FFFFFF;
     }
 
-    .title {
-      font-size: 350px;
+    .title-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+
+    .title-korean {
+      font-size: 320px;
       font-weight: 800;
       color: #1a1a1a;
       text-align: center;
-      line-height: 1.3;
+      line-height: 1.2;
       word-break: keep-all;
+    }
+
+    .title-english {
+      font-size: 280px;
+      font-weight: 600;
+      color: #1a1a1a;
+      text-align: center;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
     }
 
     /* 하단 정보 - 이미지 아래 영역 중앙 */
@@ -178,7 +242,10 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
 <body>
   <div class="poster">
     <div class="header">
-      <h1 class="title">${title || ''}</h1>
+      <div class="title-container">
+        ${koreanTitle ? `<h1 class="title-korean">${koreanTitle}</h1>` : ''}
+        ${englishTitle ? `<h2 class="title-english">${englishTitle}</h2>` : ''}
+      </div>
     </div>
 
     <div class="${imageContainerClass}">

@@ -38,11 +38,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch posters from posters table
-    const { data: posters } = await supabase
+    const { data: posters, error: postersError } = await supabase
       .from('posters')
       .select('image_url')
       .eq('exhibition_id', exhibitionId)
       .order('created_at', { ascending: false })
+
+    console.log(`[PDF] Fetched posters for exhibition ${exhibitionId}:`, posters?.length || 0, postersError || 'no error')
 
     // Fetch artworks from artworks table
     const { data: artworks } = await supabase

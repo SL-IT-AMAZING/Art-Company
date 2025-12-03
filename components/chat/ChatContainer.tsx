@@ -438,6 +438,7 @@ export function ChatContainer() {
               content: { text: artistBioData.artistBio },
             }),
           ])
+          // Note: Artwork titles/descriptions are preserved from original upload (edit-titles step)
         }
       }
     } catch (error) {
