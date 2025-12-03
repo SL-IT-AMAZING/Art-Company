@@ -369,18 +369,18 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           </div>
         )}
 
-        {/* Result State - Show all 4 posters */}
+        {/* Result State - Show all posters */}
         {posters.length > 0 && (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="font-semibold text-lg mb-2">생성된 포스터 (4가지 템플릿)</h3>
-              <p className="text-sm text-muted-foreground">마음에 드는 포스터를 다운로드하세요</p>
+              <h3 className="font-semibold text-lg mb-2">생성된 포스터</h3>
+              <p className="text-sm text-muted-foreground">포스터를 다운로드하세요</p>
             </div>
 
-            {/* Grid of 4 posters - 2x2 layout */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Center-aligned posters */}
+            <div className="flex flex-col items-center gap-6">
               {posters.map((poster) => (
-                <div key={poster.template} className="space-y-2">
+                <div key={poster.template} className="w-full max-w-md space-y-3">
                   <div className="relative aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
                     <img
                       src={poster.url}
@@ -388,28 +388,20 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-center">
-                      {templateNames[poster.template]}
-                      {poster.template === recommendedTemplate && (
-                        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">추천</span>
-                      )}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(poster.url, poster.template)}
-                      disabled={isDownloading}
-                      className="w-full"
-                    >
-                      {isDownloading ? (
-                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                      ) : (
-                        <Download className="w-3 h-3 mr-1" />
-                      )}
-                      다운로드
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => handleDownload(poster.url, poster.template)}
+                    disabled={isDownloading}
+                    className="w-full"
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    다운로드
+                  </Button>
                 </div>
               ))}
             </div>
