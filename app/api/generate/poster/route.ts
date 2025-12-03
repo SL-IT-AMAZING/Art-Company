@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
       font = 'helvetica-clean' as FontPresetId,
       artworkLayout = 'single-large' as ArtworkLayout,
       artworkUrls = [] as string[],
+      referenceImage = null as string | null,
     } = requestBody
 
     // Validate exhibition ID
@@ -87,29 +88,43 @@ export async function POST(req: NextRequest) {
       artworkUrls: artworkUrls.filter(Boolean),
     }
 
-    // Fetch artworks for the exhibition (for style analysis)
-    let artworkImageUrls: string[] = []
-    const { data: artworks, error: artworksError } = await supabase
-      .from('artworks')
-      .select('image_url')
-      .eq('exhibition_id', exhibitionId)
-      .order('order_index', { ascending: true })
+    // Use artworkUrls from request (images uploaded by user)
+    let artworkImageUrls: string[] = artworkUrls.filter(Boolean)
 
-    if (artworksError) {
-      console.error('[Poster] Failed to fetch artworks:', artworksError)
+    // If no artworks in request, try fetching from database (for existing exhibitions)
+    if (artworkImageUrls.length === 0 && exhibitionId) {
+      const { data: artworks, error: artworksError } = await supabase
+        .from('artworks')
+        .select('image_url')
+        .eq('exhibition_id', exhibitionId)
+        .order('order_index', { ascending: true })
+
+      if (artworksError) {
+        console.error('[Poster] Failed to fetch artworks:', artworksError)
+      } else {
+        artworkImageUrls = artworks?.map((a) => a.image_url).filter(Boolean) || []
+        console.log(`[Poster] Found ${artworkImageUrls.length} artworks from database`)
+      }
     } else {
-      artworkImageUrls = artworks?.map((a) => a.image_url).filter(Boolean) || []
-      console.log(`[Poster] Found ${artworkImageUrls.length} artworks for analysis`)
+      console.log(`[Poster] Using ${artworkImageUrls.length} artworks from request`)
     }
 
     // Analyze artworks for style-informed poster generation
     let artworkAnalysis: ArtworkStyleAnalysis | null = null
     let recommendedTemplate: TemplateStyle | undefined = undefined
 
-    if (artworkImageUrls.length > 0) {
+    // Use only reference image if provided, otherwise analyze up to 4 artworks
+    const imagesToAnalyze = referenceImage
+      ? [referenceImage]
+      : artworkImageUrls.slice(0, 4)
+
+    if (imagesToAnalyze.length > 0) {
       try {
-        console.log(`[Poster] Analyzing ${Math.min(artworkImageUrls.length, 4)} artworks for style...`)
-        artworkAnalysis = await analyzeArtworksForPoster(artworkImageUrls)
+        console.log(`[Poster] Analyzing ${Math.min(imagesToAnalyze.length, 4)} artworks for style...`)
+        if (referenceImage) {
+          console.log(`[Poster] Using reference image as primary guide: ${referenceImage}`)
+        }
+        artworkAnalysis = await analyzeArtworksForPoster(imagesToAnalyze)
         console.log('[Poster] Artwork analysis complete:', JSON.stringify(artworkAnalysis, null, 2))
 
         // Auto-select template based on artwork analysis
@@ -121,106 +136,71 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Determine background URL based on mode
+    // Generate single background based on the artwork
     let backgroundUrl: string | null = null
 
-    // Both modes now generate AI backgrounds based on artwork analysis
     if (mode === 'ai-background' || mode === 'artwork-photo') {
-      console.log(`[Poster] Generating background with DALL-E 3 (mode: ${mode})...`)
+      console.log(`[Poster] Generating background based on artwork...`)
 
-      const keywordList = keywords?.join(', ') || 'contemporary art, modern, abstract'
       let backgroundPrompt: string
 
       if (artworkAnalysis) {
-        // Use artwork analysis to create inspired background
-        const inspirationNote = mode === 'artwork-photo'
-          ? 'This background is INSPIRED BY the artwork style but creates a new composition suitable for a poster background.'
-          : 'This background complements the exhibition theme.'
-
-        backgroundPrompt = `Create a PURE PAINTING for exhibition poster background, NOT a mockup.
-
-${inspirationNote}
+        backgroundPrompt = `Create an exhibition poster background using the reference artwork.
 
 Style: ${artworkAnalysis.artStyle}
-Color palette: ${artworkAnalysis.dominantColors.join(', ')}
-Mood: ${artworkAnalysis.mood}
-Visual elements to incorporate: ${artworkAnalysis.visualElements.join(', ')}
+Colors: ${artworkAnalysis.dominantColors.join(', ')}
 
-CRITICAL REQUIREMENTS:
-- Create a NEW composition inspired by these elements
-- This must be a flat, 2D artistic painting that fills the ENTIRE canvas
-- Paint directly on the canvas surface with no borders or edges visible
-- NO frames, NO borders, NO shadows, NO 3D effects
-- NO mockups, NO posters-on-walls, NO gallery scenes, NO text
-- NO white space, NO margins
-- The artwork must extend to ALL four edges seamlessly
-- Suitable as a background for overlaying exhibition text
-- Abstract or semi-abstract style that won't compete with text overlay`
+- Use similar style and colors from the reference
+- Full-bleed vertical poster (1024x1792)
+- No text, borders, or frames
+- Suitable for text overlay`
       } else {
-        backgroundPrompt = `Create a PURE ABSTRACT PAINTING for exhibition poster background.
-Theme: ${keywordList}
+        backgroundPrompt = `Create an abstract painting for exhibition poster.
 
-CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, NO text. Fills entire canvas edge-to-edge seamlessly. This is a background suitable for text overlay.`
+TECHNICAL REQUIREMENTS:
+- FULL-BLEED painting filling entire vertical canvas edge-to-edge
+- NO white space, NO margins, NO borders, NO text
+- All-over composition filling portrait rectangle
+- Every pixel is part of the artwork`
       }
 
-      let lastError: any = null
-      const maxRetries = 2
+      try {
+        const response = await openai.images.generate({
+          model: 'dall-e-3',
+          prompt: backgroundPrompt,
+          size: '1024x1792',
+          quality: 'hd',
+          n: 1,
+        })
 
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          console.log(`[Poster] DALL-E 3 attempt ${attempt}/${maxRetries}`)
-
-          const response = await openai.images.generate({
-            model: 'dall-e-3',
-            prompt: backgroundPrompt,
-            size: '1024x1792',
-            quality: 'hd',
-            n: 1,
-          })
-
-          backgroundUrl = response.data?.[0]?.url ?? null
-          if (backgroundUrl) {
-            console.log('[Poster] DALL-E 3 generation successful')
-            break
-          }
-        } catch (imageError: any) {
-          lastError = imageError
-          console.error(`[Poster] DALL-E 3 attempt ${attempt} failed:`, imageError?.message || imageError)
-
-          // Don't retry on certain errors
-          if (imageError?.status === 400 || imageError?.status === 401) {
-            break
-          }
-
-          // Wait before retry (exponential backoff)
-          if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
-          }
+        backgroundUrl = response.data?.[0]?.url ?? null
+        if (backgroundUrl) {
+          console.log(`[Poster] Background generated successfully`)
         }
-      }
-
-      if (!backgroundUrl) {
-        console.error('[Poster] All DALL-E 3 attempts failed')
+      } catch (imageError: any) {
+        console.error(`[Poster] Failed to generate background:`, imageError?.message)
         return NextResponse.json(
           {
             error: 'Failed to generate poster background. Please try again later.',
-            details: lastError?.message || 'Image generation service unavailable'
+          },
+          { status: 503 }
+        )
+      }
+
+      if (!backgroundUrl) {
+        console.error('[Poster] Background generation failed')
+        return NextResponse.json(
+          {
+            error: 'Failed to generate poster background. Please try again later.',
           },
           { status: 503 }
         )
       }
     }
 
-    // Generate HTML using new template system
-    console.log(`[Poster] Generating HTML with template: ${template}, font: ${font}`)
-    const posterHtml = generatePosterHTML(
-      mode,
-      template,
-      posterData,
-      backgroundUrl || undefined,
-      undefined, // artworkLayout is no longer used
-      font
-    )
+    // Generate single poster with the selected template
+    console.log(`[Poster] Generating poster with ${template} template`)
+    let posterUrl: string | null = null
 
     // Launch Puppeteer - detect environment
     console.log('[Poster] Launching browser for rendering...')
@@ -247,27 +227,34 @@ CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, NO text. Fills en
       })
     }
 
-    const page = await browser.newPage()
-    await page.setViewport({ width: 1024, height: 1792 })  // DALL-E 3 portrait ratio
+    // Generate single poster
+    console.log(`[Poster] Generating ${template} poster...`)
 
-    // Set content and wait for fonts to load
+    const posterHtml = generatePosterHTML(
+      mode,
+      template,
+      posterData,
+      backgroundUrl || '',
+      undefined,
+      font
+    )
+
+    const page = await browser.newPage()
+    await page.setViewport({ width: 1024, height: 1792 })
+
     await page.setContent(posterHtml, {
-      waitUntil: 'networkidle0', // Wait for all network requests (including fonts) to complete
+      waitUntil: 'networkidle0',
     })
 
-    // Take screenshot
-    console.log('[Poster] Taking screenshot...')
     const imageBuffer = await page.screenshot({
       type: 'png',
       fullPage: true,
     })
 
-    await browser.close()
-    browser = null
+    await page.close()
 
     // Upload to Supabase Storage
-    console.log('[Poster] Uploading to Supabase Storage...')
-    const fileName = `poster_${exhibitionId || 'temp'}_${Date.now()}.png`
+    const fileName = `poster_${exhibitionId || 'temp'}_${template}_${Date.now()}.png`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('posters')
       .upload(fileName, imageBuffer, {
@@ -275,58 +262,38 @@ CRITICAL: Flat 2D painting, NO mockups, NO frames, NO borders, NO text. Fills en
         upsert: false,
       })
 
-    if (uploadError) {
-      console.error('[Poster] Upload error:', uploadError)
-      // Fall back to returning a data URL if upload fails
+    if (!uploadError) {
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('posters').getPublicUrl(uploadData.path)
+      posterUrl = publicUrl
+    } else {
+      console.error(`[Poster] Upload error:`, uploadError)
       const base64 = Buffer.from(imageBuffer).toString('base64')
-      const dataUrl = `data:image/png;base64,${base64}`
-
-      // Still save to database with data URL so PDF can find it
-      if (exhibitionId) {
-        const { error: dbError } = await supabase.from('posters').insert({
-          exhibition_id: exhibitionId,
-          image_url: dataUrl,
-          is_primary: true,
-          created_at: new Date().toISOString(),
-        })
-
-        if (dbError) {
-          console.error('[Poster] Failed to save poster to database:', dbError)
-        } else {
-          console.log('[Poster] Saved poster with data URL to database')
-        }
-      }
-
-      return NextResponse.json({
-        posterUrl: dataUrl,
-        message: 'Poster generated (upload failed, using data URL)',
-        recommendedTemplate,
-      })
+      posterUrl = `data:image/png;base64,${base64}`
     }
 
-    // Get public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('posters').getPublicUrl(uploadData.path)
+    await browser.close()
+    browser = null
 
-    // Save poster record to database
-    if (exhibitionId) {
+    // Save poster to database
+    if (exhibitionId && posterUrl) {
       const { error: dbError } = await supabase.from('posters').insert({
         exhibition_id: exhibitionId,
-        image_url: publicUrl,
+        image_url: posterUrl,
         is_primary: true,
         created_at: new Date().toISOString(),
       })
 
       if (dbError) {
-        console.error('[Poster] Failed to save poster to database:', dbError)
+        console.error(`[Poster] Failed to save to database:`, dbError)
       }
     }
 
-    console.log('[Poster] Success!')
+    console.log('[Poster] Success! Generated poster')
     return NextResponse.json({
-      posterUrl: publicUrl,
-      message: `Poster generated successfully with ${template} template`,
+      posterUrl,
+      message: `Generated poster successfully`,
       template,
       mode,
       recommendedTemplate,

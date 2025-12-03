@@ -37,14 +37,14 @@ export const vibrantContemporaryTemplate: TemplateDefinition = {
       default: 74,
     },
     subtitleSize: {
-      min: 28,
-      max: 42,
-      default: 36,
+      min: 36,
+      max: 48,
+      default: 42,
     },
     detailsSize: {
-      min: 20,
-      max: 28,
-      default: 24,
+      min: 44,
+      max: 58,
+      default: 50,
     },
     letterSpacing: '-0.02em',
     lineHeight: 1.1,
@@ -118,17 +118,10 @@ export const vibrantContemporaryTemplate: TemplateDefinition = {
     }
 
     .artist {
-      margin-top: 28px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
+      font-weight: 700;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      font-size: 0.9em;
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      display: inline-block;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 0;
     }
 
     .details-section {
@@ -136,38 +129,41 @@ export const vibrantContemporaryTemplate: TemplateDefinition = {
       margin-top: auto;
       position: relative;
       z-index: 2;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(20px);
-      padding: 32px;
+      padding: 30px 40px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
     }
+
 
     .details {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
     }
 
     .details p {
       margin: 0;
-      font-weight: 600;
+      font-weight: 900;
     }
 
     .date {
-      font-size: 1.2em;
-      margin-bottom: 8px;
+      font-size: 1.1em;
+      margin-bottom: 0;
       color: #06B6D4;
     }
 
     .venue {
       font-size: 1em;
+      font-weight: 700;
     }
 
     .location {
-      font-size: 0.88em;
-      opacity: 0.8;
-      font-weight: 400;
+      font-size: 0.95em;
+      opacity: 0.9;
+      font-weight: 600;
     }
 
     /* Vibrant shadows */
@@ -293,7 +289,11 @@ export function generateVibrantContemporaryHTML(
         .details {
           font-family: 'Inter', 'Pretendard', sans-serif;
           font-size: ${typography.detailsSize.default}px;
-          color: ${colorScheme.primary};
+          color: #FFFFFF;
+        }
+
+        .date, .venue, .location, .artist {
+          color: #FFFFFF !important;
         }
       </style>
     </head>
@@ -306,11 +306,11 @@ export function generateVibrantContemporaryHTML(
           <div class="content-wrapper">
             <div class="title-section">
               <h1 class="title">${title || '전시회'}</h1>
-              ${artistName ? `<p class="artist">${artistName}</p>` : ''}
             </div>
 
             <div class="details-section">
               <div class="details">
+                ${artistName ? `<p class="artist">${artistName}</p>` : ''}
                 ${dateRange ? `<p class="date">${dateRange}</p>` : ''}
                 ${venue ? `<p class="venue">${venue}</p>` : ''}
                 ${location ? `<p class="location">${location}</p>` : ''}

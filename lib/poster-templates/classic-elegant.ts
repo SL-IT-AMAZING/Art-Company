@@ -30,21 +30,21 @@ export const classicElegantTemplate: TemplateDefinition = {
     titleFont: "'Playfair Display', 'Noto Serif KR', serif",
     bodyFont: "'Lato', 'Noto Sans KR', sans-serif",
     titleWeight: 700,
-    bodyWeight: 400,
+    bodyWeight: 600,
     titleSize: {
       min: 52,
       max: 76,
       default: 64,
     },
     subtitleSize: {
-      min: 26,
-      max: 38,
-      default: 32,
+      min: 36,
+      max: 48,
+      default: 42,
     },
     detailsSize: {
-      min: 19,
-      max: 26,
-      default: 22,
+      min: 44,
+      max: 58,
+      default: 50,
     },
     letterSpacing: '0.01em',
     lineHeight: 1.3,
@@ -88,10 +88,10 @@ export const classicElegantTemplate: TemplateDefinition = {
     }
 
     .artist {
-      font-weight: 300;
+      font-weight: 600;
       font-style: italic;
       letter-spacing: 0.05em;
-      margin-top: 20px;
+      margin-bottom: 0;
     }
 
     /* Elegant decorative elements */
@@ -131,35 +131,40 @@ export const classicElegantTemplate: TemplateDefinition = {
 
     .details-section {
       flex: 0 0 auto;
-      max-width: 75%;
+      max-width: 100%;
       margin-bottom: 3%;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 30px 40px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
     }
 
+
     .details {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
     }
 
     .details p {
       margin: 0;
-      font-weight: 300;
+      font-weight: 700;
     }
 
     .date {
-      font-weight: 400;
-      font-size: 1.15em;
-      margin-bottom: 10px;
+      font-weight: 900;
+      font-size: 1.1em;
+      margin-bottom: 0;
       letter-spacing: 0.03em;
     }
 
     .venue {
-      font-weight: 400;
+      font-weight: 700;
     }
 
     .location {
-      font-size: 0.9em;
-      opacity: 0.75;
+      font-size: 0.95em;
+      opacity: 0.95;
     }
 
     /* Subtle shadow for depth */
@@ -274,13 +279,17 @@ export function generateClassicElegantHTML(
         .artist {
           font-family: 'Playfair Display', 'Pretendard', serif;
           font-size: ${typography.subtitleSize.default}px;
-          color: ${colorScheme.secondary};
+          color: #FFFFFF;
         }
 
         .details {
           font-family: 'Lato', 'Pretendard', sans-serif;
           font-size: ${typography.detailsSize.default}px;
-          color: ${colorScheme.primary};
+          color: #FFFFFF;
+        }
+
+        .date, .venue, .location, .artist {
+          color: #FFFFFF !important;
         }
 
         .ornament {
@@ -296,14 +305,12 @@ export function generateClassicElegantHTML(
           <div class="content-wrapper">
             <div class="title-section">
               <h1 class="title">${title || '전시회'}</h1>
-              ${artistName ? `
-                <div class="ornament"></div>
-                <p class="artist">${artistName}</p>
-              ` : ''}
+              <div class="ornament"></div>
             </div>
 
             <div class="details-section">
               <div class="details">
+                ${artistName ? `<p class="artist">${artistName}</p>` : ''}
                 ${dateRange ? `<p class="date">${dateRange}</p>` : ''}
                 ${venue ? `<p class="venue">${venue}</p>` : ''}
                 ${location ? `<p class="location">${location}</p>` : ''}

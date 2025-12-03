@@ -11,6 +11,9 @@ export interface ArtworkStyleAnalysis {
   mood: string
   visualElements: string[]
   suggestedPosterStyle: string
+  detailedDescription: string
+  brushworkStyle: string
+  compositionStyle: string
 }
 
 /**
@@ -42,25 +45,32 @@ export async function analyzeArtworksForPoster(
         content: [
           {
             type: 'text',
-            text: `You are designing an exhibition poster background. Analyze these artworks to extract visual elements for the poster.
+            text: `You are designing an exhibition poster background that should CLOSELY RESEMBLE the provided artworks.
+
+${limitedUrls.length > 1 ? 'IMPORTANT: The FIRST image is the PRIMARY REFERENCE. Focus most heavily on matching its colors, textures, and style. Other images provide supporting context.' : ''}
+
+Analyze these artworks in EXTREME DETAIL to recreate a similar visual style:
 
 Return JSON:
 {
-  "dominantColors": ["specific color names like 'deep navy blue', 'warm coral', 'muted sage green'"],
-  "colorPalette": "How colors work together (e.g., 'warm earth tones with cool blue accents')",
-  "artStyle": "Specific style (e.g., 'fluid abstract with organic shapes', 'geometric minimalism', 'expressive brushwork')",
-  "mood": "Emotional quality (e.g., 'contemplative and serene', 'energetic and vibrant')",
-  "visualElements": ["specific motifs like 'flowing curves', 'sharp geometric shapes', 'soft gradients', 'textured surfaces'"],
-  "suggestedPosterStyle": "Describe the ideal poster background in 1-2 sentences, focusing on how to translate the artwork's essence into an abstract full-bleed background"
+  "dominantColors": ["exact color names with descriptors like 'deep navy blue #1a3a52', 'warm burnt sienna', 'soft cream white'"],
+  "colorPalette": "Precise color relationships and gradients (e.g., 'warm earth tones transitioning to cool blue-grays with touches of golden yellow')",
+  "artStyle": "VERY specific style description (e.g., 'loose impressionistic brushwork with visible texture', 'hard-edge geometric abstraction', 'layered mixed media with collage elements')",
+  "mood": "Emotional quality (e.g., 'contemplative and serene', 'energetic and dynamic')",
+  "visualElements": ["highly specific visual patterns like 'horizontal sweeping brushstrokes', 'overlapping circular forms', 'dripping paint effects', 'sharp angular intersections'"],
+  "suggestedPosterStyle": "2-3 sentences describing EXACTLY how to recreate this artwork's visual language as a full-bleed background",
+  "detailedDescription": "A detailed 3-4 sentence description of the artwork's visual appearance, textures, layering, and spatial composition that would allow someone to recreate a very similar piece",
+  "brushworkStyle": "Describe the mark-making technique (e.g., 'thick impasto with palette knife', 'smooth airbrushed gradients', 'gestural calligraphic strokes')",
+  "compositionStyle": "Describe the spatial arrangement (e.g., 'centered focal point with radiating elements', 'all-over field composition', 'asymmetric diagonal movement')"
 }
 
-Be specific and descriptive - these will be used to generate the actual poster background with DALL-E.`,
+CRITICAL: Be EXTREMELY specific and detailed. The goal is to create a background that looks like it came from the SAME ARTIST and SAME SERIES as these artworks.`,
           },
           ...imageContent,
         ],
       },
     ],
-    max_tokens: 800,
+    max_tokens: 1200,
     response_format: { type: 'json_object' },
   })
 

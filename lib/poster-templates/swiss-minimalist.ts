@@ -29,25 +29,25 @@ export const swissMinimalistTemplate: TemplateDefinition = {
   typography: {
     titleFont: "'Helvetica Neue', 'Arial', sans-serif",
     bodyFont: "'Helvetica Neue', 'Arial', sans-serif",
-    titleWeight: 700,
-    bodyWeight: 400,
+    titleWeight: 900,
+    bodyWeight: 600,
     titleSize: {
-      min: 48,
-      max: 84,
-      default: 68,
+      min: 80,
+      max: 140,
+      default: 110,
     },
     subtitleSize: {
-      min: 24,
-      max: 36,
-      default: 32,
+      min: 32,
+      max: 40,
+      default: 36,
     },
     detailsSize: {
-      min: 18,
-      max: 26,
-      default: 22,
+      min: 36,
+      max: 48,
+      default: 40,
     },
     letterSpacing: '-0.02em',
-    lineHeight: 1.1,
+    lineHeight: 1.05,
   },
 
   layout: {
@@ -86,11 +86,15 @@ export const swissMinimalistTemplate: TemplateDefinition = {
     }
 
     .details-section {
-      grid-column: 1 / 8;
+      grid-column: 1 / 13;
       grid-row: 11 / 13;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 30px 40px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
     }
 
     /* Typography */
@@ -102,25 +106,33 @@ export const swissMinimalistTemplate: TemplateDefinition = {
     }
 
     .artist {
-      opacity: 0.8;
-      font-weight: 300;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-size: 0.4em;
+      font-weight: 600;
+      margin-bottom: 0;
     }
 
     .details {
-      line-height: 1.6;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
+      line-height: 1.8;
     }
 
     .details p {
-      margin: 6px 0;
-      font-weight: 300;
+      margin: 0;
+      font-weight: 700;
     }
 
     .date {
-      font-weight: 500;
-      margin-bottom: 12px;
+      font-weight: 900;
+      margin-bottom: 0;
+    }
+
+    .venue {
+      font-weight: 700;
+    }
+
+    .location {
+      font-weight: 700;
     }
 
     /* Minimal decorative line */
@@ -180,16 +192,19 @@ export function generateSwissMinimalistHTML(
         body {
           width: 1024px;
           height: 1792px;
+          margin: 0;
+          padding: 0;
           overflow: hidden;
           font-family: 'Pretendard', ${bodyFont};
           color: ${colorScheme.primary};
-          background: white;
+          background: black;
         }
 
         .poster-container {
           position: relative;
-          width: 100%;
-          height: 100%;
+          width: 1024px;
+          height: 1792px;
+          overflow: hidden;
         }
 
         .background {
@@ -199,6 +214,8 @@ export function generateSwissMinimalistHTML(
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center;
+          display: block;
         }
 
         .content-overlay {
@@ -217,26 +234,26 @@ export function generateSwissMinimalistHTML(
           font-weight: ${typography.titleWeight};
           line-height: ${typography.lineHeight};
           letter-spacing: ${typography.letterSpacing};
-          color: ${colorScheme.primary};
-          text-shadow:
-            0 2px 20px rgba(255, 255, 255, 0.9),
-            0 4px 40px rgba(255, 255, 255, 0.7);
+          color: #FFFFFF;
+          text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
         }
 
         .artist {
           font-size: ${typography.subtitleSize.default}px;
-          color: ${colorScheme.secondary};
-          text-shadow:
-            0 2px 15px rgba(255, 255, 255, 0.9),
-            0 4px 30px rgba(255, 255, 255, 0.7);
+          color: #FFFFFF;
+          font-weight: ${typography.bodyWeight};
+          text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.6);
         }
 
         .details {
           font-size: ${typography.detailsSize.default}px;
-          color: ${colorScheme.primary};
-          text-shadow:
-            0 2px 15px rgba(255, 255, 255, 0.9),
-            0 4px 30px rgba(255, 255, 255, 0.7);
+          color: #FFFFFF;
+          font-weight: ${typography.bodyWeight};
+          text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        .date, .venue, .location {
+          color: #FFFFFF !important;
         }
 
         .accent-line {
@@ -252,14 +269,16 @@ export function generateSwissMinimalistHTML(
           <div class="poster-grid">
             <div class="title-section">
               <h1 class="title">${title || '전시회'}</h1>
-              ${artistName ? `<p class="artist">${artistName}</p>` : ''}
               <div class="accent-line"></div>
             </div>
 
             <div class="details-section">
-              ${dateRange ? `<p class="date">${dateRange}</p>` : ''}
-              ${venue ? `<p class="venue">${venue}</p>` : ''}
-              ${location ? `<p class="location">${location}</p>` : ''}
+              <div class="details">
+                ${artistName ? `<p class="artist">${artistName}</p>` : ''}
+                ${dateRange ? `<p class="date">${dateRange}</p>` : ''}
+                ${venue ? `<p class="venue">${venue}</p>` : ''}
+                ${location ? `<p class="location">${location}</p>` : ''}
+              </div>
             </div>
           </div>
         </div>

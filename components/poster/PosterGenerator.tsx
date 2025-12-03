@@ -3,12 +3,15 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Download, ChevronLeft } from 'lucide-react'
+import { Loader2, Download, ChevronLeft, Edit2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { ExhibitionData } from '@/types/exhibition'
 import { PosterMode, TemplateStyle, FontPresetId } from '@/lib/poster-templates'
 import { PosterModeSelector } from './PosterModeSelector'
 import { TemplatePreview } from './TemplatePreview'
 import { FontSelector } from './FontSelector'
+import { ReferencePosterSelector } from './ReferencePosterSelector'
 
 interface PosterGeneratorProps {
   data: ExhibitionData
@@ -27,6 +30,17 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
   const [selectedFont, setSelectedFont] = useState<FontPresetId>('helvetica-clean')
   const [recommendedTemplate, setRecommendedTemplate] = useState<TemplateStyle>()
   const [showConfig, setShowConfig] = useState(true)
+  const [referenceImage, setReferenceImage] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+
+  // Editable poster info state
+  const [editableTitle, setEditableTitle] = useState(data.selectedTitle || '')
+  const [editableArtist, setEditableArtist] = useState(data.artistName || '')
+  const [editableStartDate, setEditableStartDate] = useState(data.exhibitionDate || '')
+  const [editableEndDate, setEditableEndDate] = useState(data.exhibitionEndDate || '')
+  const [editableVenue, setEditableVenue] = useState(data.venue || '')
+  const [editableLocation, setEditableLocation] = useState(data.location || '')
+  const [isEditing, setIsEditing] = useState(false)
 
   const allTemplates: TemplateStyle[] = [
     'swiss-minimalist',
@@ -35,20 +49,40 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
     'classic-elegant',
   ]
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  const handleShowPreview = () => {
+    setShowPreview(true)
+    setShowConfig(false)
+  }
+
+  const handleBackToConfig = () => {
+    setShowPreview(false)
+    setShowConfig(true)
+  }
+
   const handleDownload = async () => {
     if (!posterUrl) return
     setIsDownloading(true)
     try {
       const response = await fetch(posterUrl)
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const blobUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = blobUrl
       a.download = `poster-${data.selectedTitle || 'exhibition'}-${Date.now()}.png`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
+      window.URL.revokeObjectURL(blobUrl)
     } catch (err) {
       console.error('Download failed:', err)
     } finally {
@@ -60,6 +94,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
     setIsGenerating(true)
     setError('')
     setShowConfig(false)
+    setShowPreview(false)
 
     try {
       const response = await fetch('/api/generate/poster', {
@@ -67,14 +102,14 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           exhibitionId: data.id,
-          title: data.selectedTitle,
+          title: editableTitle,
           keywords: data.keywords,
           mainImage: data.images[0],
-          artistName: data.artistName,
-          exhibitionDate: data.exhibitionDate,
-          exhibitionEndDate: data.exhibitionEndDate,
-          venue: data.venue,
-          location: data.location,
+          artistName: editableArtist,
+          exhibitionDate: editableStartDate,
+          exhibitionEndDate: editableEndDate,
+          venue: editableVenue,
+          location: editableLocation,
           openingHours: data.openingHours,
           admissionFee: data.admissionFee,
           // New parameters
@@ -82,6 +117,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           template: selectedTemplate,
           font: selectedFont,
           artworkUrls: data.images, // Send all uploaded images
+          referenceImage: referenceImage, // Send selected reference image
         }),
       })
 
@@ -120,6 +156,14 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
     setPosterUrl('')
     setError('')
     setShowConfig(true)
+    setShowPreview(false)
+  }
+
+  const templateNames: Record<string, string> = {
+    'swiss-minimalist': 'Swiss Minimalist',
+    'bold-brutalist': 'Bold Brutalist',
+    'classic-elegant': 'Classic Elegant',
+    'vibrant-contemporary': 'Vibrant Contemporary'
   }
 
   return (
@@ -134,31 +178,159 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
         {/* Configuration Section */}
         {showConfig && !posterUrl && !isGenerating && (
           <div className="space-y-6">
-            {/* Mode Selector */}
-            <PosterModeSelector
-              selectedMode={posterMode}
-              onModeChange={setPosterMode}
-            />
+            {/* Description */}
+            <div className="text-center space-y-2 py-4">
+              <h3 className="font-semibold text-lg">작품 영감 배경</h3>
+              <p className="text-sm text-muted-foreground">
+                작품 스타일을 분석하여<br />4가지 분위기의 포스터를 생성합니다
+              </p>
+            </div>
 
-            {/* Template Selector */}
-            <TemplatePreview
-              templates={allTemplates}
-              selectedTemplate={selectedTemplate}
-              onTemplateChange={setSelectedTemplate}
-              recommendedTemplate={recommendedTemplate}
-            />
-
-            {/* Font Selector */}
-            <FontSelector
-              selectedFont={selectedFont}
-              onFontChange={setSelectedFont}
-              templateStyle={selectedTemplate}
+            {/* Reference Image Selector */}
+            <ReferencePosterSelector
+              selectedReference={referenceImage}
+              onReferenceChange={setReferenceImage}
+              artworkImages={data.images}
             />
 
             {/* Generate Button */}
-            <Button onClick={generatePoster} size="lg" className="w-full">
-              포스터 생성하기
+            <Button onClick={handleShowPreview} size="lg" className="w-full">
+              다음: 정보 확인
             </Button>
+          </div>
+        )}
+
+        {/* Information Preview Section */}
+        {showPreview && !posterUrl && !isGenerating && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between py-4">
+              <div>
+                <h3 className="font-semibold text-lg">포스터 정보 확인</h3>
+                <p className="text-sm text-muted-foreground">
+                  아래 정보가 포스터에 표시됩니다
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                <Edit2 className="w-4 h-4 mr-1" />
+                {isEditing ? '완료' : '수정'}
+              </Button>
+            </div>
+
+            <Card className="bg-gray-50">
+              <CardContent className="pt-6 space-y-4">
+                {/* Title */}
+                <div>
+                  <Label className="text-xs font-medium text-gray-500">전시회 제목</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editableTitle}
+                      onChange={(e) => setEditableTitle(e.target.value)}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-lg font-bold mt-1">{editableTitle || '제목 없음'}</p>
+                  )}
+                </div>
+
+                {/* Artist */}
+                <div>
+                  <Label className="text-xs font-medium text-gray-500">작가명</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editableArtist}
+                      onChange={(e) => setEditableArtist(e.target.value)}
+                      className="mt-1"
+                      placeholder="작가명 입력 (선택사항)"
+                    />
+                  ) : (
+                    <p className="text-base mt-1">{editableArtist || '-'}</p>
+                  )}
+                </div>
+
+                {/* Date Range */}
+                <div>
+                  <Label className="text-xs font-medium text-gray-500">전시 기간</Label>
+                  {isEditing ? (
+                    <div className="space-y-2 mt-1">
+                      <Input
+                        type="date"
+                        value={editableStartDate}
+                        onChange={(e) => setEditableStartDate(e.target.value)}
+                      />
+                      <Input
+                        type="date"
+                        value={editableEndDate}
+                        onChange={(e) => setEditableEndDate(e.target.value)}
+                        placeholder="종료일 (선택사항)"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-base mt-1">
+                      {editableStartDate ? formatDate(editableStartDate) : '-'}
+                      {editableEndDate && ` - ${formatDate(editableEndDate)}`}
+                    </p>
+                  )}
+                </div>
+
+                {/* Venue */}
+                <div>
+                  <Label className="text-xs font-medium text-gray-500">장소</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editableVenue}
+                      onChange={(e) => setEditableVenue(e.target.value)}
+                      className="mt-1"
+                      placeholder="장소 입력 (선택사항)"
+                    />
+                  ) : (
+                    <p className="text-base mt-1">{editableVenue || '-'}</p>
+                  )}
+                </div>
+
+                {/* Location */}
+                <div>
+                  <Label className="text-xs font-medium text-gray-500">위치</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editableLocation}
+                      onChange={(e) => setEditableLocation(e.target.value)}
+                      className="mt-1"
+                      placeholder="위치 입력 (선택사항)"
+                    />
+                  ) : (
+                    <p className="text-base mt-1">{editableLocation || '-'}</p>
+                  )}
+                </div>
+
+                {/* Reference Image */}
+                {referenceImage && (
+                  <div>
+                    <Label className="text-xs font-medium text-gray-500">참고 이미지</Label>
+                    <div className="mt-2">
+                      <img
+                        src={referenceImage}
+                        alt="참고 이미지"
+                        className="w-32 h-32 object-cover rounded border"
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleBackToConfig} className="flex-1">
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                이전
+              </Button>
+              <Button onClick={generatePoster} size="lg" className="flex-1">
+                포스터 생성하기
+              </Button>
+            </div>
           </div>
         )}
 
@@ -168,9 +340,7 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
             <p className="text-muted-foreground">포스터를 생성하고 있습니다...</p>
             <p className="text-sm font-medium text-primary mt-2">
-              {posterMode === 'ai-background'
-                ? '예상 소요시간: 약 1-2분'
-                : '예상 소요시간: 약 30초'}
+              예상 소요시간: 약 1-2분
             </p>
           </div>
         )}
@@ -199,27 +369,28 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
           </div>
         )}
 
-        {/* Result State */}
+        {/* Result State - Show single poster */}
         {posterUrl && (
-          <div className="space-y-4">
-            <div className="flex justify-center">
-              <div className="relative max-w-sm w-full aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="font-semibold text-lg mb-2">생성된 포스터</h3>
+              <p className="text-sm text-muted-foreground">포스터를 다운로드하세요</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="relative aspect-[1024/1792] bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-lg">
                 <img
                   src={posterUrl}
                   alt="Generated Poster"
                   className="w-full h-full object-contain"
                 />
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleRegenerate}>
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                다시 설정
-              </Button>
               <Button
                 variant="outline"
+                size="lg"
                 onClick={handleDownload}
                 disabled={isDownloading}
+                className="w-full"
               >
                 {isDownloading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -228,8 +399,15 @@ export function PosterGenerator({ data, onComplete }: PosterGeneratorProps) {
                 )}
                 다운로드
               </Button>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleRegenerate}>
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                다시 생성
+              </Button>
               <Button onClick={onComplete} size="lg" className="flex-1">
-                포스터 확정
+                완료
               </Button>
             </div>
           </div>

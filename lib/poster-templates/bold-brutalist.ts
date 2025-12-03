@@ -38,14 +38,14 @@ export const boldBrutalistTemplate: TemplateDefinition = {
       default: 96,
     },
     subtitleSize: {
-      min: 28,
-      max: 48,
-      default: 40,
+      min: 32,
+      max: 40,
+      default: 36,
     },
     detailsSize: {
-      min: 20,
-      max: 30,
-      default: 24,
+      min: 36,
+      max: 48,
+      default: 40,
     },
     letterSpacing: '-0.04em',
     lineHeight: 0.95,
@@ -101,57 +101,49 @@ export const boldBrutalistTemplate: TemplateDefinition = {
     }
 
     .artist {
-      margin-top: 30px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.15em;
-      position: relative;
-      display: inline-block;
-    }
-
-    .artist::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 0;
-      width: 50%;
-      height: 4px;
-      background: currentColor;
+      letter-spacing: 0.1em;
+      margin-bottom: 0;
     }
 
     .details-section {
       flex: 0 0 auto;
       margin-top: auto;
-      border-top: 3px solid currentColor;
-      padding-top: 24px;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 30px 40px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      width: 100%;
     }
+
 
     .details {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 40px;
     }
 
     .details p {
       margin: 0;
-      font-weight: 600;
+      font-weight: 900;
       letter-spacing: 0.02em;
     }
 
     .date {
-      font-size: 1.3em;
-      margin-bottom: 8px;
+      font-size: 1.1em;
+      margin-bottom: 0;
     }
 
     /* Stark contrast */
     .venue {
       text-transform: uppercase;
-      font-size: 0.9em;
+      font-size: 1em;
     }
 
     .location {
-      font-size: 0.85em;
-      opacity: 0.85;
+      font-size: 0.95em;
+      opacity: 0.9;
     }
   `,
 }
@@ -165,7 +157,8 @@ export function generateBoldBrutalistHTML(
   artistName: string,
   dateRange: string,
   venue: string,
-  location: string
+  location: string,
+  customFonts?: { titleFont: string; bodyFont: string; googleFontUrl?: string }
 ): string {
   const template = boldBrutalistTemplate
   const { colorScheme, typography, layout } = template
@@ -263,12 +256,12 @@ export function generateBoldBrutalistHTML(
 
         .details {
           font-size: ${typography.detailsSize.default}px;
-          color: ${colorScheme.primary};
+          color: #FFFFFF;
           border-color: ${colorScheme.accent};
         }
 
-        .date {
-          color: ${colorScheme.accent};
+        .date, .venue, .location, .artist {
+          color: #FFFFFF !important;
         }
       </style>
     </head>
@@ -280,11 +273,11 @@ export function generateBoldBrutalistHTML(
           <div class="content-wrapper">
             <div class="title-section">
               <h1 class="title" data-text="${title || '전시회'}">${title || '전시회'}</h1>
-              ${artistName ? `<p class="artist">${artistName}</p>` : ''}
             </div>
 
             <div class="details-section">
               <div class="details">
+                ${artistName ? `<p class="artist">${artistName}</p>` : ''}
                 ${dateRange ? `<p class="date">${dateRange}</p>` : ''}
                 ${venue ? `<p class="venue">${venue}</p>` : ''}
                 ${location ? `<p class="location">${location}</p>` : ''}
