@@ -23,6 +23,7 @@ export function ImageUploader({
   const [previews, setPreviews] = useState<string[]>(existingImages)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [error, setError] = useState<string>('')
+  const [isUploading, setIsUploading] = useState(false)
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -81,10 +82,12 @@ export function ImageUploader({
   }
 
   const handleComplete = () => {
+    if (isUploading) return  // 중복 클릭 방지
     if (uploadedFiles.length === 0) {
       setError('최소 1개 이상의 이미지를 업로드해주세요.')
       return
     }
+    setIsUploading(true)
     onUpload(uploadedFiles)
   }
 
@@ -141,8 +144,8 @@ export function ImageUploader({
 
       {previews.length > 0 && (
         <div className="flex justify-end">
-          <Button onClick={handleComplete} size="lg">
-            이미지 {previews.length}개 업로드 완료
+          <Button onClick={handleComplete} disabled={isUploading} size="lg">
+            {isUploading ? '업로드 중...' : `이미지 ${previews.length}개 업로드 완료`}
           </Button>
         </div>
       )}

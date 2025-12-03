@@ -16,6 +16,7 @@ interface TitleSelectorProps {
 export function TitleSelector({ keywords, images, conversationContext, onSelect }: TitleSelectorProps) {
   const [titles, setTitles] = useState<string[]>([])
   const [selectedTitle, setSelectedTitle] = useState<string>('')
+  const [customTitle, setCustomTitle] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -61,8 +62,9 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
   }
 
   const handleSubmit = () => {
-    if (!selectedTitle) return
-    onSelect(selectedTitle)
+    const finalTitle = customTitle.trim() || selectedTitle
+    if (!finalTitle) return
+    onSelect(finalTitle)
   }
 
   if (isLoading) {
@@ -106,7 +108,10 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
           {titles.map((title, index) => (
             <button
               key={index}
-              onClick={() => setSelectedTitle(title)}
+              onClick={() => {
+                setSelectedTitle(title)
+                setCustomTitle('')
+              }}
               className={cn(
                 'w-full text-left p-4 rounded-lg border-2 transition-all',
                 selectedTitle === title
@@ -119,13 +124,30 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
           ))}
         </div>
 
+        {/* 직접 입력 섹션 */}
+        <div className="pt-4 border-t">
+          <p className="text-sm text-muted-foreground mb-2">
+            또는 직접 입력
+          </p>
+          <input
+            type="text"
+            value={customTitle}
+            onChange={(e) => {
+              setCustomTitle(e.target.value)
+              setSelectedTitle('')
+            }}
+            placeholder="원하는 전시 타이틀을 입력하세요"
+            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+        </div>
+
         <div className="flex justify-between pt-4">
           <Button variant="outline" onClick={generateTitles}>
             다시 생성
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!selectedTitle}
+            disabled={!selectedTitle && !customTitle.trim()}
             size="lg"
           >
             타이틀 선택 완료
