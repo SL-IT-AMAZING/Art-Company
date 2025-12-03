@@ -145,11 +145,15 @@ export async function POST(req: NextRequest) {
       let backgroundPrompt: string
 
       if (artworkAnalysis) {
-        backgroundPrompt = `Use the reference image as-is for a poster background.
+        backgroundPrompt = `Create a poster background based on the reference image.
 
-- Minimal changes to the original image
-- Fill vertical poster (1024x1792)
-- No text or borders`
+CRITICAL: The image MUST fill the ENTIRE canvas from edge to edge
+- Full-bleed composition with NO empty space, NO margins, NO borders
+- Extend the artwork to completely fill vertical 1024x1792 format
+- Every pixel of the canvas must be filled with the artwork
+- The image should bleed off all four edges
+- No white space, no gaps, no borders whatsoever
+- Keep the style and colors of the reference`
       } else {
         backgroundPrompt = `Create an abstract painting for exhibition poster.
 
