@@ -27,22 +27,32 @@ export interface SimplePosterData {
 function parseTitle(title: string): { korean: string; english: string } {
   if (!title) return { korean: '', english: '' }
 
+  console.log('[Poster] Parsing title:', title)
+
   const hasKorean = (str: string) => /[가-힣]/.test(str)
   const hasEnglish = (str: string) => /[a-zA-Z]/.test(str)
   const isMainlyKorean = (str: string) => hasKorean(str)
   const isMainlyEnglish = (str: string) => hasEnglish(str) && !hasKorean(str)
 
-  // 먼저 / 구분자로 분리 시도 (한글 전체 / 영어 전체)
-  if (title.includes(' / ')) {
-    const parts = title.split(' / ').map(p => p.trim())
-    if (parts.length >= 2) {
-      const part1 = parts[0]
-      const part2 = parts.slice(1).join(' / ')
+  // 먼저 / 또는 | 구분자로 분리 시도 (한글 전체 / 영어 전체)
+  const mainSeparators = [' / ', ' | ']
+  for (const sep of mainSeparators) {
+    if (title.includes(sep)) {
+      const parts = title.split(sep).map(p => p.trim())
+      console.log('[Poster] Split by', sep, ':', parts)
+      if (parts.length >= 2) {
+        const part1 = parts[0]
+        const part2 = parts.slice(1).join(sep)
+        console.log('[Poster] part1:', part1, 'isMainlyKorean:', isMainlyKorean(part1))
+        console.log('[Poster] part2:', part2, 'isMainlyEnglish:', isMainlyEnglish(part2))
 
-      if (isMainlyKorean(part1) && isMainlyEnglish(part2)) {
-        return { korean: part1, english: part2 }
-      } else if (isMainlyEnglish(part1) && isMainlyKorean(part2)) {
-        return { korean: part2, english: part1 }
+        if (isMainlyKorean(part1) && isMainlyEnglish(part2)) {
+          console.log('[Poster] Matched! Korean first, English second')
+          return { korean: part1, english: part2 }
+        } else if (isMainlyEnglish(part1) && isMainlyKorean(part2)) {
+          console.log('[Poster] Matched! English first, Korean second')
+          return { korean: part2, english: part1 }
+        }
       }
     }
   }

@@ -10,11 +10,16 @@ ${conversationContext ? `사용자와의 대화 내용:\n${conversationContext}\
 - 사용자와의 대화에서 나온 전시 컨셉과 아이디어를 반영
 - 키워드의 핵심 의미를 담기
 - 감성적이고 상징적인 표현 사용
-- 한국어와 영어 병기 가능
 - 전시의 핵심 메시지 담기
 
+**중요 - 타이틀 형식:**
+- 반드시 "한글 타이틀 | English Title" 형식으로 작성
+- 한글과 영어 사이에 " | " (공백+파이프+공백) 구분자 사용
+- 괄호() 사용 금지
+- 예시: "도시의 숨결 | Breath of the City"
+
 JSON 형식으로 응답:
-{ "titles": ["타이틀1", "타이틀2", "타이틀3", "타이틀4", "타이틀5"] }
+{ "titles": ["한글 타이틀1 | English Title1", "한글 타이틀2 | English Title2", ...] }
 `,
 
   generateIntroduction: (title: string, keywords: string[], context: string) => `

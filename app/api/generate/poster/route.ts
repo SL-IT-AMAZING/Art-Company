@@ -202,7 +202,6 @@ export async function POST(req: NextRequest) {
       const { error: dbError } = await supabase.from('posters').insert({
         exhibition_id: exhibitionId,
         image_url: publicUrl,
-        template_name: 'simple',
         is_primary: true,
         created_at: new Date().toISOString(),
       })
