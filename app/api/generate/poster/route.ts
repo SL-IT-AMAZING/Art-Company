@@ -251,9 +251,9 @@ TECHNICAL REQUIREMENTS:
       }
     }
 
-    // Generate posters with all 4 templates
-    console.log(`[Poster] Generating posters with all 4 templates (each with unique background)`)
-    const allTemplates: TemplateStyle[] = ['swiss-minimalist', 'vibrant-contemporary', 'classic-elegant', 'bold-brutalist']
+    // Generate poster with Bold Brutalist template only
+    console.log(`[Poster] Generating Bold Brutalist poster`)
+    const allTemplates: TemplateStyle[] = ['bold-brutalist']
     const posterUrls: { template: string; url: string }[] = []
 
     // Launch Puppeteer - detect environment
@@ -375,10 +375,10 @@ TECHNICAL REQUIREMENTS:
     await browser.close()
     browser = null
 
-    console.log('[Poster] Success! Generated all 4 posters')
+    console.log('[Poster] Success! Generated Bold Brutalist poster')
     return NextResponse.json({
       posters: posterUrls,
-      message: `Generated ${posterUrls.length} posters successfully`,
+      message: `Generated Bold Brutalist poster successfully`,
       mode,
       recommendedTemplate,
     })
