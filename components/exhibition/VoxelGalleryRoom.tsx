@@ -39,16 +39,6 @@ export default function VoxelGalleryRoom({ dimensions }: VoxelGalleryRoomProps) 
         />
       </mesh>
 
-      {/* South Wall (facing north, +Z) */}
-      <mesh position={[0, height / 2, depth / 2]} castShadow receiveShadow>
-        <boxGeometry args={[width, height, wallThickness]} />
-        <meshStandardMaterial
-          color="#f8f8f8"
-          roughness={0.9}
-          metalness={0}
-        />
-      </mesh>
-
       {/* East Wall (facing west, +X) */}
       <mesh position={[width / 2, height / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[wallThickness, height, depth]} />
