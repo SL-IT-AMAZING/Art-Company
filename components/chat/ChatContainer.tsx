@@ -33,6 +33,7 @@ export function ChatContainer() {
   const [chatInitialized, setChatInitialized] = useState(false)
   const [isGeneratingContent, setIsGeneratingContent] = useState(false)
   const initRef = useRef(false)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
     api: '/api/chat',
@@ -164,6 +165,13 @@ export function ChatContainer() {
     initializeChat()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    }
+  }, [messages])
 
   const handleKeywordsSubmit = async (keywords: string[]) => {
     setExhibitionData((prev) => ({ ...prev, keywords }))
@@ -491,7 +499,7 @@ export function ChatContainer() {
                 </div>
 
                 {/* Chat Messages */}
-                <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto bg-background/50">
+                <div ref={messagesContainerRef} className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto bg-background/50">
                   {messages.length > 0 ? (
                     <MessageList messages={messages} />
                   ) : (

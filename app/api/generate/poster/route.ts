@@ -101,12 +101,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 이미지가 포스터에 맞춰졌을 때 실제 크기 계산
-    const MIN_MARGIN = 1080 // 최소 여백 높이 (A2 기준, 720 * 1.5)
+    const MIN_MARGIN = 600 // 최소 여백 높이
     let headerHeight = MIN_MARGIN
     let footerHeight = MIN_MARGIN
 
     if (imageWidth > 0 && imageHeight > 0) {
-      const availableWidth = isVertical ? POSTER_WIDTH - 580 : POSTER_WIDTH // 세로면 좌우 290px 패딩
+      const availableWidth = isVertical ? POSTER_WIDTH - 2320 : POSTER_WIDTH // 세로면 좌우 1160px 패딩
       const availableHeight = POSTER_HEIGHT - (MIN_MARGIN * 2) // 최소 여백 확보
       const imageAspectRatio = imageWidth / imageHeight
 

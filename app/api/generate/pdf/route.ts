@@ -234,9 +234,16 @@ export async function POST(req: NextRequest) {
           }
 
           .page {
-            padding: 60px 80px;
-            page-break-after: always;
             min-height: 100vh;
+            padding: 0 80px 100px 80px;
+          }
+
+          .page:not(.no-top-padding) {
+            padding-top: 100px;
+          }
+
+          .page.no-top-padding {
+            padding-top: 60px;
           }
 
           .cover {
@@ -246,6 +253,9 @@ export async function POST(req: NextRequest) {
             align-items: center;
             text-align: center;
             background: linear-gradient(135deg, #F5F3F0 0%, #E8E0D5 100%);
+            margin: 0 -80px;
+            padding: 100px 80px !important;
+            min-height: 100vh;
           }
 
           h1 {
@@ -276,6 +286,7 @@ export async function POST(req: NextRequest) {
           h2 {
             font-size: 32px;
             font-weight: 600;
+            margin-top: 0;
             margin-bottom: 24px;
             color: #1E293B;
             border-bottom: 2px solid #D4C5B9;
@@ -339,21 +350,22 @@ export async function POST(req: NextRequest) {
 
           .artworks-grid {
             display: flex;
-            flex-wrap: wrap;
-            gap: 32px;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 48px;
           }
 
           .artwork-item {
-            width: calc(50% - 16px);
+            width: 100%;
+            max-width: 600px;
             text-align: center;
             page-break-inside: avoid;
-            margin-bottom: 24px;
+            margin-bottom: 32px;
           }
 
           .artwork-item img {
             max-width: 100%;
-            max-height: 400px;
+            max-height: 300px;
             width: auto;
             height: auto;
             object-fit: contain;
@@ -432,11 +444,26 @@ export async function POST(req: NextRequest) {
           </div>
         </div>
 
-        <!-- Main Poster (moved here - after cover) -->
+        <!-- Exhibition Planning -->
+        <div class="page no-top-padding">
+          <h2>전시 기획</h2>
+
+          <div class="planning-section">
+            ${exhibition.keywords && exhibition.keywords.length > 0 ? `<p><strong>전시 키워드:</strong> ${exhibition.keywords.join(', ')}</p>` : ''}
+
+            ${conversationSummary ? `
+              <div class="content-area" style="margin-top: 24px;">
+                ${marked.parse(conversationSummary)}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Main Poster -->
         ${
           posters && posters.length > 0 && posters[0].image_url
             ? `
-        <div class="page">
+        <div class="page no-top-padding">
           <h2>전시 포스터</h2>
           <div class="poster-page">
             <img src="${posters[0].image_url}" alt="Exhibition Poster">
@@ -450,7 +477,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('introduction')
             ? `
-        <div class="page">
+        <div class="page no-top-padding">
           <h2>전시 소개</h2>
           <div class="content-area">${getContent('introduction')}</div>
         </div>
@@ -462,7 +489,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('preface')
             ? `
-        <div class="page">
+        <div class="page no-top-padding">
           <h2>전시 서문</h2>
           <div class="content-area">${getContent('preface')}</div>
         </div>
@@ -474,7 +501,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('artist_bio')
             ? `
-        <div class="page">
+        <div class="page no-top-padding">
           <h2>작가 소개</h2>
           <div class="content-area">${getContent('artist_bio')}</div>
         </div>
@@ -482,37 +509,11 @@ export async function POST(req: NextRequest) {
             : ''
         }
 
-        <!-- Exhibition Planning -->
-        <div class="page">
-          <h2>전시 기획</h2>
-
-          <div class="planning-section">
-            <h3 style="font-size: 18px; margin-bottom: 15px; color: #1E293B;">전시 개요</h3>
-
-            ${exhibition.keywords && exhibition.keywords.length > 0 ? `<p><strong>전시 키워드:</strong> ${exhibition.keywords.join(', ')}</p>` : ''}
-            ${exhibition.exhibition_date ? `<p><strong>전시 기간:</strong> ${exhibition.exhibition_date}${exhibition.exhibition_end_date ? ` ~ ${exhibition.exhibition_end_date}` : ''}</p>` : ''}
-            ${exhibition.venue ? `<p><strong>전시 장소:</strong> ${exhibition.venue}</p>` : ''}
-            ${exhibition.location ? `<p><strong>주소:</strong> ${exhibition.location}</p>` : ''}
-            ${exhibition.opening_hours ? `<p><strong>운영 시간:</strong> ${exhibition.opening_hours}</p>` : ''}
-            ${exhibition.admission_fee ? `<p><strong>입장료:</strong> ${exhibition.admission_fee}</p>` : ''}
-            ${exhibition.contact_info ? `<p><strong>문의:</strong> ${exhibition.contact_info}</p>` : ''}
-
-            ${conversationSummary ? `
-              <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #E2E8F0;">
-                <h3 style="font-size: 16px; margin-bottom: 12px; color: #1E293B;">기획 의도</h3>
-                <p style="color: #475569; line-height: 1.8; text-align: justify; word-break: keep-all;">
-                  ${conversationSummary}
-                </p>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-
         <!-- Artworks -->
         ${
           artworks && artworks.length > 0
             ? `
-        <div class="page">
+        <div class="page no-top-padding">
           <h2>작품</h2>
           <div class="artworks-grid">
             ${artworks.map((artwork: any, index: number) => {
@@ -535,7 +536,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('press_release')
             ? `
-        <div class="page">
+        <div class="page no-top-padding">
           <h2>보도자료</h2>
           <div class="content-area">${getContent('press_release')}</div>
         </div>
@@ -547,7 +548,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('marketing_report')
             ? `
-        <div class="page">
+        <div class="page no-top-padding">
           <h2>마케팅 리포트</h2>
           <div class="content-area">${getContent('marketing_report')}</div>
         </div>

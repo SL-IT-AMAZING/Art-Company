@@ -125,8 +125,8 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
     venue,
     imageUrl,
     isVertical = true,
-    headerHeight = 200,
-    footerHeight = 200,
+    headerHeight = 600,
+    footerHeight = 600,
   } = data
 
   const dateRange = formatDateRange(exhibitionDate, exhibitionEndDate)
@@ -175,7 +175,7 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
     }
 
     .image-container.vertical {
-      padding: 0 290px;
+      padding: 0 1160px;
       box-sizing: border-box;
     }
 
@@ -186,7 +186,7 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
     .artwork-image {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
     }
 
     /* 상단 타이틀 - 이미지 위 영역 중앙 */
