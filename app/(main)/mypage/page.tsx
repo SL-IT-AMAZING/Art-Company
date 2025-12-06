@@ -43,7 +43,8 @@ export default async function MyPage() {
         <div className="mb-8">
           <ProfileSettingsCard
             email={user.email || ''}
-            initialDisplayName={(user.user_metadata?.full_name as string) || ''}
+            initialFullName={(user.user_metadata?.full_name as string) || ''}
+            initialUsername={(user.user_metadata?.username as string) || ''}
             initialBio={(user.user_metadata?.bio as string) || ''}
           />
         </div>

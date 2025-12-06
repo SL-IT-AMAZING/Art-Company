@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,17 +10,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 interface ProfileSettingsCardProps {
   email: string
-  initialDisplayName?: string
+  initialFullName?: string
+  initialUsername?: string
   initialBio?: string
+  onProfileUpdate?: () => void
 }
 
 export function ProfileSettingsCard({
   email,
-  initialDisplayName = '',
+  initialFullName = '',
+  initialUsername = '',
   initialBio = '',
+  onProfileUpdate,
 }: ProfileSettingsCardProps) {
+  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const [displayName, setDisplayName] = useState(initialDisplayName)
+  const [fullName, setFullName] = useState(initialFullName)
+  const [username, setUsername] = useState(initialUsername)
   const [bio, setBio] = useState(initialBio)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -34,7 +41,8 @@ export function ProfileSettingsCard({
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
-          full_name: displayName || null,
+          full_name: fullName || null,
+          username: username || null,
           bio: bio || null,
         },
       })
@@ -43,6 +51,12 @@ export function ProfileSettingsCard({
         setError(error.message)
       } else {
         setMessage('프로필이 업데이트되었습니다.')
+        // 페이지 새로고침하여 헤더의 닉네임 즉시 업데이트
+        router.refresh()
+        // 추가 콜백이 있다면 호출
+        if (onProfileUpdate) {
+          onProfileUpdate()
+        }
       }
     } catch (err) {
       setError('프로필 업데이트 중 오류가 발생했습니다.')
@@ -65,13 +79,25 @@ export function ProfileSettingsCard({
           </div>
 
           <div>
-            <label htmlFor="display-name" className="block text-sm font-medium mb-2">
-              이름 / 닉네임
+            <label htmlFor="full-name" className="block text-sm font-medium mb-2">
+              이름
             </label>
             <Input
-              id="display-name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              id="full-name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="홍길동"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium mb-2">
+              닉네임
+            </label>
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder="AI Curator"
             />
           </div>

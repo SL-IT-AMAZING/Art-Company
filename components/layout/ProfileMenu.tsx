@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button'
 
 interface ProfileMenuProps {
   email: string
-  displayName?: string
+  username?: string
   logoutAction: (formData: FormData) => void
 }
 
-export function ProfileMenu({ email, displayName, logoutAction }: ProfileMenuProps) {
+export function ProfileMenu({ email, username, logoutAction }: ProfileMenuProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -34,7 +34,7 @@ export function ProfileMenu({ email, displayName, logoutAction }: ProfileMenuPro
         className="flex items-center gap-2"
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span>{displayName || email}</span>
+        <span>{username ? `${username}님` : email}</span>
         <ChevronDown className="w-4 h-4" />
       </Button>
 
@@ -42,7 +42,7 @@ export function ProfileMenu({ email, displayName, logoutAction }: ProfileMenuPro
         <div className="absolute right-0 mt-2 w-56 rounded-lg border bg-popover shadow-lg z-50">
           <div className="p-3 border-b">
             <p className="text-sm font-semibold leading-tight">
-              {displayName || '사용자'}
+              {username || '사용자'}
             </p>
             <p className="text-xs text-muted-foreground truncate">{email}</p>
           </div>

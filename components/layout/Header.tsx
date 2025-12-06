@@ -35,7 +35,7 @@ export async function Header() {
           {user ? (
             <ProfileMenu
               email={user.email || ''}
-              displayName={(user.user_metadata?.full_name as string) || undefined}
+              username={(user.user_metadata?.username as string) || undefined}
               logoutAction={logout}
             />
           ) : (
