@@ -253,9 +253,25 @@ export function ChatContainer() {
       // Sanitize filename to remove Korean characters and special characters
       const sanitizedName = sanitizeFilename(file.name)
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${sanitizedName}`
-      const { data, error } = await supabase.storage
+
+      // Add timeout to upload request (30 seconds)
+      const uploadPromise = supabase.storage
         .from('artworks')
         .upload(fileName, file)
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('업로드 시간이 초과되었습니다. 이미지 파일이 너무 클 수 있습니다.')), 30000)
+      )
+
+      let data, error
+      try {
+        const result = await Promise.race([uploadPromise, timeoutPromise]) as any
+        data = result.data
+        error = result.error
+      } catch (timeoutError: any) {
+        error = timeoutError
+        data = null
+      }
 
       if (data && !error) {
         const {
@@ -308,14 +324,36 @@ export function ChatContainer() {
 
         failedUploads.push(file.name)
 
+        // Determine error type and show appropriate message
+        let errorMessage = error?.message || '알 수 없는 오류'
+        let troubleshootingTips = ''
+
+        if (errorMessage.includes('시간이 초과')) {
+          troubleshootingTips =
+            '해결 방법:\n' +
+            '1. 이미지 파일 크기를 줄여보세요 (5MB 이하 권장)\n' +
+            '2. 네트워크 연결 상태를 확인해주세요\n' +
+            '3. 잠시 후 다시 시도해주세요'
+        } else if (errorMessage.includes('not valid JSON') || errorMessage.includes('504')) {
+          errorMessage = '서버 응답 시간 초과 (이미지 파일이 너무 크거나 네트워크가 불안정합니다)'
+          troubleshootingTips =
+            '해결 방법:\n' +
+            '1. 이미지 파일 크기를 줄여보세요 (5MB 이하 권장)\n' +
+            '2. 네트워크 연결 상태를 확인해주세요\n' +
+            '3. 잠시 후 다시 시도해주세요'
+        } else {
+          troubleshootingTips =
+            'Supabase Storage 설정을 확인해주세요:\n' +
+            '1. "artworks" 버킷이 존재하는지\n' +
+            '2. 버킷이 Public으로 설정되어 있는지\n' +
+            '3. 업로드 권한이 있는지'
+        }
+
         // Show user-friendly error message
         alert(
           `이미지 업로드 실패: ${file.name}\n\n` +
-          `오류: ${error?.message || '알 수 없는 오류'}\n\n` +
-          'Supabase Storage 설정을 확인해주세요:\n' +
-          '1. "artworks" 버킷이 존재하는지\n' +
-          '2. 버킷이 Public으로 설정되어 있는지\n' +
-          '3. 업로드 권한이 있는지'
+          `오류: ${errorMessage}\n\n` +
+          troubleshootingTips
         )
       }
     }
