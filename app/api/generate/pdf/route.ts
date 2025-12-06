@@ -233,20 +233,11 @@ export async function POST(req: NextRequest) {
             background: #fff;
           }
 
+          @page:first {
+            margin: 0;
+          }
+
           .page {
-            min-height: 100vh;
-            padding: 0 80px 100px 80px;
-          }
-
-          .page:not(.no-top-padding) {
-            padding-top: 100px;
-          }
-
-          .page.no-top-padding {
-            padding-top: 100px;
-          }
-
-          .page-break {
             page-break-before: always;
           }
 
@@ -257,9 +248,14 @@ export async function POST(req: NextRequest) {
             align-items: center;
             text-align: center;
             background: linear-gradient(135deg, #F5F3F0 0%, #E8E0D5 100%);
-            margin: 0 -80px;
-            padding: 100px 80px !important;
             min-height: 100vh;
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            padding: 80px 60px;
           }
 
           h1 {
@@ -449,7 +445,7 @@ export async function POST(req: NextRequest) {
         </div>
 
         <!-- Exhibition Planning -->
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>전시 기획</h2>
 
           <div class="planning-section">
@@ -467,7 +463,7 @@ export async function POST(req: NextRequest) {
         ${
           posters && posters.length > 0 && posters[0].image_url
             ? `
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>전시 포스터</h2>
           <div class="poster-page">
             <img src="${posters[0].image_url}" alt="Exhibition Poster">
@@ -481,7 +477,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('introduction')
             ? `
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>전시 소개</h2>
           <div class="content-area">${getContent('introduction')}</div>
         </div>
@@ -493,7 +489,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('preface')
             ? `
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>전시 서문</h2>
           <div class="content-area">${getContent('preface')}</div>
         </div>
@@ -505,7 +501,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('artist_bio')
             ? `
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>작가 소개</h2>
           <div class="content-area">${getContent('artist_bio')}</div>
         </div>
@@ -517,7 +513,7 @@ export async function POST(req: NextRequest) {
         ${
           artworks && artworks.length > 0
             ? `
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>작품</h2>
           <div class="artworks-grid">
             ${artworks.map((artwork: any, index: number) => {
@@ -540,7 +536,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('press_release')
             ? `
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>보도자료</h2>
           <div class="content-area">${getContent('press_release')}</div>
         </div>
@@ -552,7 +548,7 @@ export async function POST(req: NextRequest) {
         ${
           getContent('marketing_report')
             ? `
-        <div class="page no-top-padding page-break">
+        <div class="page">
           <h2>마케팅 리포트</h2>
           <div class="content-area">${getContent('marketing_report')}</div>
         </div>
@@ -610,10 +606,10 @@ export async function POST(req: NextRequest) {
       format: 'A4',
       printBackground: true,
       margin: {
-        top: '0',
-        right: '0',
-        bottom: '0',
-        left: '0',
+        top: '60px',
+        right: '60px',
+        bottom: '60px',
+        left: '60px',
       },
     })
 
