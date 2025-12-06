@@ -10,13 +10,13 @@ export default function Home() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
             AI 큐레이터
           </h1>
-          <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 mb-12 sm:mb-16 px-2">
+          <p className="text-xl sm:text-2xl md:text-3xl text-gray-600 mb-8 sm:mb-10 px-2">
             대화만으로 완성되는 전시의 모든 것
           </p>
 
           <div className="flex justify-center">
             <Link href="/curation">
-              <Button size="lg" className="text-xl sm:text-2xl px-16 py-7 h-auto">
+              <Button size="lg" className="text-base sm:text-lg px-8 py-4 h-auto">
                 전시 만들기 시작
               </Button>
             </Link>
