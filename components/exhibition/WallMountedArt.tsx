@@ -10,6 +10,7 @@ interface WallMountedArtProps {
   position: Vector3
   rotation: Euler
   onClick?: () => void
+  showLabels?: boolean
 }
 
 /**
@@ -20,7 +21,8 @@ export default function WallMountedArt({
   artwork,
   position,
   rotation,
-  onClick
+  onClick,
+  showLabels = true
 }: WallMountedArtProps) {
   const [hovered, setHovered] = useState(false)
   const groupRef = useRef<THREE.Group>(null)
@@ -142,28 +144,30 @@ export default function WallMountedArt({
       />
 
       {/* Title label above artwork - 40px above frame */}
-      <Html
-        position={[0, artworkHeight / 2 + frameThickness + 0.12, 0]} // Approximately 40px above frame
-        center
-        distanceFactor={1.5}
-        style={{ pointerEvents: 'none' }}
-      >
-        <p
-          className="text-white whitespace-nowrap"
-          style={{
-            fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontSize: '42px',
-            fontWeight: 600, // Semi-bold
-            letterSpacing: '0.2em',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9), 2px -2px 4px rgba(0,0,0,0.9), -2px 2px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8)'
-          }}
+      {showLabels && (
+        <Html
+          position={[0, artworkHeight / 2 + frameThickness + 0.12, 0]} // Approximately 40px above frame
+          center
+          distanceFactor={1.5}
+          style={{ pointerEvents: 'none' }}
         >
-          {artwork.title}
-        </p>
-      </Html>
+          <p
+            className="text-white whitespace-nowrap"
+            style={{
+              fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontSize: '42px',
+              fontWeight: 600, // Semi-bold
+              letterSpacing: '0.2em',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.9), 2px -2px 4px rgba(0,0,0,0.9), -2px 2px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8)'
+            }}
+          >
+            {artwork.title}
+          </p>
+        </Html>
+      )}
 
       {/* Description label below artwork */}
-      {artwork.description && (
+      {showLabels && artwork.description && (
         <Html
           position={[0, -artworkHeight / 2 - frameThickness - 0.15, 0]}
           center

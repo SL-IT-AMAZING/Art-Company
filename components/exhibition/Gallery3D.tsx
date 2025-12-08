@@ -83,7 +83,7 @@ export default function Gallery3D({ artworks, exhibitionId }: Gallery3DProps) {
     <div className="relative w-full h-screen" style={{ backgroundColor: '#2a2a2a' }}>
       {/* Instructions overlay - ART WIZARD branded with purple/blue theme */}
       {!isLocked && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
              style={{ background: 'rgba(30, 27, 75, 0.7)' }}> {/* indigo-950 with opacity */}
           <div
             className="px-10 py-8 rounded-2xl text-center backdrop-blur-sm"
@@ -146,6 +146,7 @@ export default function Gallery3D({ artworks, exhibitionId }: Gallery3DProps) {
               position={position.position}
               rotation={position.rotation}
               onClick={() => isLocked && setSelectedArtwork(artwork)}
+              showLabels={isLocked}
             />
           ))}
         </Suspense>
@@ -177,7 +178,7 @@ export default function Gallery3D({ artworks, exhibitionId }: Gallery3DProps) {
       />
 
       {/* Artwork detail modal */}
-      {selectedArtwork && (
+      {selectedArtwork && isLocked && (
         <ArtworkDetail
           artwork={selectedArtwork}
           exhibitionId={exhibitionId}
