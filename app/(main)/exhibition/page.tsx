@@ -46,28 +46,65 @@ export default async function ExhibitionListPage() {
                     <CardTitle className="line-clamp-2">
                       {exhibition.title || '제목 없음'}
                     </CardTitle>
-                    <CardDescription>
-                      {exhibition.created_at
-                        ? formatDate(exhibition.created_at)
-                        : ''}
-                    </CardDescription>
+                    {exhibition.artist_name && (
+                      <CardDescription className="font-medium">
+                        작가: {exhibition.artist_name}
+                      </CardDescription>
+                    )}
                   </CardHeader>
                   <CardContent>
-                    {exhibition.keywords && exhibition.keywords.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {exhibition.keywords.slice(0, 5).map((keyword: string, index: number) => (
-                          <span
-                            key={index}
-                            className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs"
-                          >
-                            {keyword}
-                          </span>
-                        ))}
+                    <div className="space-y-3">
+                      {/* 전시 기간 */}
+                      {(exhibition.exhibition_date || exhibition.exhibition_end_date) && (
+                        <div className="text-sm">
+                          <span className="font-semibold">전시기간:</span>{' '}
+                          {exhibition.exhibition_date && formatDate(exhibition.exhibition_date)}
+                          {exhibition.exhibition_end_date && (
+                            <> ~ {formatDate(exhibition.exhibition_end_date)}</>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 전시장소 */}
+                      {exhibition.location && (
+                        <div className="text-sm">
+                          <span className="font-semibold">전시장소:</span> {exhibition.location}
+                        </div>
+                      )}
+
+                      {/* 운영시간 */}
+                      {exhibition.opening_hours && (
+                        <div className="text-sm">
+                          <span className="font-semibold">운영시간:</span> {exhibition.opening_hours}
+                        </div>
+                      )}
+
+                      {/* 입장료 */}
+                      {exhibition.admission_fee && (
+                        <div className="text-sm">
+                          <span className="font-semibold">입장료:</span> {exhibition.admission_fee}
+                        </div>
+                      )}
+
+                      {/* 키워드 */}
+                      {exhibition.keywords && exhibition.keywords.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {exhibition.keywords.slice(0, 5).map((keyword: string, index: number) => (
+                            <span
+                              key={index}
+                              className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs"
+                            >
+                              {keyword}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 조회수 및 관람하기 */}
+                      <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
+                        <span>조회수: {exhibition.view_count || 0}</span>
+                        <span className="text-primary font-medium">관람하기 →</span>
                       </div>
-                    )}
-                    <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                      <span>조회수: {exhibition.view_count || 0}</span>
-                      <span className="text-primary font-medium">관람하기 →</span>
                     </div>
                   </CardContent>
                 </Card>
