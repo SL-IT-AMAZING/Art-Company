@@ -68,7 +68,7 @@ export function calculateRoomDimensions(
 
   // Calculate width and depth with extra padding
   const width = Math.max(minWidth, Math.ceil(wallSpace) + 2)
-  const depth = Math.max(minDepth, Math.ceil(wallSpace) + 2)
+  const depth = Math.max(minDepth, Math.ceil(wallSpace) + 4) // Increased depth for longer east/west walls
 
   return { width, height, depth }
 }
@@ -156,14 +156,6 @@ export function autoArrangeArtworks(
     depth - 1,
     -Math.PI / 2,
     (offset) => ({ x: halfWidth - wallOffset, z: offset })
-  )
-
-  // South wall (facing north, +Z) - horizontal distribution
-  distributeOnWall(
-    'south',
-    width - 1,
-    Math.PI,
-    (offset) => ({ x: -offset, z: halfDepth - wallOffset })
   )
 
   // West wall (facing east, -X) - vertical distribution along depth

@@ -11,15 +11,24 @@ interface ParallaxGalleryProps {
   viewPoints: ViewPoint[]
   exhibitionTitle: string
   exhibitionId?: string
+  exhibitionMetadata?: {
+    venue?: string
+    location?: string
+    exhibitionDate?: string
+    exhibitionEndDate?: string
+    openingHours?: string
+    admissionFee?: string
+    artistName?: string
+  }
 }
 
 export function ParallaxGallery({
   viewPoints,
   exhibitionTitle,
   exhibitionId,
+  exhibitionMetadata,
 }: ParallaxGalleryProps) {
   const [currentView, setCurrentView] = useState(0)
-  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null)
 
   const goToNextView = useCallback(() => {
     setCurrentView((prev) => (prev + 1) % viewPoints.length)
@@ -85,7 +94,6 @@ export function ParallaxGallery({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: artworkIndex * 0.08, duration: 0.4 }}
                   whileHover={{ y: -4 }}
-                  onClick={() => setSelectedArtwork(artwork)}
                 >
                   <div className="relative bg-white p-5 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
                     {/* Frame - fixed aspect ratio with object-contain to prevent cropping */}
@@ -170,16 +178,6 @@ export function ParallaxGallery({
         </span>
       </div>
 
-      {/* Artwork Detail Modal */}
-      <AnimatePresence>
-        {selectedArtwork && (
-          <ArtworkDetail
-            artwork={selectedArtwork}
-            exhibitionId={exhibitionId}
-            onClose={() => setSelectedArtwork(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   )
 }

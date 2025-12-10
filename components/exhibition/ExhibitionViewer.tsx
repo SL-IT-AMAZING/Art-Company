@@ -11,6 +11,15 @@ interface ExhibitionViewerProps {
   exhibitionTitle: string
   exhibitionId?: string
   artworks: Artwork[]
+  exhibitionMetadata?: {
+    venue?: string
+    location?: string
+    exhibitionDate?: string
+    exhibitionEndDate?: string
+    openingHours?: string
+    admissionFee?: string
+    artistName?: string
+  }
 }
 
 const STORAGE_KEY = 'exhibition-view-mode'
@@ -23,7 +32,8 @@ export default function ExhibitionViewer({
   viewPoints,
   exhibitionTitle,
   exhibitionId,
-  artworks
+  artworks,
+  exhibitionMetadata
 }: ExhibitionViewerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('2d')
   const [mounted, setMounted] = useState(false)
@@ -59,9 +69,18 @@ export default function ExhibitionViewer({
 
       {/* Render current view */}
       {viewMode === '2d' ? (
-        <ParallaxGallery viewPoints={viewPoints} exhibitionTitle={exhibitionTitle} exhibitionId={exhibitionId} />
+        <ParallaxGallery 
+          viewPoints={viewPoints} 
+          exhibitionTitle={exhibitionTitle} 
+          exhibitionId={exhibitionId}
+          exhibitionMetadata={exhibitionMetadata}
+        />
       ) : (
-        <Gallery3D artworks={artworks} exhibitionId={exhibitionId} />
+        <Gallery3D 
+          artworks={artworks} 
+          exhibitionId={exhibitionId}
+          exhibitionMetadata={exhibitionMetadata}
+        />
       )}
     </div>
   )

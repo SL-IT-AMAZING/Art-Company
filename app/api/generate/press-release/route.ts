@@ -82,7 +82,8 @@ ${ragContext}
 • 전시명: [전시 제목]
 ${artistName ? `• 작가명: ${artistName}` : ''}
 ${dateRange ? `• 전시기간: ${dateRange}` : ''}
-${location ? `• 전시장소: ${location}` : ''}
+${location ? `• 주소: ${location}` : ''}
+${venue ? `• 전시장소: ${venue}` : ''}
 ${openingHours ? `• 운영시간: ${openingHours}` : ''}
 ${admissionFee ? `• 입장료: ${admissionFee}` : ''}
 

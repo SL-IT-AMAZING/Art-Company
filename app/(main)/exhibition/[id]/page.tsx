@@ -85,6 +85,15 @@ export default async function ExhibitionViewerPage({
         exhibitionTitle={exhibition.title || '제목 없음'}
         exhibitionId={id}
         artworks={transformedArtworks}
+        exhibitionMetadata={{
+          venue: exhibition.venue,
+          location: exhibition.location,
+          exhibitionDate: exhibition.exhibition_date,
+          exhibitionEndDate: exhibition.exhibition_end_date,
+          openingHours: exhibition.opening_hours,
+          admissionFee: exhibition.admission_fee,
+          artistName: exhibition.artist_name,
+        }}
       />
     </div>
   )

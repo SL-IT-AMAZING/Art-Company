@@ -65,10 +65,17 @@ export default async function ExhibitionListPage() {
                         </div>
                       )}
 
-                      {/* 전시장소 */}
+                      {/* 주소 */}
                       {exhibition.location && (
                         <div className="text-sm">
-                          <span className="font-semibold">전시장소:</span> {exhibition.location}
+                          <span className="font-semibold">주소:</span> {exhibition.location}
+                        </div>
+                      )}
+
+                      {/* 전시장소 */}
+                      {exhibition.venue && (
+                        <div className="text-sm">
+                          <span className="font-semibold">전시장소:</span> {exhibition.venue}
                         </div>
                       )}
 

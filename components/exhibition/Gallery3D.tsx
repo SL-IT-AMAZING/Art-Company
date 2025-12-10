@@ -31,14 +31,22 @@ import type { Artwork } from '@/types/exhibition'
 interface Gallery3DProps {
   artworks: Artwork[]
   exhibitionId?: string
+  exhibitionMetadata?: {
+    venue?: string
+    location?: string
+    exhibitionDate?: string
+    exhibitionEndDate?: string
+    openingHours?: string
+    admissionFee?: string
+    artistName?: string
+  }
 }
 
 /**
  * 3D voxel gallery with first-person walkthrough
  * Displays artworks in wall-mounted frames with voxel aesthetic
  */
-export default function Gallery3D({ artworks, exhibitionId }: Gallery3DProps) {
-  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null)
+export default function Gallery3D({ artworks, exhibitionId, exhibitionMetadata }: Gallery3DProps) {
   const [isLocked, setIsLocked] = useState(false)
 
   // Calculate room dimensions and artwork positions
@@ -145,7 +153,7 @@ export default function Gallery3D({ artworks, exhibitionId }: Gallery3DProps) {
               artwork={artwork}
               position={position.position}
               rotation={position.rotation}
-              onClick={() => isLocked && setSelectedArtwork(artwork)}
+              onClick={() => {}}
               showLabels={isLocked}
             />
           ))}
@@ -177,14 +185,6 @@ export default function Gallery3D({ artworks, exhibitionId }: Gallery3DProps) {
         }}
       />
 
-      {/* Artwork detail modal */}
-      {selectedArtwork && isLocked && (
-        <ArtworkDetail
-          artwork={selectedArtwork}
-          exhibitionId={exhibitionId}
-          onClose={() => setSelectedArtwork(null)}
-        />
-      )}
     </div>
   )
 }
