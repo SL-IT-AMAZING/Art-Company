@@ -560,11 +560,16 @@ export function ChatContainer() {
               </div>
 
             {/* Navigation Buttons */}
-            <div className="flex gap-3 flex-shrink-0">
+            <div className="flex flex-col items-center gap-2 flex-shrink-0">
+              {messages.filter(m => m.role === 'user').length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  AI 큐레이터와 최소 1번 대화해주세요
+                </p>
+              )}
               <Button
                 onClick={handleProceedToMetadata}
                 size="lg"
-                disabled={isLoading}
+                disabled={isLoading || messages.filter(m => m.role === 'user').length === 0}
               >
                 다음 단계로 →
               </Button>
@@ -577,13 +582,26 @@ export function ChatContainer() {
             <ExhibitionMetadataForm
               onSubmit={handleMetadataSubmit}
               onBack={handlePreviousStep}
+              initialData={{
+                exhibitionDate: exhibitionData.exhibitionDate,
+                exhibitionEndDate: exhibitionData.exhibitionEndDate,
+                venue: exhibitionData.venue,
+                location: exhibitionData.location,
+                artistName: exhibitionData.artistName,
+                openingHours: exhibitionData.openingHours,
+                admissionFee: exhibitionData.admissionFee,
+                contactInfo: exhibitionData.contactInfo,
+              }}
             />
           </div>
         )}
 
         {step === 'keywords' && (
           <div className="space-y-4 overflow-y-auto">
-              <KeywordsInput onSubmit={handleKeywordsSubmit} />
+              <KeywordsInput
+                onSubmit={handleKeywordsSubmit}
+                initialKeywords={exhibitionData.keywords}
+              />
               <div className="flex justify-between pt-4">
                 <Button onClick={handlePreviousStep} variant="outline">
                   ← 이전 단계

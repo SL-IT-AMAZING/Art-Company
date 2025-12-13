@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 interface KeywordsInputProps {
   onSubmit: (keywords: string[]) => void
+  initialKeywords?: string[]
 }
 
-export function KeywordsInput({ onSubmit }: KeywordsInputProps) {
-  const [keywords, setKeywords] = useState<string[]>([])
+export function KeywordsInput({ onSubmit, initialKeywords = [] }: KeywordsInputProps) {
+  const [keywords, setKeywords] = useState<string[]>(initialKeywords)
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
 

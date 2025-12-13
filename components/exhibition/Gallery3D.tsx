@@ -48,6 +48,7 @@ interface Gallery3DProps {
  */
 export default function Gallery3D({ artworks, exhibitionId, exhibitionMetadata }: Gallery3DProps) {
   const [isLocked, setIsLocked] = useState(false)
+  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null)
 
   // Calculate room dimensions and artwork positions
   const { dimensions, artworkPositions } = useMemo(() => {
@@ -153,7 +154,7 @@ export default function Gallery3D({ artworks, exhibitionId, exhibitionMetadata }
               artwork={artwork}
               position={position.position}
               rotation={position.rotation}
-              onClick={() => {}}
+              onClick={() => isLocked && setSelectedArtwork(artwork)}
               showLabels={isLocked}
             />
           ))}
@@ -185,6 +186,14 @@ export default function Gallery3D({ artworks, exhibitionId, exhibitionMetadata }
         }}
       />
 
+      {/* Artwork detail modal */}
+      {selectedArtwork && (
+        <ArtworkDetail
+          artwork={selectedArtwork}
+          exhibitionId={exhibitionId}
+          onClose={() => setSelectedArtwork(null)}
+        />
+      )}
     </div>
   )
 }

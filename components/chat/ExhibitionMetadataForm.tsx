@@ -20,18 +20,19 @@ interface ExhibitionMetadata {
 interface ExhibitionMetadataFormProps {
   onSubmit: (metadata: ExhibitionMetadata) => void
   onBack?: () => void
+  initialData?: Partial<ExhibitionMetadata>
 }
 
-export default function ExhibitionMetadataForm({ onSubmit, onBack }: ExhibitionMetadataFormProps) {
+export default function ExhibitionMetadataForm({ onSubmit, onBack, initialData }: ExhibitionMetadataFormProps) {
   const [formData, setFormData] = useState<ExhibitionMetadata>({
-    exhibitionDate: '',
-    exhibitionEndDate: '',
-    venue: '',
-    location: '',
-    artistName: '',
-    openingHours: '',
-    admissionFee: '',
-    contactInfo: ''
+    exhibitionDate: initialData?.exhibitionDate || '',
+    exhibitionEndDate: initialData?.exhibitionEndDate || '',
+    venue: initialData?.venue || '',
+    location: initialData?.location || '',
+    artistName: initialData?.artistName || '',
+    openingHours: initialData?.openingHours || '',
+    admissionFee: initialData?.admissionFee || '',
+    contactInfo: initialData?.contactInfo || ''
   })
 
   const [errors, setErrors] = useState<Partial<Record<keyof ExhibitionMetadata, string>>>({})

@@ -69,12 +69,12 @@ export async function POST(req: NextRequest) {
       const arrayBuffer = await imageResponse.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      // PNG/JPEG 헤더에서 이미지 크기 읽기
+      // PNG/JPEG/WebP 헤더에서 이미지 크기 읽기
       if (buffer[0] === 0x89 && buffer[1] === 0x50) {
         // PNG
         imageWidth = buffer.readUInt32BE(16)
         imageHeight = buffer.readUInt32BE(20)
-        isVertical = imageWidth <= imageHeight * 1.2 // 가로가 세로의 1.2배 이상일 때만 가로 이미지로 판단
+        isVertical = imageWidth <= imageHeight
         console.log(`[Poster] PNG image: ${imageWidth}x${imageHeight}, isVertical: ${isVertical}`)
       } else if (buffer[0] === 0xff && buffer[1] === 0xd8) {
         // JPEG - SOF0 마커 찾기
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
             if (marker === 0xc0 || marker === 0xc2) {
               imageHeight = buffer.readUInt16BE(offset + 5)
               imageWidth = buffer.readUInt16BE(offset + 7)
-              isVertical = imageWidth <= imageHeight * 1.2 // 가로가 세로의 1.2배 이상일 때만 가로 이미지로 판단
+              isVertical = imageWidth <= imageHeight
               console.log(`[Poster] JPEG image: ${imageWidth}x${imageHeight}, isVertical: ${isVertical}`)
               break
             }
@@ -94,6 +94,34 @@ export async function POST(req: NextRequest) {
           } else {
             offset++
           }
+        }
+      } else if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) {
+        // WebP - RIFF header
+        // WebP format: RIFF....WEBPVP8 or VP8L or VP8X
+        const webpMarker = buffer.toString('ascii', 8, 12)
+        if (webpMarker === 'WEBP') {
+          const chunkType = buffer.toString('ascii', 12, 16)
+          if (chunkType === 'VP8 ') {
+            // Lossy WebP
+            // Width and height at offset 26-27 and 28-29 (little endian, 14 bits each)
+            const bits = buffer.readUInt32LE(26)
+            imageWidth = bits & 0x3fff
+            imageHeight = (bits >> 16) & 0x3fff
+          } else if (chunkType === 'VP8L') {
+            // Lossless WebP
+            // Signature byte at 21, then width-1 (14 bits) and height-1 (14 bits)
+            const bits = buffer.readUInt32LE(21)
+            imageWidth = (bits & 0x3fff) + 1
+            imageHeight = ((bits >> 14) & 0x3fff) + 1
+          } else if (chunkType === 'VP8X') {
+            // Extended WebP
+            // Canvas width at 24-26 (24 bits, little endian) + 1
+            // Canvas height at 27-29 (24 bits, little endian) + 1
+            imageWidth = (buffer[24] | (buffer[25] << 8) | (buffer[26] << 16)) + 1
+            imageHeight = (buffer[27] | (buffer[28] << 8) | (buffer[29] << 16)) + 1
+          }
+          isVertical = imageWidth <= imageHeight
+          console.log(`[Poster] WebP image (${chunkType}): ${imageWidth}x${imageHeight}, isVertical: ${isVertical}`)
         }
       }
     } catch (err) {
