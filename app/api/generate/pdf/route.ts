@@ -41,8 +41,8 @@ const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v1
 
 export async function POST(req: NextRequest) {
   let browser = null
+  let requestBody: any
   try {
-    let requestBody
     try {
       requestBody = await req.json()
     } catch (parseError) {
