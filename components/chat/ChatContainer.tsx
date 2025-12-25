@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useChat } from 'ai/react'
+import { useTranslations, useLocale } from 'next-intl'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { ImageUploader } from './ImageUploader'
@@ -24,6 +25,10 @@ import { Step } from '@/types/chat'
 import { StepProgress } from './StepProgress'
 
 export function ChatContainer() {
+  const t = useTranslations('chat')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
+  const locale = useLocale()
   const [step, setStep] = useState<Step>('welcome')
   const [exhibitionData, setExhibitionData] = useState<ExhibitionData>({
     keywords: [],
@@ -41,6 +46,7 @@ export function ChatContainer() {
       exhibitionId: exhibitionData.id,
       step,
       data: exhibitionData,
+      locale,
     },
   })
 
@@ -80,7 +86,7 @@ export function ChatContainer() {
       {
         id: 'welcome-1',
         role: 'assistant',
-        content: '안녕하세요! 저는 Art Wizard의 AI 큐레이터입니다. 🎨\n\n어떤 전시를 기획 중이신가요? 전시의 주제, 컨셉, 분위기 등 자유롭게 말씀해주세요!',
+        content: t('welcomeMessage'),
         createdAt: new Date(),
       },
     ])
@@ -260,7 +266,7 @@ export function ChatContainer() {
         .upload(fileName, file)
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('업로드 시간이 초과되었습니다. 이미지 파일이 너무 클 수 있습니다.')), 30000)
+        setTimeout(() => reject(new Error(tErrors('uploadTimeout'))), 30000)
       )
 
       let data, error
@@ -291,7 +297,7 @@ export function ChatContainer() {
             .insert({
               exhibition_id: exhibitionData.id,
               image_url: publicUrl,
-              title: `작품 ${nextOrderIndex + 1}`, // Use counter-based title
+              title: `${tCommon('artwork')} ${nextOrderIndex + 1}`, // Use counter-based title
               order_index: nextOrderIndex,
               image_width: imageData.width,
               image_height: imageData.height,
@@ -325,34 +331,22 @@ export function ChatContainer() {
         failedUploads.push(file.name)
 
         // Determine error type and show appropriate message
-        let errorMessage = error?.message || '알 수 없는 오류'
+        let errorMessage = error?.message || t('unknownError')
         let troubleshootingTips = ''
 
-        if (errorMessage.includes('시간이 초과')) {
-          troubleshootingTips =
-            '해결 방법:\n' +
-            '1. 이미지 파일 크기를 줄여보세요 (5MB 이하 권장)\n' +
-            '2. 네트워크 연결 상태를 확인해주세요\n' +
-            '3. 잠시 후 다시 시도해주세요'
+        if (errorMessage.includes('시간이 초과') || errorMessage.includes('timed out')) {
+          troubleshootingTips = tErrors('uploadTimeoutSolution')
         } else if (errorMessage.includes('not valid JSON') || errorMessage.includes('504')) {
-          errorMessage = '서버 응답 시간 초과 (이미지 파일이 너무 크거나 네트워크가 불안정합니다)'
-          troubleshootingTips =
-            '해결 방법:\n' +
-            '1. 이미지 파일 크기를 줄여보세요 (5MB 이하 권장)\n' +
-            '2. 네트워크 연결 상태를 확인해주세요\n' +
-            '3. 잠시 후 다시 시도해주세요'
+          errorMessage = tErrors('serverTimeout')
+          troubleshootingTips = tErrors('uploadTimeoutSolution')
         } else {
-          troubleshootingTips =
-            'Supabase Storage 설정을 확인해주세요:\n' +
-            '1. "artworks" 버킷이 존재하는지\n' +
-            '2. 버킷이 Public으로 설정되어 있는지\n' +
-            '3. 업로드 권한이 있는지'
+          troubleshootingTips = tErrors('checkSupabaseSettings')
         }
 
         // Show user-friendly error message
         alert(
-          `이미지 업로드 실패: ${file.name}\n\n` +
-          `오류: ${errorMessage}\n\n` +
+          `${tErrors('uploadFailed')}: ${file.name}\n\n` +
+          `${tCommon('error')}: ${errorMessage}\n\n` +
           troubleshootingTips
         )
       }
@@ -376,12 +370,7 @@ export function ChatContainer() {
       }
 
       console.error('Failed to upload files:', failedUploads)
-      alert(
-        `${failedUploads.length}개의 이미지 업로드에 실패했습니다.\n\n` +
-        `실패한 파일:\n${failedUploads.join('\n')}\n\n` +
-        '모든 이미지가 성공적으로 업로드되어야 진행할 수 있습니다.\n' +
-        '다시 시도해주세요.'
-      )
+      alert(t('uploadFailedCount', { count: failedUploads.length }))
       return // Don't proceed to next step
     }
 
@@ -417,6 +406,7 @@ export function ChatContainer() {
           body: JSON.stringify({
             title,
             keywords: exhibitionData.keywords,
+            locale,
           }),
         }),
         fetch('/api/generate/preface', {
@@ -425,15 +415,17 @@ export function ChatContainer() {
           body: JSON.stringify({
             title,
             keywords: exhibitionData.keywords,
+            locale,
           }),
         }),
         fetch('/api/generate/artist-bio', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            artistName: exhibitionData.artistName || '작가',
+            artistName: exhibitionData.artistName || tCommon('artist'),
             keywords: exhibitionData.keywords,
             title,
+            locale,
           }),
         }),
         fetch('/api/generate/artwork-descriptions', {
@@ -443,10 +435,11 @@ export function ChatContainer() {
             artworks: exhibitionData.images.map((url, idx) => ({
               id: idx,
               imageUrl: url,
-              title: `작품 ${idx + 1}`,
+              title: `${tCommon('artwork')} ${idx + 1}`,
             })),
             title,
             keywords: exhibitionData.keywords,
+            locale,
           }),
         }),
       ])
@@ -489,7 +482,7 @@ export function ChatContainer() {
       }
     } catch (error) {
       console.error('Error generating content:', error)
-      alert('콘텐츠 생성 중 오류가 발생했습니다.')
+      alert(tErrors('contentGenerationError'))
     } finally {
       setIsGeneratingContent(false)
     }
@@ -515,9 +508,9 @@ export function ChatContainer() {
           <div className="flex flex-col items-center h-full space-y-2 sm:space-y-4">
             {/* Header */}
             <div className="text-center space-y-1 sm:space-y-2 flex-shrink-0 px-2">
-              <h1 className="text-xl sm:text-2xl font-bold">AI 큐레이터와 전시 기획하기</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">{t('pageTitle')}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                AI 큐레이터와 대화하며 당신의 전시 아이디어를 구체화하세요
+                {t('pageSubtitle')}
               </p>
             </div>
 
@@ -530,8 +523,8 @@ export function ChatContainer() {
                       <span className="text-lg sm:text-xl">🎨</span>
                     </div>
                     <div>
-                      <h3 className="text-sm sm:text-base font-semibold">AI 큐레이터</h3>
-                      <p className="text-xs text-muted-foreground">전시 기획 전문가</p>
+                      <h3 className="text-sm sm:text-base font-semibold">{t('aiCurator')}</h3>
+                      <p className="text-xs text-muted-foreground">{t('expertTitle')}</p>
                     </div>
                   </div>
                 </div>
@@ -542,7 +535,7 @@ export function ChatContainer() {
                     <MessageList messages={messages} />
                   ) : (
                     <div className="text-center text-xs sm:text-sm text-muted-foreground py-8">
-                      대화를 시작해주세요...
+                      {t('startConversation')}
                     </div>
                   )}
                 </div>
@@ -554,7 +547,7 @@ export function ChatContainer() {
                     handleInputChange={handleInputChange}
                     handleSubmit={handleSubmit}
                     isLoading={isLoading}
-                    placeholder="전시 아이디어를 자유롭게 말씀해주세요..."
+                    placeholder={t('inputPlaceholder')}
                   />
                 </div>
               </div>
@@ -563,7 +556,7 @@ export function ChatContainer() {
             <div className="flex flex-col items-center gap-2 flex-shrink-0">
               {messages.filter(m => m.role === 'user').length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  AI 큐레이터와 최소 1번 대화해주세요
+                  {t('chatAtLeastOnce')}
                 </p>
               )}
               <Button
@@ -571,7 +564,7 @@ export function ChatContainer() {
                 size="lg"
                 disabled={isLoading || messages.filter(m => m.role === 'user').length === 0}
               >
-                다음 단계로 →
+                {t('nextStep')}
               </Button>
             </div>
           </div>
@@ -604,7 +597,7 @@ export function ChatContainer() {
               />
               <div className="flex justify-between pt-4">
                 <Button onClick={handlePreviousStep} variant="outline">
-                  ← 이전 단계
+                  {t('previousStep')}
                 </Button>
               </div>
             </div>
@@ -618,7 +611,7 @@ export function ChatContainer() {
             />
             <div className="flex justify-between pt-4">
               <Button onClick={handlePreviousStep} variant="outline">
-                ← 이전 단계
+                {t('previousStep')}
               </Button>
             </div>
           </div>
@@ -639,21 +632,21 @@ export function ChatContainer() {
                 <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
                   <Loader2 className="w-12 h-12 animate-spin text-primary" />
                   <div className="text-center space-y-2">
-                    <h3 className="text-lg font-semibold">전시 본문 생성 중...</h3>
+                    <h3 className="text-lg font-semibold">{t('generatingContent')}</h3>
                     <p className="text-sm text-muted-foreground">
-                      AI가 전시 소개, 서문, 작가 소개, 작품 설명을 생성하고 있습니다.
+                      {t('generatingContentDesc')}
                       <br />
-                      <span className="font-medium text-primary">예상 소요시간: 약 20-30초</span>
+                      <span className="font-medium text-primary">{t('estimatedTime')}</span>
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                      전시 소개문 생성 중
+                      {t('generatingIntro')}
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-primary rounded-full animate-pulse delay-100"></div>
-                      전시 서문 및 작품 설명 생성 중
+                      {t('generatingPreface')}
                     </div>
                   </div>
                 </CardContent>
@@ -671,7 +664,7 @@ export function ChatContainer() {
                 />
                 <div className="flex justify-between pt-4">
                   <Button onClick={handlePreviousStep} variant="outline">
-                    ← 이전 단계
+                    {t('previousStep')}
                   </Button>
                 </div>
               </>
@@ -689,7 +682,7 @@ export function ChatContainer() {
             </div>
             <div className="flex justify-between pt-4 flex-shrink-0">
               <Button onClick={handlePreviousStep} variant="outline">
-                ← 이전 단계
+                {t('previousStep')}
               </Button>
             </div>
           </div>
@@ -705,7 +698,7 @@ export function ChatContainer() {
             </div>
             <div className="flex justify-between pt-4 flex-shrink-0">
               <Button onClick={handlePreviousStep} variant="outline">
-                ← 이전 단계
+                {t('previousStep')}
               </Button>
             </div>
           </div>
@@ -721,7 +714,7 @@ export function ChatContainer() {
             </div>
             <div className="flex justify-between pt-4 flex-shrink-0">
               <Button onClick={handlePreviousStep} variant="outline">
-                ← 이전 단계
+                {t('previousStep')}
               </Button>
             </div>
           </div>
@@ -737,7 +730,7 @@ export function ChatContainer() {
             </div>
             <div className="flex justify-between pt-4 flex-shrink-0">
               <Button onClick={handlePreviousStep} variant="outline">
-                ← 이전 단계
+                {t('previousStep')}
               </Button>
             </div>
           </div>
@@ -753,7 +746,7 @@ export function ChatContainer() {
             </div>
             <div className="flex justify-between pt-4 flex-shrink-0">
               <Button onClick={handlePreviousStep} variant="outline">
-                ← 이전 단계
+                {t('previousStep')}
               </Button>
             </div>
           </div>
@@ -766,7 +759,7 @@ export function ChatContainer() {
             </div>
             <div className="flex justify-between pt-4 flex-shrink-0">
               <Button onClick={handlePreviousStep} variant="outline">
-                ← 이전 단계
+                {t('previousStep')}
               </Button>
             </div>
           </div>

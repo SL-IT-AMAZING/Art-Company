@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,8 @@ export function ProfileSettingsCard({
   initialBio = '',
   onProfileUpdate,
 }: ProfileSettingsCardProps) {
+  const t = useTranslations('profile')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [fullName, setFullName] = useState(initialFullName)
@@ -50,16 +53,14 @@ export function ProfileSettingsCard({
       if (error) {
         setError(error.message)
       } else {
-        setMessage('프로필이 업데이트되었습니다.')
-        // 페이지 새로고침하여 헤더의 닉네임 즉시 업데이트
+        setMessage(t('updated'))
         router.refresh()
-        // 추가 콜백이 있다면 호출
         if (onProfileUpdate) {
           onProfileUpdate()
         }
       }
     } catch (err) {
-      setError('프로필 업데이트 중 오류가 발생했습니다.')
+      setError(t('updateError'))
     } finally {
       setLoading(false)
     }
@@ -68,31 +69,31 @@ export function ProfileSettingsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>프로필 정보</CardTitle>
-        <CardDescription>서비스 내에서 표시될 이름과 소개를 관리하세요.</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">로그인 이메일</label>
+            <label className="block text-sm font-medium mb-2">{t('loginEmail')}</label>
             <Input value={email} disabled readOnly />
           </div>
 
           <div>
             <label htmlFor="full-name" className="block text-sm font-medium mb-2">
-              이름
+              {t('name')}
             </label>
             <Input
               id="full-name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="홍길동"
+              placeholder={t('namePlaceholder')}
             />
           </div>
 
           <div>
             <label htmlFor="username" className="block text-sm font-medium mb-2">
-              닉네임
+              {t('nickname')}
             </label>
             <Input
               id="username"
@@ -104,14 +105,14 @@ export function ProfileSettingsCard({
 
           <div>
             <label htmlFor="profile-bio" className="block text-sm font-medium mb-2">
-              한 줄 소개
+              {t('bio')}
             </label>
             <Textarea
               id="profile-bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
-              placeholder="전시 기획자 / 작가 소개 문장을 입력하세요"
+              placeholder={t('bioPlaceholder')}
             />
           </div>
 
@@ -120,7 +121,7 @@ export function ProfileSettingsCard({
 
           <div className="flex justify-end">
             <Button type="submit" disabled={loading}>
-              {loading ? '저장 중...' : '저장하기'}
+              {loading ? tCommon('saving') : tCommon('save')}
             </Button>
           </div>
         </form>

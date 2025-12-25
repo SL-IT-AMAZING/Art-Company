@@ -1,8 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -21,12 +22,14 @@ interface MobileNavProps {
 
 export function MobileNav({ user, logoutAction }: MobileNavProps) {
   const pathname = usePathname()
+  const t = useTranslations('nav')
+  const tAuth = useTranslations('auth')
 
   const navItems = [
-    { href: '/curation', label: 'AI 큐레이터' },
-    { href: '/exhibition', label: '온라인 전시' },
-    { href: '/notice', label: '공지사항' },
-    { href: '/about', label: 'About' },
+    { href: '/curation', label: t('aiCurator') },
+    { href: '/exhibition', label: t('onlineExhibition') },
+    { href: '/notice', label: t('notice') },
+    { href: '/about', label: t('about') },
   ]
 
   return (
@@ -34,7 +37,7 @@ export function MobileNav({ user, logoutAction }: MobileNavProps) {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
-          <span className="sr-only">메뉴 열기</span>
+          <span className="sr-only">{tAuth('openMenu')}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[300px] sm:w-[400px]">
@@ -65,17 +68,17 @@ export function MobileNav({ user, logoutAction }: MobileNavProps) {
             {user ? (
               <>
                 <div className="px-4 py-2">
-                  <p className="text-sm text-muted-foreground">로그인됨</p>
+                  <p className="text-sm text-muted-foreground">{tAuth('loggedIn')}</p>
                   <p className="text-sm font-medium truncate">{user.email}</p>
                 </div>
                 <Link href="/mypage" className="block">
                   <Button variant="outline" className="w-full">
-                    마이페이지
+                    {tAuth('myPage')}
                   </Button>
                 </Link>
                 <form action={logoutAction as any}>
                   <Button variant="ghost" type="submit" className="w-full">
-                    로그아웃
+                    {tAuth('logout')}
                   </Button>
                 </form>
               </>
@@ -83,12 +86,12 @@ export function MobileNav({ user, logoutAction }: MobileNavProps) {
               <>
                 <Link href="/login" className="block">
                   <Button variant="outline" className="w-full">
-                    로그인
+                    {tAuth('login')}
                   </Button>
                 </Link>
                 <Link href="/signup" className="block">
                   <Button className="w-full">
-                    회원가입
+                    {tAuth('signup')}
                   </Button>
                 </Link>
               </>

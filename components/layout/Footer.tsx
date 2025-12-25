@@ -1,65 +1,68 @@
-import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
 
-export function Footer() {
+export async function Footer() {
+  const t = await getTranslations('footer')
+
   return (
     <footer className="border-t">
       <div className="container flex flex-col gap-4 py-10 md:flex-row md:justify-between">
         <div>
           <h3 className="text-lg font-bold mb-2">ART WIZARD</h3>
           <p className="text-sm text-muted-foreground max-w-xs">
-            AI-powered Digital Curator Service
+            {t('tagline')}
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           <div>
-            <h4 className="font-semibold mb-3">Services</h4>
+            <h4 className="font-semibold mb-3">{t('services')}</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/curation" className="text-muted-foreground hover:text-foreground">
-                  AI Curator
+                  {t('aiCurator')}
                 </Link>
               </li>
               <li>
                 <Link href="/exhibition" className="text-muted-foreground hover:text-foreground">
-                  Online Exhibition
+                  {t('onlineExhibition')}
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3">Info</h4>
+            <h4 className="font-semibold mb-3">{t('info')}</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/about" className="text-muted-foreground hover:text-foreground">
-                  About
+                  {t('about')}
                 </Link>
               </li>
               <li>
                 <Link href="/notice" className="text-muted-foreground hover:text-foreground">
-                  Notice
+                  {t('notice')}
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3">Account</h4>
+            <h4 className="font-semibold mb-3">{t('account')}</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/login" className="text-muted-foreground hover:text-foreground">
-                  Login
+                  {t('login')}
                 </Link>
               </li>
               <li>
                 <Link href="/signup" className="text-muted-foreground hover:text-foreground">
-                  Sign Up
+                  {t('signup')}
                 </Link>
               </li>
               <li>
                 <Link href="/mypage" className="text-muted-foreground hover:text-foreground">
-                  My Page
+                  {t('myPage')}
                 </Link>
               </li>
             </ul>
@@ -69,7 +72,7 @@ export function Footer() {
 
       <div className="container border-t py-6">
         <p className="text-center text-sm text-muted-foreground">
-          © 2025 ART WIZARD. All rights reserved.
+          {t('copyright')}
         </p>
       </div>
     </footer>

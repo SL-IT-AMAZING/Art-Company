@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -24,13 +25,16 @@ export interface ContentPreviewProps {
 }
 
 export function ContentPreview({ content, keywords }: ContentPreviewProps) {
+  const t = useTranslations('content')
+  const tCommon = useTranslations('common')
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center">
-            {content.title || '전시 제목'}
+            {content.title || tCommon('noTitle')}
           </CardTitle>
           {keywords && keywords.length > 0 && (
             <div className="flex flex-wrap gap-2 justify-center mt-4">
@@ -48,7 +52,7 @@ export function ContentPreview({ content, keywords }: ContentPreviewProps) {
       {content.introduction && (
         <Card>
           <CardHeader>
-            <CardTitle>전시 소개</CardTitle>
+            <CardTitle>{t('exhibitionIntro')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap font-serif leading-relaxed">
@@ -62,7 +66,7 @@ export function ContentPreview({ content, keywords }: ContentPreviewProps) {
       {content.preface && (
         <Card>
           <CardHeader>
-            <CardTitle>전시 서문</CardTitle>
+            <CardTitle>{t('exhibitionPreface')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap font-serif leading-relaxed">
@@ -76,7 +80,7 @@ export function ContentPreview({ content, keywords }: ContentPreviewProps) {
       {content.artistBio && (
         <Card>
           <CardHeader>
-            <CardTitle>작가 소개</CardTitle>
+            <CardTitle>{t('artistIntro')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap font-serif leading-relaxed">
@@ -90,7 +94,7 @@ export function ContentPreview({ content, keywords }: ContentPreviewProps) {
       {content.artworkDescriptions && content.artworkDescriptions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>작품 소개</CardTitle>
+            <CardTitle>{t('artworkIntro')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {content.artworkDescriptions.map((artwork, index) => (
@@ -101,7 +105,7 @@ export function ContentPreview({ content, keywords }: ContentPreviewProps) {
                     <div className="aspect-square relative overflow-hidden rounded-lg bg-muted">
                       <img
                         src={artwork.imageUrl}
-                        alt={artwork.title || `작품 ${index + 1}`}
+                        alt={artwork.title || tCommon('artworkNum', { num: index + 1 })}
                         className="object-cover w-full h-full"
                       />
                     </div>
@@ -123,7 +127,7 @@ export function ContentPreview({ content, keywords }: ContentPreviewProps) {
       {content.pressRelease && (
         <Card>
           <CardHeader>
-            <CardTitle>보도자료</CardTitle>
+            <CardTitle>{t('pressRelease')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap font-serif leading-relaxed">
@@ -137,7 +141,7 @@ export function ContentPreview({ content, keywords }: ContentPreviewProps) {
       {content.marketingReport && (
         <Card>
           <CardHeader>
-            <CardTitle>마케팅 리포트 (컬렉팅 포인트)</CardTitle>
+            <CardTitle>{t('marketingReport')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap font-serif leading-relaxed">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
@@ -18,6 +19,9 @@ export function PressReleaseGenerator({
   data,
   onComplete,
 }: PressReleaseGeneratorProps) {
+  const t = useTranslations('pressRelease')
+  const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [isGenerating, setIsGenerating] = useState(false)
   const [pressRelease, setPressRelease] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -45,6 +49,7 @@ export function PressReleaseGenerator({
           artistName: data.artistName,
           openingHours: data.openingHours,
           admissionFee: data.admissionFee,
+          locale,
         }),
       })
 
@@ -67,7 +72,7 @@ export function PressReleaseGenerator({
       }
     } catch (err) {
       console.error('Error generating press release:', err)
-      setError('보도자료 생성 중 오류가 발생했습니다.')
+      setError(t('generationError'))
     } finally {
       setIsGenerating(false)
     }
@@ -80,15 +85,15 @@ export function PressReleaseGenerator({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>보도자료 생성</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         <CardDescription>
-          전시를 위한 전문적인 보도자료를 생성합니다.
+          {t('generatingDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!pressRelease && !isGenerating && (
           <Button onClick={generatePressRelease} size="lg" className="w-full">
-            보도자료 생성하기
+            {t('generate')}
           </Button>
         )}
 
@@ -96,9 +101,8 @@ export function PressReleaseGenerator({
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
             <p className="text-muted-foreground">
-              보도자료를 생성하고 있습니다...
+              {t('generating')}
             </p>
-            <p className="text-sm font-medium text-primary mt-2">예상 소요시간: 약 10-15초</p>
           </div>
         )}
 
@@ -111,7 +115,7 @@ export function PressReleaseGenerator({
               onClick={generatePressRelease}
               className="mt-2"
             >
-              다시 시도
+              {t('retry')}
             </Button>
           </div>
         )}
@@ -126,10 +130,10 @@ export function PressReleaseGenerator({
 
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={generatePressRelease}>
-                다시 생성
+                {t('regenerate')}
               </Button>
               <Button onClick={handleComplete} size="lg" className="flex-1">
-                보도자료 확정
+                {tCommon('confirm')}
               </Button>
             </div>
           </div>
@@ -138,7 +142,7 @@ export function PressReleaseGenerator({
         {/* Skip option */}
         <div className="text-center pt-4">
           <Button variant="ghost" onClick={() => onComplete()}>
-            보도자료 건너뛰기
+            {tCommon('skip')}
           </Button>
         </div>
       </CardContent>

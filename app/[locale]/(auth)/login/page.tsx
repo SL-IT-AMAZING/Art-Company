@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
 
 export default function LoginPage() {
+  const t = useTranslations('auth')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -43,7 +45,7 @@ export default function LoginPage() {
         router.refresh()
       }
     } catch (err) {
-      setError('로그인 중 오류가 발생했습니다.')
+      setError(t('loginError'))
     } finally {
       setLoading(false)
     }
@@ -53,9 +55,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">로그인</CardTitle>
+          <CardTitle className="text-2xl">{t('loginTitle')}</CardTitle>
           <CardDescription>
-            Art Wizard에 오신 것을 환영합니다
+            {t('loginWelcome')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -71,7 +73,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                또는 이메일로 계속하기
+                {t('orContinueWithEmail')}
               </span>
             </div>
           </div>
@@ -79,7 +81,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
-                이메일
+                {t('email')}
               </label>
               <Input
                 id="email"
@@ -93,7 +95,7 @@ export default function LoginPage() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium mb-2">
-                비밀번호
+                {t('password')}
               </label>
               <Input
                 id="password"
@@ -110,26 +112,26 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '로그인 중...' : '로그인'}
+              {loading ? t('loggingIn') : t('login')}
             </Button>
           </form>
 
           <div className="mt-4 text-right">
             <Link href="/reset-password" className="text-sm text-primary hover:underline">
-              비밀번호를 잊으셨나요?
+              {t('forgotPassword')}
             </Link>
           </div>
 
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">계정이 없으신가요? </span>
+            <span className="text-muted-foreground">{t('noAccount')} </span>
             <Link href="/signup" className="text-primary hover:underline">
-              회원가입
+              {t('signup')}
             </Link>
           </div>
 
           <div className="mt-4 text-center">
             <Link href="/" className="text-sm text-muted-foreground hover:underline">
-              홈으로 돌아가기
+              {t('backToHome')}
             </Link>
           </div>
         </CardContent>

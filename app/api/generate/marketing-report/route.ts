@@ -1,10 +1,11 @@
 import { openai } from '@/lib/openai/client'
-import { PROMPTS } from '@/lib/openai/prompts'
+import { getPrompts } from '@/lib/openai/prompts'
 import { getRAGContext } from '@/lib/rag/retrieval'
 
 export async function POST(req: Request) {
   try {
-    const exhibitionData = await req.json()
+    const requestData = await req.json()
+    const { locale = 'ko', ...exhibitionData } = requestData
 
     if (!exhibitionData.title && !exhibitionData.keywords) {
       return new Response(
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
     }
 
     const ragContext = await getRAGContext('marketing_report')
+    const PROMPTS = getPrompts(locale)
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -42,15 +44,24 @@ export async function POST(req: Request) {
       console.error('Failed to parse marketing report JSON:', parseError)
       console.error('Content:', content)
 
-      // If not JSON, create a basic structure
+      // If not JSON, create a basic structure with locale-aware defaults
+      const isEnglish = locale === 'en'
       return new Response(
         JSON.stringify({
           marketingReport: {
             overview: content.substring(0, 300),
-            targetAudience: ['아트 컬렉터', '미술 애호가', '일반 관람객'],
-            marketingPoints: ['독창적인 작품 세계', '현대적 해석', '감각적 표현'],
-            pricingStrategy: '중저가 전략으로 접근성 확보',
-            promotionStrategy: ['SNS 마케팅', '아트 커뮤니티 홍보', 'VIP 프리뷰'],
+            targetAudience: isEnglish
+              ? ['Art collectors', 'Art enthusiasts', 'General visitors']
+              : ['아트 컬렉터', '미술 애호가', '일반 관람객'],
+            marketingPoints: isEnglish
+              ? ['Unique artistic vision', 'Contemporary interpretation', 'Sensory expression']
+              : ['독창적인 작품 세계', '현대적 해석', '감각적 표현'],
+            pricingStrategy: isEnglish
+              ? 'Mid-range pricing strategy for accessibility'
+              : '중저가 전략으로 접근성 확보',
+            promotionStrategy: isEnglish
+              ? ['Social media marketing', 'Art community outreach', 'VIP preview events']
+              : ['SNS 마케팅', '아트 커뮤니티 홍보', 'VIP 프리뷰'],
           },
         }),
         {

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Image as ImageIcon, Check } from 'lucide-react'
@@ -15,14 +16,16 @@ export function ReferencePosterSelector({
   onReferenceChange,
   artworkImages
 }: ReferencePosterSelectorProps) {
+  const t = useTranslations('poster')
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <ImageIcon className="w-4 h-4" />
-        <label className="text-sm font-medium">참고 이미지 선택 (선택사항)</label>
+        <label className="text-sm font-medium">{t('referenceImage')}</label>
       </div>
       <p className="text-xs text-muted-foreground">
-        업로드한 작품 중 하나를 선택하면 해당 이미지의 색감과 분위기를 더욱 정확하게 반영합니다
+        {t('referenceImageDesc')}
       </p>
 
       <div className="grid grid-cols-3 gap-3">
@@ -38,7 +41,7 @@ export function ReferencePosterSelector({
           <div className="aspect-square bg-gray-100 flex items-center justify-center rounded-t">
             <div className="text-center p-4">
               <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-xs text-gray-600">자동 선택</p>
+              <p className="text-xs text-gray-600">{t('autoSelect')}</p>
             </div>
           </div>
           {selectedReference === null && (
@@ -64,7 +67,7 @@ export function ReferencePosterSelector({
               <div className="aspect-square relative">
                 <img
                   src={imageUrl}
-                  alt={`작품 ${index + 1}`}
+                  alt={t('artworkNum', { num: index + 1 })}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -74,7 +77,7 @@ export function ReferencePosterSelector({
                 </div>
               )}
               <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-                작품 {index + 1}
+                {t('artworkNum', { num: index + 1 })}
               </div>
             </Card>
           )

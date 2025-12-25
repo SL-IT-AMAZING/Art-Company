@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       exhibitionEndDate,
       venue,
       referenceImage = null as string | null,
+      locale = 'ko',
     } = requestBody
 
     // Validate required fields
@@ -165,6 +166,7 @@ export async function POST(req: NextRequest) {
       isVertical,
       headerHeight,
       footerHeight,
+      locale,
     })
 
     // Launch Puppeteer - detect environment

@@ -1,13 +1,15 @@
 'use client'
 
 import { useMemo, useState, type FormEvent } from 'react'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function ResetPasswordRequestForm() {
+  const t = useTranslations('auth')
   const supabase = useMemo(() => createClient(), [])
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -33,11 +35,11 @@ export function ResetPasswordRequestForm() {
       if (error) {
         setError(error.message)
       } else {
-        setMessage('재설정 링크를 이메일로 전송했습니다. 메일함을 확인해주세요.')
+        setMessage(t('resetPasswordSent'))
         setEmail('')
       }
     } catch (err) {
-      setError('비밀번호 재설정 요청 중 오류가 발생했습니다.')
+      setError(t('resetPasswordError'))
     } finally {
       setLoading(false)
     }
@@ -46,16 +48,16 @@ export function ResetPasswordRequestForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">비밀번호 재설정</CardTitle>
+        <CardTitle className="text-2xl">{t('resetPasswordTitle')}</CardTitle>
         <CardDescription>
-          가입에 사용한 이메일 주소를 입력하면 재설정 링크를 보내드립니다.
+          {t('resetPasswordDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="reset-email" className="block text-sm font-medium mb-2">
-              이메일
+              {t('email')}
             </label>
             <Input
               id="reset-email"
@@ -71,13 +73,13 @@ export function ResetPasswordRequestForm() {
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? '전송 중...' : '재설정 링크 보내기'}
+            {loading ? t('sending') : t('sendResetLink')}
           </Button>
         </form>
 
         <div className="mt-6 text-center text-sm">
           <Link href="/login" className="text-primary hover:underline">
-            로그인으로 돌아가기
+            {t('backToLogin')}
           </Link>
         </div>
       </CardContent>

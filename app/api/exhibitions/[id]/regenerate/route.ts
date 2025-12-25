@@ -1,5 +1,5 @@
 import { openai } from '@/lib/openai/client'
-import { PROMPTS } from '@/lib/openai/prompts'
+import { getPrompts } from '@/lib/openai/prompts'
 import { OpenAIStream, StreamingTextResponse } from 'ai'
 import { createClient } from '@/lib/supabase/server'
 import { getRAGContext } from '@/lib/rag/retrieval'
@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { contentType, exhibitionData } = await req.json()
+    const { contentType, exhibitionData, locale = 'ko' } = await req.json()
     const supabase = await createClient()
 
     // Verify user authentication
@@ -39,9 +39,13 @@ export async function POST(
 
     // Get RAG context based on content type
     const ragContext = await getRAGContext(contentType)
+    const PROMPTS = getPrompts(locale)
+    const isEnglish = locale === 'en'
 
     // Generate system prompt based on content type
-    let systemPrompt = '당신은 전문 미술 큐레이터입니다.'
+    let systemPrompt = isEnglish
+      ? 'You are a professional art curator.'
+      : '당신은 전문 미술 큐레이터입니다.'
 
     const { title = '', keywords = [] } = exhibitionData
 
@@ -62,12 +66,22 @@ export async function POST(
         )
         break
       default:
-        systemPrompt = `당신은 전문 미술 큐레이터입니다.
-        전시 제목: ${title}
-        키워드: ${keywords.join(', ')}
+        systemPrompt = isEnglish
+          ? `You are a professional art curator.
+          Exhibition Title: ${title}
+          Keywords: ${keywords.join(', ')}
 
-        위 정보를 바탕으로 ${contentType}를 작성해주세요.`
+          Based on the above information, please write the ${contentType}.`
+          : `당신은 전문 미술 큐레이터입니다.
+          전시 제목: ${title}
+          키워드: ${keywords.join(', ')}
+
+          위 정보를 바탕으로 ${contentType}를 작성해주세요.`
     }
+
+    const userMessage = isEnglish
+      ? `Please regenerate the ${contentType}.`
+      : `${contentType}를 재생성해주세요.`
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -79,7 +93,7 @@ export async function POST(
         },
         {
           role: 'user',
-          content: `${contentType}를 재생성해주세요.`,
+          content: userMessage,
         },
       ],
       temperature: 0.8, // Higher temperature for more creative regeneration

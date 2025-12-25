@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { ExhibitionData } from '@/types/exhibition'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,20 +12,23 @@ interface ContentPreviewProps {
 }
 
 export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
+  const t = useTranslations('contentPreview')
+  const tCommon = useTranslations('common')
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>전시 정보 미리보기</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
           <CardDescription>
-            생성된 전시 정보를 확인하고 다음 단계로 진행하세요.
+            {t('subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Title */}
           <div>
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-              전시 타이틀
+              {t('exhibitionTitle')}
             </h3>
             <p className="text-xl font-bold">{data.selectedTitle}</p>
           </div>
@@ -32,7 +36,7 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
           {/* Keywords */}
           <div>
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-              키워드
+              {t('keywords')}
             </h3>
             <div className="flex flex-wrap gap-2">
               {data.keywords.map((keyword, index) => (
@@ -51,7 +55,7 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold text-muted-foreground">
-                  전시 소개문
+                  {t('introduction')}
                 </h3>
                 {onEdit && (
                   <Button
@@ -59,7 +63,7 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
                     size="sm"
                     onClick={() => onEdit('introduction')}
                   >
-                    수정
+                    {tCommon('edit')}
                   </Button>
                 )}
               </div>
@@ -72,7 +76,7 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold text-muted-foreground">
-                  전시 서문
+                  {t('preface')}
                 </h3>
                 {onEdit && (
                   <Button
@@ -80,7 +84,7 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
                     size="sm"
                     onClick={() => onEdit('preface')}
                   >
-                    수정
+                    {tCommon('edit')}
                   </Button>
                 )}
               </div>
@@ -93,10 +97,10 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
           {data.images.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-                업로드된 작품
+                {t('uploadedArtworks')}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {data.images.length}개의 작품 이미지
+                {data.images.length} {t('artworkImages')}
               </p>
             </div>
           )}
@@ -105,7 +109,7 @@ export function ContentPreview({ data, onNext, onEdit }: ContentPreviewProps) {
 
       <div className="flex justify-end">
         <Button onClick={onNext} size="lg">
-          다음 단계로
+          {t('nextStep')}
         </Button>
       </div>
     </div>

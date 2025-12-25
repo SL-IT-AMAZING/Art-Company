@@ -196,21 +196,38 @@ interface ExhibitionData {
 }
 
 /**
+ * Get locale-aware default values
+ */
+function getDefaults(locale: string = 'ko') {
+  const isEnglish = locale === 'en'
+  return {
+    tbd: isEnglish ? 'TBD' : '미정',
+    free: isEnglish ? 'Free' : '무료',
+  }
+}
+
+/**
  * Replace [TBD] placeholders with actual exhibition data
+ * @param text The text to process
+ * @param exhibition Exhibition data to use for replacements
+ * @param locale The locale for formatting (default: 'ko')
  */
 export function replaceTBDPlaceholders(
   text: string,
-  exhibition: ExhibitionData
+  exhibition: ExhibitionData,
+  locale: string = 'ko'
 ): string {
   if (!text) return text
 
   let result = text
+  const defaults = getDefaults(locale)
+  const isEnglish = locale === 'en'
 
-  // Format date helper
+  // Format date helper with locale support
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return null
     const date = new Date(dateStr)
-    return date.toLocaleDateString('ko-KR', {
+    return date.toLocaleDateString(isEnglish ? 'en-US' : 'ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -223,14 +240,14 @@ export function replaceTBDPlaceholders(
     ? endDate
       ? `${startDate} - ${endDate}`
       : startDate
-    : '미정'
+    : defaults.tbd
 
-  // Replace common [TBD] patterns
-  result = result.replace(/\[TBD\]|\[미정\]|\[추후 공지\]|\[추후공지\]/gi, '미정')
-  result = result.replace(/\[날짜\]|\[일정\]|\[전시 기간\]|\[전시기간\]/gi, dateRange)
-  result = result.replace(/\[장소\]|\[전시장\]|\[갤러리\]/gi, exhibition.venue || '미정')
-  result = result.replace(/\[위치\]|\[주소\]/gi, exhibition.location || '미정')
-  result = result.replace(/\[입장료\]|\[관람료\]|\[가격\]|\[티켓\]/gi, exhibition.admission_fee || '무료')
+  // Replace common [TBD] patterns - both English and Korean
+  result = result.replace(/\[TBD\]|\[미정\]|\[추후 공지\]|\[추후공지\]/gi, defaults.tbd)
+  result = result.replace(/\[날짜\]|\[일정\]|\[전시 기간\]|\[전시기간\]|\[Date\]|\[Period\]/gi, dateRange)
+  result = result.replace(/\[장소\]|\[전시장\]|\[갤러리\]|\[Venue\]|\[Gallery\]/gi, exhibition.venue || defaults.tbd)
+  result = result.replace(/\[위치\]|\[주소\]|\[Location\]|\[Address\]/gi, exhibition.location || defaults.tbd)
+  result = result.replace(/\[입장료\]|\[관람료\]|\[가격\]|\[티켓\]|\[Admission\]|\[Ticket\]/gi, exhibition.admission_fee || defaults.free)
 
   return result
 }
@@ -238,8 +255,10 @@ export function replaceTBDPlaceholders(
 /**
  * Main post-processing function
  * Applies all filters in the correct order
+ * @param text The text to process
+ * @param locale Optional locale for localized defaults (default: 'ko')
  */
-export function postProcessLLMOutput(text: string): string {
+export function postProcessLLMOutput(text: string, locale: string = 'ko'): string {
   if (!text) return text
 
   let result = text

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,6 +30,7 @@ export function EditableContent({
   description,
   wordCount,
 }: EditableContentProps) {
+  const t = useTranslations('content')
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(content)
   const [isSaving, setIsSaving] = useState(false)
@@ -55,13 +57,13 @@ export function EditableContent({
       await onSave(editedContent)
       setIsEditing(false)
       toast({
-        title: '저장 완료',
-        description: '콘텐츠가 성공적으로 저장되었습니다.',
+        title: t('saved'),
+        description: t('savedDesc'),
       })
     } catch (error) {
       toast({
-        title: '저장 실패',
-        description: '콘텐츠 저장 중 오류가 발생했습니다.',
+        title: t('saveFailed'),
+        description: t('saveError'),
         variant: 'destructive',
       })
     } finally {
@@ -75,13 +77,13 @@ export function EditableContent({
     try {
       await onRegenerate()
       toast({
-        title: '재생성 시작',
-        description: 'AI가 새로운 콘텐츠를 생성하고 있습니다.',
+        title: t('regenerationStarted'),
+        description: t('regenerationDesc'),
       })
     } catch (error) {
       toast({
-        title: '재생성 실패',
-        description: '콘텐츠 재생성 중 오류가 발생했습니다.',
+        title: t('regenerationFailed'),
+        description: t('regenerationError'),
         variant: 'destructive',
       })
     }
@@ -109,8 +111,11 @@ export function EditableContent({
                       : 'secondary'
                   }
                 >
-                  {currentWordCount}자
-                  {wordCount && ` (권장: ${wordCount.min}-${wordCount.max}자)`}
+                  {t('charCountRecommended', {
+                    count: currentWordCount,
+                    min: wordCount.min,
+                    max: wordCount.max
+                  })}
                 </Badge>
               )}
             </div>
@@ -125,7 +130,7 @@ export function EditableContent({
                   disabled={isGenerating}
                 >
                   <Pencil className="w-4 h-4 mr-1" />
-                  편집
+                  {t('edit')}
                 </Button>
                 {onRegenerate && (
                   <Button
@@ -137,7 +142,7 @@ export function EditableContent({
                     <RotateCcw
                       className={`w-4 h-4 mr-1 ${isGenerating ? 'animate-spin' : ''}`}
                     />
-                    재생성
+                    {t('regenerate')}
                   </Button>
                 )}
               </>
@@ -151,11 +156,11 @@ export function EditableContent({
                   disabled={isSaving}
                 >
                   <X className="w-4 h-4 mr-1" />
-                  취소
+                  {t('cancel')}
                 </Button>
                 <Button size="sm" onClick={handleSave} disabled={isSaving}>
                   <Check className="w-4 h-4 mr-1" />
-                  {isSaving ? '저장 중...' : '저장'}
+                  {isSaving ? t('saving') : t('save')}
                 </Button>
               </>
             )}
@@ -169,19 +174,19 @@ export function EditableContent({
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
               className="min-h-[200px] font-serif leading-relaxed"
-              placeholder="콘텐츠를 입력하세요..."
+              placeholder={t('enterContent')}
               disabled={isSaving}
             />
             <p className="text-sm text-muted-foreground">
-              실시간 글자 수: {currentWordCount}자
+              {t('liveCharCount')}: {t('charCount', { count: currentWordCount })}
               {wordCount &&
-                ` (권장: ${wordCount.min}-${wordCount.max}자)`}
+                ` (${t('charCountRecommended', { count: currentWordCount, min: wordCount.min, max: wordCount.max })})`}
             </p>
           </div>
         ) : (
           <div className="prose prose-sm max-w-none">
             <p className="whitespace-pre-wrap font-serif leading-relaxed">
-              {content || '콘텐츠가 아직 생성되지 않았습니다.'}
+              {content || t('noContent')}
             </p>
           </div>
         )}

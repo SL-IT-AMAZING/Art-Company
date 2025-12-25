@@ -2,6 +2,7 @@
 
 import { FormEvent } from 'react'
 import { Send } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
@@ -19,9 +20,11 @@ export function ChatInput({
   handleInputChange,
   handleSubmit,
   isLoading,
-  placeholder = '메시지를 입력하세요...',
+  placeholder,
   disabled = false,
 }: ChatInputProps) {
+  const t = useTranslations('chat')
+  const effectivePlaceholder = placeholder || t('messagePlaceholder')
   const isDisabled = disabled || isLoading
 
   return (
@@ -29,7 +32,7 @@ export function ChatInput({
       <Input
         value={input}
         onChange={handleInputChange}
-        placeholder={placeholder}
+        placeholder={effectivePlaceholder}
         disabled={isDisabled}
         className="flex-1"
       />

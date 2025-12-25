@@ -16,6 +16,7 @@ export interface SimplePosterData {
   isVertical?: boolean // 세로로 긴 이미지인지 여부
   headerHeight?: number // 상단 여백 높이 (px)
   footerHeight?: number // 하단 여백 높이 (px)
+  locale?: 'ko' | 'en' // 언어 설정
 }
 
 /**
@@ -127,11 +128,25 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
     isVertical = true,
     headerHeight = 600,
     footerHeight = 600,
+    locale = 'ko',
   } = data
 
   const dateRange = formatDateRange(exhibitionDate, exhibitionEndDate)
   const imageContainerClass = isVertical ? 'image-container vertical' : 'image-container horizontal'
   const { korean: koreanTitle, english: englishTitle } = parseTitle(title)
+
+  // Determine which title(s) to display based on locale
+  let displayKoreanTitle = ''
+  let displayEnglishTitle = ''
+
+  if (locale === 'en') {
+    // English mode: show only English title (fallback to Korean if no English)
+    displayEnglishTitle = englishTitle || koreanTitle
+  } else {
+    // Korean mode: show Korean title, and optionally English as subtitle
+    displayKoreanTitle = koreanTitle
+    displayEnglishTitle = englishTitle
+  }
 
   return `<!DOCTYPE html>
 <html>
@@ -265,8 +280,8 @@ export function generateSimplePosterHTML(data: SimplePosterData): string {
   <div class="poster">
     <div class="header">
       <div class="title-container">
-        ${koreanTitle ? `<h1 class="title-korean">${koreanTitle}</h1>` : ''}
-        ${englishTitle ? `<h2 class="title-english">${englishTitle}</h2>` : ''}
+        ${displayKoreanTitle ? `<h1 class="title-korean">${displayKoreanTitle}</h1>` : ''}
+        ${displayEnglishTitle ? `<h2 class="title-english">${displayEnglishTitle}</h2>` : ''}
       </div>
     </div>
 

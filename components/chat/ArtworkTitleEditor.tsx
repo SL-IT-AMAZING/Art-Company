@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 
 interface Artwork {
@@ -27,6 +28,8 @@ export default function ArtworkTitleEditor({
   onComplete,
   onSkip
 }: ArtworkTitleEditorProps) {
+  const t = useTranslations('artworkEditor')
+  const tCommon = useTranslations('common')
   const [artworks, setArtworks] = useState<Artwork[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -101,7 +104,7 @@ export default function ArtworkTitleEditor({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-500">작품 정보를 불러오는 중...</div>
+        <div className="text-gray-500">{t('loading')}</div>
       </div>
     )
   }
@@ -109,9 +112,9 @@ export default function ArtworkTitleEditor({
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 mb-4">
-        <h2 className="text-2xl font-bold mb-2">작품 정보 편집</h2>
+        <h2 className="text-2xl font-bold mb-2">{t('title')}</h2>
         <p className="text-gray-600">
-          각 작품의 제목과 설명을 입력할 수 있습니다. 건너뛰면 기본 제목("작품 1", "작품 2" 등)이 사용됩니다.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -136,27 +139,27 @@ export default function ArtworkTitleEditor({
               {/* Title input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  작품 {index + 1} 제목
+                  {t('artworkTitle', { num: index + 1 })}
                 </label>
                 <input
                   type="text"
                   value={artwork.title}
                   onChange={(e) => handleTitleChange(artwork.id, e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                  placeholder={`작품 ${index + 1}`}
+                  placeholder={t('artworkTitlePlaceholder', { num: index + 1 })}
                 />
               </div>
 
               {/* Description input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  작품 설명 (선택사항)
+                  {t('description')}
                 </label>
                 <textarea
                   value={artwork.description || ''}
                   onChange={(e) => handleDescriptionChange(artwork.id, e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none"
-                  placeholder="작품에 대한 설명을 입력하세요"
+                  placeholder={t('descriptionPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -172,14 +175,14 @@ export default function ArtworkTitleEditor({
           disabled={saving}
           className="px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          건너뛰기
+          {tCommon('skip')}
         </button>
         <button
           onClick={handleSave}
           disabled={saving}
           className="px-6 py-3 bg-black text-white hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
         >
-          {saving ? '저장 중...' : '저장하기'}
+          {saving ? tCommon('saving') : tCommon('save')}
         </button>
       </div>
     </div>

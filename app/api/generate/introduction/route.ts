@@ -1,10 +1,10 @@
 import { openai } from '@/lib/openai/client'
-import { PROMPTS } from '@/lib/openai/prompts'
+import { getPrompts } from '@/lib/openai/prompts'
 import { getRAGContext } from '@/lib/rag/retrieval'
 
 export async function POST(req: Request) {
   try {
-    const { title, keywords } = await req.json()
+    const { title, keywords, locale = 'ko' } = await req.json()
 
     if (!title || !keywords) {
       return new Response(
@@ -14,6 +14,7 @@ export async function POST(req: Request) {
     }
 
     const ragContext = await getRAGContext('introduction')
+    const PROMPTS = getPrompts(locale)
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',

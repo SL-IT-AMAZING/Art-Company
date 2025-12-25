@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, AlertTriangle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 
 interface DeleteConfirmModalProps {
@@ -25,10 +26,13 @@ export default function DeleteConfirmModal({
   onConfirm,
   title,
   message,
-  confirmText = '삭제',
-  cancelText = '취소',
+  confirmText,
+  cancelText,
   isDeleting = false
 }: DeleteConfirmModalProps) {
+  const t = useTranslations('deleteModal')
+  const effectiveConfirmText = confirmText || t('delete')
+  const effectiveCancelText = cancelText || t('cancel')
   if (!isOpen) return null
 
   return (
@@ -78,14 +82,14 @@ export default function DeleteConfirmModal({
                 variant="outline"
                 disabled={isDeleting}
               >
-                {cancelText}
+                {effectiveCancelText}
               </Button>
               <Button
                 onClick={onConfirm}
                 className="bg-red-600 hover:bg-red-700 text-white"
                 disabled={isDeleting}
               >
-                {isDeleting ? '삭제 중...' : confirmText}
+                {isDeleting ? t('deleting') : effectiveConfirmText}
               </Button>
             </div>
           </motion.div>

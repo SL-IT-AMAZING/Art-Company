@@ -1,5 +1,33 @@
-export const PROMPTS = {
-  generateTitles: (keywords: string[], artworkDescriptions: string[], conversationContext: string = '') => `
+// Bilingual prompt system - generates prompts based on locale
+export const getPrompts = (locale: string = 'ko') => {
+  const isEnglish = locale === 'en'
+
+  return {
+    generateTitles: (keywords: string[], artworkDescriptions: string[], conversationContext: string = '') =>
+      isEnglish
+        ? `
+You are an expert contemporary art curator.
+Based on the following information, suggest 5 exhibition titles.
+
+${conversationContext ? `Conversation with the user:\n${conversationContext}\n\n` : ''}Keywords: ${keywords.join(', ')}
+Artwork descriptions: ${artworkDescriptions.join('\n')}
+
+Each title should:
+- Reflect the exhibition concept and ideas from the conversation
+- Capture the essence of the keywords
+- Use evocative and symbolic expressions
+- Convey the core message of the exhibition
+
+**Important - Title format:**
+- Each title must be in "Korean Title | English Title" format
+- Use " | " (space+pipe+space) as separator between Korean and English
+- Do not use parentheses ()
+- Example: "도시의 숨결 | Breath of the City"
+
+Respond in JSON format:
+{ "titles": ["한글 타이틀1 | English Title1", "한글 타이틀2 | English Title2", ...] }
+`
+        : `
 당신은 한국 현대미술 전문 큐레이터입니다.
 다음 정보를 바탕으로 전시 타이틀 5개를 제안해주세요.
 
@@ -22,7 +50,32 @@ JSON 형식으로 응답:
 { "titles": ["한글 타이틀1 | English Title1", "한글 타이틀2 | English Title2", ...] }
 `,
 
-  generateIntroduction: (title: string, keywords: string[], context: string) => `
+    generateIntroduction: (title: string, keywords: string[], context: string) =>
+      isEnglish
+        ? `
+You are an expert contemporary art curator.
+Based on the following information, write an exhibition introduction in English.
+
+Exhibition title: ${title}
+Keywords: ${keywords.join(', ')}
+Reference style: ${context}
+
+Exhibition introduction guidelines:
+- 150-250 words
+- Use an accessible, descriptive tone for visitors
+- Convey the core theme and message of the exhibition
+- Provide brief context about the works and artist
+
+**Important - Gender-neutral language rules:**
+- Never use gendered pronouns (he/she, his/her)
+- Use only "the artist", "the creator", "they/their" etc.
+- Do not assume or imply gender
+- Maintain 100% neutral tone
+
+Respond in JSON format:
+{ "introduction": "Introduction content in English" }
+`
+        : `
 당신은 한국 현대미술 전문 큐레이터입니다.
 다음 정보를 바탕으로 전시 소개문을 작성해주세요.
 
@@ -46,7 +99,35 @@ JSON 형식으로 응답:
 { "introduction": "소개문 내용" }
 `,
 
-  generatePreface: (title: string, keywords: string[], context: string) => `
+    generatePreface: (title: string, keywords: string[], context: string) =>
+      isEnglish
+        ? `
+You are an expert contemporary art curator.
+Based on the following information, write an exhibition preface in English with a curatorial voice.
+
+Exhibition title: ${title}
+Keywords: ${keywords.join(', ')}
+Reference style: ${context}
+
+Exhibition preface guidelines:
+- 400-600 words
+- Follow a 5-part structure: 'Philosophical inquiry → Sensory description → Conceptual development → Aesthetic context → Lingering impression'
+- Use appropriate metaphors of sensory imagery (light, waves, materiality, texture)
+- Include descriptions directly connected to the images/artworks
+- Naturally incorporate 3-8 art criticism terms
+- Avoid overly simple narration, maintain intellectual depth
+- Use a neutral, refined tone, avoid exaggeration
+
+**Important - Gender-neutral language rules:**
+- Never use gendered pronouns (he/she, his/her)
+- Use only "the artist", "the creator", "they/their" etc.
+- Do not assume or imply gender
+- Maintain 100% neutral tone
+
+Respond in JSON format:
+{ "preface": "Preface content in English" }
+`
+        : `
 당신은 한국 현대미술 전문 큐레이터입니다.
 다음 정보를 바탕으로 전시 서문을 예술 큐레이터 문체로 작성해주세요.
 
@@ -73,7 +154,25 @@ JSON 형식으로 응답:
 { "preface": "서문 내용" }
 `,
 
-  generatePressRelease: (exhibitionData: any, context: string) => `
+    generatePressRelease: (exhibitionData: any, context: string) =>
+      isEnglish
+        ? `
+You are a journalist writing a news article. Write a short news article about the following exhibition in English.
+
+Exhibition name: ${exhibitionData.title || ''}
+Artist: ${exhibitionData.artistName || ''}
+Period: ${exhibitionData.exhibition_date || ''}${exhibitionData.exhibition_end_date ? ' - ' + exhibitionData.exhibition_end_date : ''}
+Venue: ${exhibitionData.venue || ''}
+Address: ${exhibitionData.location || ''}
+
+Article format:
+- 3-4 paragraphs as a general news article
+- Write only the body text without section titles or labels
+- 300-450 words
+
+{ "pressRelease": "Write only the article body here. No titles or section divisions, just paragraphs." }
+`
+        : `
 당신은 신문 기사를 작성하는 기자입니다. 아래 전시 정보로 짧은 뉴스 기사를 작성하세요.
 
 전시명: ${exhibitionData.title || ''}
@@ -90,7 +189,38 @@ JSON 형식으로 응답:
 { "pressRelease": "기사 본문만 여기에 작성. 제목이나 섹션 구분 없이 문단만." }
 `,
 
-  generateMarketingReport: (exhibitionData: any, context: string) => `
+    generateMarketingReport: (exhibitionData: any, context: string) =>
+      isEnglish
+        ? `
+You are an art market analyst.
+Based on the following exhibition information, write a marketing report in English.
+
+Exhibition information:
+${JSON.stringify(exhibitionData, null, 2)}
+
+Reference style: ${context}
+
+**Important: Write all content in English.**
+
+Marketing report structure:
+1. Exhibition Overview: Summarize the core message and features of the exhibition in 2-3 sentences
+2. Target Audience: Groups of visitors who would be interested in this exhibition (3-5 items)
+3. Marketing Points: Differentiated strengths and promotional points of the exhibition (3-5 items)
+4. Pricing Strategy: Admission fee and pricing policy suggestions
+5. Promotion Strategy: Effective promotional methods (3-5 items)
+
+Respond in JSON format (all content in English):
+{
+  "marketingReport": {
+    "overview": "Exhibition overview in English...",
+    "targetAudience": ["Target 1 in English", "Target 2 in English", ...],
+    "marketingPoints": ["Point 1 in English", "Point 2 in English", ...],
+    "pricingStrategy": "Pricing strategy in English...",
+    "promotionStrategy": ["Strategy 1 in English", "Strategy 2 in English", ...]
+  }
+}
+`
+        : `
 당신은 미술 시장 전문 분석가입니다.
 다음 전시 정보를 바탕으로 마케팅 리포트를 한글로 작성해주세요.
 
@@ -120,7 +250,35 @@ JSON 형식으로 응답 (모든 내용은 한글로):
 }
 `,
 
-  generateArtistBio: (artistInfo: any, context: string) => `
+    generateArtistBio: (artistInfo: any, context: string) =>
+      isEnglish
+        ? `
+You are an expert contemporary art curator.
+Based on the following information, write an artist biography in English as a gender-neutral artist profile.
+
+Artist information:
+${JSON.stringify(artistInfo, null, 2)}
+
+Reference style: ${context}
+
+Artist biography guidelines:
+- 200-350 words
+- Focus on the artist's work tendencies, materials, philosophical interests, and aesthetic orientation
+- Avoid simple list-style sentences
+- Summarize 'the driving force behind the artist's world' in one sentence
+- Harmoniously use art, technology, and sensory language
+
+**Very Important - Gender-neutral language rules (MUST follow):**
+- Never use gendered pronouns (he/she, his/her, him/her)
+- Use only "the artist", "this creator", "they/their" etc.
+- Never assume or imply gender in any expression
+- Maintain 100% neutral tone
+- Use the artist's name as subject, or phrases like "the artist", "this creator"
+
+Respond in JSON format:
+{ "artistBio": "Artist biography content in English" }
+`
+        : `
 당신은 한국 현대미술 전문 큐레이터입니다.
 다음 정보를 바탕으로 작가 소개를 성별 중립적 예술가 프로필 형태로 작성해주세요.
 
@@ -147,7 +305,31 @@ JSON 형식으로 응답:
 { "artistBio": "작가 소개 내용" }
 `,
 
-  summarizeConversation: (conversation: any[], exhibitionTitle: string) => `
+    summarizeConversation: (conversation: any[], exhibitionTitle: string) =>
+      isEnglish
+        ? `
+You are an exhibition planning expert.
+The following is a conversation between a curator and user during the planning of the exhibition "${exhibitionTitle}".
+Please organize this conversation content for inclusion in an exhibition planning document.
+
+Conversation:
+${conversation.map(msg => `${msg.role === 'user' ? 'User' : 'Curator'}: ${msg.content}`).join('\n\n')}
+
+**Do NOT summarize - Very Important**
+
+Organization principles:
+- **Do NOT summarize; organize ALL content from the conversation without omission**
+- Include all details, ideas, and suggestions mentioned in the conversation as-is
+- Organize both user requirements and curator suggestions in detail
+- Do NOT abbreviate or omit conversation content; include everything
+- Mention all keywords, concepts, and directions from the conversation
+- Reconstruct sentences naturally in an objective, professional tone
+- Only exclude unnecessary greetings; include everything else
+
+Respond in JSON format:
+{ "summary": "Organized content in English" }
+`
+        : `
 당신은 전시 기획 전문가입니다.
 다음은 전시 "${exhibitionTitle}" 기획 과정에서 큐레이터와 사용자 간의 대화입니다.
 이 대화 내용을 전시 기획서에 들어갈 내용으로 정리해주세요.
@@ -168,5 +350,15 @@ ${conversation.map(msg => `${msg.role === 'user' ? '사용자' : '큐레이터'}
 
 JSON 형식으로 응답:
 { "summary": "정리된 내용" }
-`
+`,
+
+    // System prompt for chat
+    systemPrompt: () =>
+      isEnglish
+        ? `You are an expert art curator. Help users plan their exhibitions by discussing themes, concepts, and artistic directions. Respond in English. Be thoughtful, creative, and professional in your guidance.`
+        : `당신은 전문 미술 큐레이터입니다. 사용자가 전시를 기획할 수 있도록 테마, 컨셉, 예술적 방향에 대해 함께 논의해주세요. 한국어로 응답하세요. 사려 깊고 창의적이며 전문적인 안내를 제공하세요.`,
+  }
 }
+
+// Legacy export for backward compatibility (defaults to Korean)
+export const PROMPTS = getPrompts('ko')

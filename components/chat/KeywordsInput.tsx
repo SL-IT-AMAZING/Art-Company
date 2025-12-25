@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,7 @@ interface KeywordsInputProps {
 }
 
 export function KeywordsInput({ onSubmit, initialKeywords = [] }: KeywordsInputProps) {
+  const t = useTranslations('keywords')
   const [keywords, setKeywords] = useState<string[]>(initialKeywords)
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
@@ -22,12 +24,12 @@ export function KeywordsInput({ onSubmit, initialKeywords = [] }: KeywordsInputP
     if (!trimmedInput) return
 
     if (keywords.length >= 10) {
-      setError('최대 10개의 키워드만 입력할 수 있습니다.')
+      setError(t('maxKeywords'))
       return
     }
 
     if (keywords.includes(trimmedInput)) {
-      setError('이미 추가된 키워드입니다.')
+      setError(t('duplicateKeyword'))
       return
     }
 
@@ -43,7 +45,7 @@ export function KeywordsInput({ onSubmit, initialKeywords = [] }: KeywordsInputP
 
   const handleSubmit = () => {
     if (keywords.length < 3) {
-      setError('최소 3개 이상의 키워드를 입력해주세요.')
+      setError(t('minKeywords'))
       return
     }
     onSubmit(keywords)
@@ -59,9 +61,9 @@ export function KeywordsInput({ onSubmit, initialKeywords = [] }: KeywordsInputP
   return (
     <Card>
       <CardHeader>
-        <CardTitle>전시 키워드 입력</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         <CardDescription>
-          전시의 핵심 주제나 컨셉을 나타내는 키워드를 3~10개 입력해주세요.
+          {t('subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -70,11 +72,11 @@ export function KeywordsInput({ onSubmit, initialKeywords = [] }: KeywordsInputP
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="예: 자연, 도시, 기억, 시간..."
+            placeholder={t('placeholder')}
             maxLength={50}
           />
           <Button onClick={addKeyword} variant="outline">
-            추가
+            {t('add')}
           </Button>
         </div>
 
@@ -101,14 +103,14 @@ export function KeywordsInput({ onSubmit, initialKeywords = [] }: KeywordsInputP
 
         <div className="flex justify-between items-center pt-4">
           <p className="text-sm text-muted-foreground">
-            {keywords.length}/10 키워드
+            {keywords.length}{t('keywordCount')}
           </p>
           <Button
             onClick={handleSubmit}
             disabled={keywords.length < 3}
             size="lg"
           >
-            다음 단계
+            {t('nextStep')}
           </Button>
         </div>
       </CardContent>

@@ -1,14 +1,16 @@
 'use client'
 
 import { useMemo, useState, useEffect, type FormEvent } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function ResetPasswordUpdateForm() {
+  const t = useTranslations('auth')
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const [password, setPassword] = useState('')
@@ -30,12 +32,12 @@ export function ResetPasswordUpdateForm() {
     setMessage('')
 
     if (password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.')
+      setError(t('passwordMinLength'))
       return
     }
 
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.')
+      setError(t('passwordsNotMatch'))
       return
     }
 
@@ -45,11 +47,11 @@ export function ResetPasswordUpdateForm() {
       if (error) {
         setError(error.message)
       } else {
-        setMessage('비밀번호가 변경되었습니다. 다시 로그인해주세요.')
+        setMessage(t('passwordChanged'))
         setTimeout(() => router.replace('/login'), 1500)
       }
     } catch (err) {
-      setError('비밀번호 변경 중 오류가 발생했습니다.')
+      setError(t('passwordChangeError'))
     } finally {
       setLoading(false)
     }
@@ -58,9 +60,9 @@ export function ResetPasswordUpdateForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">새 비밀번호 설정</CardTitle>
+        <CardTitle className="text-2xl">{t('newPasswordTitle')}</CardTitle>
         <CardDescription>
-          이메일로 수신한 링크를 통해 접속한 경우에만 비밀번호를 변경할 수 있습니다.
+          {t('newPasswordDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -68,7 +70,7 @@ export function ResetPasswordUpdateForm() {
           <form onSubmit={handleUpdate} className="space-y-4">
             <div>
               <label htmlFor="new-password" className="block text-sm font-medium mb-2">
-                새 비밀번호
+                {t('newPassword')}
               </label>
               <Input
                 id="new-password"
@@ -82,7 +84,7 @@ export function ResetPasswordUpdateForm() {
 
             <div>
               <label htmlFor="confirm-password" className="block text-sm font-medium mb-2">
-                새 비밀번호 확인
+                {t('confirmNewPassword')}
               </label>
               <Input
                 id="confirm-password"
@@ -98,16 +100,16 @@ export function ResetPasswordUpdateForm() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '변경 중...' : '비밀번호 변경'}
+              {loading ? t('changing') : t('changePassword')}
             </Button>
           </form>
         ) : (
           <div className="space-y-4 text-center">
             <p className="text-sm text-muted-foreground">
-              유효한 재설정 링크 없이 접근했습니다. 이메일의 재설정 링크를 통해 다시 접속해주세요.
+              {t('invalidResetLink')}
             </p>
             <Link href="/reset-password" className="text-primary hover:underline">
-              재설정 링크 다시 받기
+              {t('requestNewLink')}
             </Link>
           </div>
         )}

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { Trash2, Plus, Edit2, Save, X, Globe, Lock, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +33,8 @@ export default function ExhibitionManager({
   exhibition: initialExhibition,
   artworks: initialArtworks
 }: ExhibitionManagerProps) {
+  const t = useTranslations('exhibition')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -64,11 +67,11 @@ export default function ExhibitionManager({
         setExhibition({ ...exhibition, title: newTitle })
         setEditingTitle(false)
       } else {
-        alert('제목 수정에 실패했습니다')
+        alert(t('titleUpdateFailed'))
       }
     } catch (error) {
       console.error('Error updating title:', error)
-      alert('제목 수정 중 오류가 발생했습니다')
+      alert(t('titleUpdateError'))
     }
   }
 
@@ -92,11 +95,11 @@ export default function ExhibitionManager({
           is_public: publish
         })
       } else {
-        alert(publish ? '전시 공개에 실패했습니다' : '비공개 전환에 실패했습니다')
+        alert(publish ? t('publishFailed') : t('unpublishFailed'))
       }
     } catch (error) {
       console.error('Error toggling publish:', error)
-      alert('상태 변경 중 오류가 발생했습니다')
+      alert(t('statusChangeError'))
     } finally {
       setIsPublishing(false)
     }
@@ -113,11 +116,11 @@ export default function ExhibitionManager({
       if (res.ok) {
         router.push('/mypage')
       } else {
-        alert('전시 삭제에 실패했습니다')
+        alert(t('deleteFailed'))
       }
     } catch (error) {
       console.error('Error deleting exhibition:', error)
-      alert('전시 삭제 중 오류가 발생했습니다')
+      alert(t('deleteError'))
     } finally {
       setIsDeleting(false)
       setShowDeleteModal(false)
@@ -139,11 +142,11 @@ export default function ExhibitionManager({
         ))
         setEditingArtwork(null)
       } else {
-        alert('작품 제목 수정에 실패했습니다')
+        alert(t('artworkTitleUpdateFailed'))
       }
     } catch (error) {
       console.error('Error updating artwork title:', error)
-      alert('작품 제목 수정 중 오류가 발생했습니다')
+      alert(t('artworkTitleUpdateError'))
     }
   }
 
@@ -158,11 +161,11 @@ export default function ExhibitionManager({
       if (res.ok) {
         setArtworks(artworks.filter(a => a.id !== artworkId))
       } else {
-        alert('작품 삭제에 실패했습니다')
+        alert(t('artworkDeleteFailed'))
       }
     } catch (error) {
       console.error('Error deleting artwork:', error)
-      alert('작품 삭제 중 오류가 발생했습니다')
+      alert(t('artworkDeleteError'))
     } finally {
       setIsDeleting(false)
       setShowDeleteModal(false)
@@ -181,7 +184,7 @@ export default function ExhibitionManager({
       try {
         const formData = new FormData()
         formData.append('file', file)
-        formData.append('title', `작품 ${artworks.length + 1}`)
+        formData.append('title', tCommon('artworkNum', { num: artworks.length + 1 }))
 
         const res = await fetch(`/api/exhibitions/${exhibition.id}/artworks`, {
           method: 'POST',
@@ -195,11 +198,11 @@ export default function ExhibitionManager({
         } else {
           const errorData = await res.json()
           console.error('Upload error:', errorData)
-          alert(`${file.name} 업로드 실패: ${errorData.details || errorData.error}`)
+          alert(`${file.name} ${t('uploadFailed')}: ${errorData.details || errorData.error}`)
         }
       } catch (error) {
         console.error('Error uploading artwork:', error)
-        alert(`${file.name} 업로드 중 오류가 발생했습니다`)
+        alert(`${file.name} ${t('uploadError')}`)
       }
     }
 
@@ -212,13 +215,13 @@ export default function ExhibitionManager({
       {/* Header */}
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={() => router.push('/mypage')}>
-          ← 마이페이지로 돌아가기
+          {t('backToMypage')}
         </Button>
       </div>
 
       {/* Exhibition Title Section */}
       <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-sm font-medium text-gray-500 mb-2">전시 제목</h2>
+        <h2 className="text-sm font-medium text-gray-500 mb-2">{t('exhibitionTitle')}</h2>
         {editingTitle ? (
           <div className="flex gap-2">
             <Input
@@ -228,7 +231,7 @@ export default function ExhibitionManager({
               autoFocus
             />
             <Button onClick={handleSaveTitle} size="sm">
-              <Save size={16} className="mr-1" /> 저장
+              <Save size={16} className="mr-1" /> {tCommon('save')}
             </Button>
             <Button
               onClick={() => {
@@ -257,23 +260,23 @@ export default function ExhibitionManager({
 
       {/* Publish Section */}
       <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-sm font-medium text-gray-500 mb-2">전시 공개 상태</h2>
+        <h2 className="text-sm font-medium text-gray-500 mb-2">{t('publicStatus')}</h2>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {exhibition.is_public ? (
               <>
                 <Globe className="text-green-600" size={24} />
                 <div>
-                  <p className="font-medium text-green-700">공개중</p>
-                  <p className="text-sm text-gray-500">모든 사람이 이 전시를 볼 수 있습니다</p>
+                  <p className="font-medium text-green-700">{t('isPublic')}</p>
+                  <p className="text-sm text-gray-500">{t('isPublicDesc')}</p>
                 </div>
               </>
             ) : (
               <>
                 <Lock className="text-gray-400" size={24} />
                 <div>
-                  <p className="font-medium text-gray-700">비공개</p>
-                  <p className="text-sm text-gray-500">나만 이 전시를 볼 수 있습니다</p>
+                  <p className="font-medium text-gray-700">{t('isPrivate')}</p>
+                  <p className="text-sm text-gray-500">{t('isPrivateDesc')}</p>
                 </div>
               </>
             )}
@@ -286,17 +289,17 @@ export default function ExhibitionManager({
             {isPublishing ? (
               <>
                 <Loader2 size={16} className="mr-2 animate-spin" />
-                처리중...
+                {tCommon('processing')}
               </>
             ) : exhibition.is_public ? (
               <>
                 <Lock size={16} className="mr-2" />
-                비공개로 전환
+                {t('makePrivate')}
               </>
             ) : (
               <>
                 <Globe size={16} className="mr-2" />
-                전시 공개하기
+                {t('makePublic')}
               </>
             )}
           </Button>
@@ -306,7 +309,7 @@ export default function ExhibitionManager({
       {/* Artworks Section */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">작품 관리 ({artworks.length}개)</h2>
+          <h2 className="text-xl font-bold">{t('artworkManagement')} ({t('artworkCount', { count: artworks.length })})</h2>
           <>
             <input
               ref={fileInputRef}
@@ -322,7 +325,7 @@ export default function ExhibitionManager({
               onClick={() => fileInputRef.current?.click()}
             >
               <Plus size={16} className="mr-1" />
-              {isUploading ? '업로드 중...' : '작품 추가'}
+              {isUploading ? tCommon('uploading') : t('addArtwork')}
             </Button>
           </>
         </div>
@@ -396,9 +399,9 @@ export default function ExhibitionManager({
 
       {/* Danger Zone */}
       <div className="bg-red-50 border border-red-200 p-6 rounded-lg">
-        <h2 className="text-lg font-bold text-red-900 mb-2">위험 구역</h2>
+        <h2 className="text-lg font-bold text-red-900 mb-2">{t('dangerZone')}</h2>
         <p className="text-sm text-red-700 mb-4">
-          전시를 삭제하면 모든 작품도 함께 삭제되며 복구할 수 없습니다.
+          {t('deleteWarning')}
         </p>
         <Button
           onClick={() => {
@@ -408,7 +411,7 @@ export default function ExhibitionManager({
           className="bg-red-600 hover:bg-red-700"
         >
           <Trash2 size={16} className="mr-2" />
-          전시 삭제
+          {t('deleteExhibition')}
         </Button>
       </div>
 
@@ -426,11 +429,11 @@ export default function ExhibitionManager({
             handleDeleteArtwork(deleteTarget.id)
           }
         }}
-        title={deleteTarget?.type === 'exhibition' ? '전시 삭제' : '작품 삭제'}
+        title={deleteTarget?.type === 'exhibition' ? t('deleteExhibition') : t('deleteArtwork')}
         message={
           deleteTarget?.type === 'exhibition'
-            ? '이 전시를 삭제하시겠습니까?\n모든 작품도 함께 삭제되며 복구할 수 없습니다.'
-            : '이 작품을 삭제하시겠습니까?\n삭제된 작품은 복구할 수 없습니다.'
+            ? t('deleteExhibitionConfirm')
+            : t('deleteArtworkConfirm')
         }
         isDeleting={isDeleting}
       />

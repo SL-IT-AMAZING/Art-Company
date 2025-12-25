@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExhibitionData } from '@/types/exhibition'
@@ -16,6 +17,10 @@ export function VirtualExhibitionPrompt({
   data,
   onComplete,
 }: VirtualExhibitionPromptProps) {
+  const t = useTranslations('virtual')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
+  const locale = useLocale()
   const [isDownloading, setIsDownloading] = useState(false)
   const { toast } = useToast()
 
@@ -30,7 +35,7 @@ export function VirtualExhibitionPrompt({
           templateType: '2.5d_fixed',
           artworks: data.images.map((url, i) => ({
             imageUrl: url,
-            title: `작품 ${i + 1}`,
+            title: tCommon('artworkNum', { num: i + 1 }),
             description: '',
             order: i,
           })),
@@ -48,8 +53,8 @@ export function VirtualExhibitionPrompt({
   const downloadPDF = async () => {
     if (!data.id) {
       toast({
-        title: '오류',
-        description: '전시 ID가 없습니다. 전시를 먼저 생성해주세요.',
+        title: tCommon('error'),
+        description: t('createExhibitionFirst'),
         variant: 'destructive',
       })
       return
@@ -61,34 +66,34 @@ export function VirtualExhibitionPrompt({
       const response = await fetch('/api/generate/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ exhibitionId: data.id }),
+        body: JSON.stringify({ exhibitionId: data.id, locale }),
       })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         console.error('[PDF Client] Error response:', errorData)
-        throw new Error(errorData.error || 'PDF 생성 실패')
+        throw new Error(errorData.error || t('pdfGenerationFailed'))
       }
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${data.selectedTitle || '전시패키지'}_패키지.pdf`
+      a.download = `${data.selectedTitle || t('exhibitionPackage')}_package.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
 
       toast({
-        title: 'PDF 다운로드 완료',
-        description: '전시 패키지가 성공적으로 다운로드되었습니다.',
+        title: t('pdfDownloadComplete'),
+        description: t('pdfDownloadSuccess'),
       })
     } catch (error) {
       console.error('Error downloading PDF:', error)
       toast({
-        title: 'PDF 다운로드 실패',
-        description: error instanceof Error ? error.message : 'PDF 다운로드 중 오류가 발생했습니다.',
+        title: t('pdfDownloadFailed'),
+        description: error instanceof Error ? error.message : tErrors('pdfGenerationFailed'),
         variant: 'destructive',
       })
     } finally {
@@ -100,29 +105,29 @@ export function VirtualExhibitionPrompt({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>전시 완성</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
           <CardDescription>
-            전시 기획이 완료되었습니다! 가상 전시를 만들거나 패키지를 다운로드하세요.
+            {t('subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-6 border rounded-lg space-y-3">
               <Image className="w-10 h-10 text-primary" />
-              <h3 className="font-semibold text-lg">온라인 가상 전시</h3>
+              <h3 className="font-semibold text-lg">{t('onlineExhibition')}</h3>
               <p className="text-sm text-muted-foreground">
-                2.5D 가상 갤러리에서 작품을 전시하고 전 세계와 공유하세요.
+                {t('onlineExhibitionDesc')}
               </p>
               <div className="w-full py-2 px-4 bg-green-50 text-green-700 rounded-md text-center font-medium">
-                ✓ 생성 완료
+                {t('creationComplete')}
               </div>
             </div>
 
             <div className="p-6 border rounded-lg space-y-3">
               <FileDown className="w-10 h-10 text-primary" />
-              <h3 className="font-semibold text-lg">전시 패키지 다운로드</h3>
+              <h3 className="font-semibold text-lg">{t('downloadPackage')}</h3>
               <p className="text-sm text-muted-foreground">
-                서문, 소개, 보도자료, 마케팅 리포트를 PDF로 다운로드하세요.
+                {t('downloadPackageDesc')}
               </p>
               <Button
                 onClick={downloadPDF}
@@ -133,25 +138,25 @@ export function VirtualExhibitionPrompt({
                 {isDownloading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    생성 중...
+                    {t('pdfGenerating')}
                   </>
                 ) : (
-                  'PDF 다운로드'
+                  t('pdfDownload')
                 )}
               </Button>
             </div>
           </div>
 
           <div className="pt-4 border-t">
-            <h4 className="font-semibold mb-2">생성된 콘텐츠</h4>
+            <h4 className="font-semibold mb-2">{t('generatedContent')}</h4>
             <ul className="space-y-1 text-sm text-muted-foreground">
-              <li>✓ 전시 타이틀: {data.selectedTitle}</li>
-              <li>✓ 키워드: {data.keywords.join(', ')}</li>
-              {data.introduction && <li>✓ 전시 소개문</li>}
-              {data.preface && <li>✓ 전시 서문</li>}
-              {data.pressRelease && <li>✓ 보도자료</li>}
-              {data.marketingReport && <li>✓ 마케팅 리포트</li>}
-              <li>✓ 작품 이미지: {data.images.length}개</li>
+              <li>✓ {t('exhibitionTitle')}: {data.selectedTitle}</li>
+              <li>✓ {t('keywords')}: {data.keywords.join(', ')}</li>
+              {data.introduction && <li>✓ {t('exhibitionIntro')}</li>}
+              {data.preface && <li>✓ {t('exhibitionPreface')}</li>}
+              {data.pressRelease && <li>✓ {t('pressRelease')}</li>}
+              {data.marketingReport && <li>✓ {t('marketingReport')}</li>}
+              <li>✓ {t('artworkImages')}: {data.images.length}</li>
             </ul>
           </div>
         </CardContent>
@@ -159,7 +164,7 @@ export function VirtualExhibitionPrompt({
 
       <div className="flex justify-end">
         <Button onClick={onComplete} size="lg">
-          완료
+          {tCommon('complete')}
         </Button>
       </div>
     </div>

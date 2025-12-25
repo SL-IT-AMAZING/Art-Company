@@ -2,20 +2,23 @@
 
 import { Step } from '@/types/chat'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 
-const STEP_ORDER: { id: Step; label: string }[] = [
-  { id: 'welcome', label: '시작' },
-  { id: 'keywords', label: '키워드' },
-  { id: 'images', label: '이미지' },
-  { id: 'titles', label: '타이틀' },
-  { id: 'content', label: '본문 생성' },
-  { id: 'press-release', label: '보도자료' },
-  { id: 'poster', label: '포스터' },
-  { id: 'marketing', label: '마케팅' },
-  { id: 'virtual', label: '가상 전시' },
-  { id: 'complete', label: '완료' },
+type StepConfig = { id: Step; labelKey: string }
+
+const STEP_CONFIG: StepConfig[] = [
+  { id: 'welcome', labelKey: 'welcome' },
+  { id: 'keywords', labelKey: 'keywords' },
+  { id: 'images', labelKey: 'images' },
+  { id: 'titles', labelKey: 'titles' },
+  { id: 'content', labelKey: 'content' },
+  { id: 'press-release', labelKey: 'pressRelease' },
+  { id: 'poster', labelKey: 'poster' },
+  { id: 'marketing', labelKey: 'marketing' },
+  { id: 'virtual', labelKey: 'virtual' },
+  { id: 'complete', labelKey: 'complete' },
 ]
 
 interface StepProgressProps {
@@ -24,8 +27,9 @@ interface StepProgressProps {
 }
 
 export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
+  const t = useTranslations('steps')
   const currentIndex = Math.max(
-    STEP_ORDER.findIndex((step) => step.id === currentStep),
+    STEP_CONFIG.findIndex((step) => step.id === currentStep),
     0
   )
   const [scrollPosition, setScrollPosition] = useState(0)
@@ -42,7 +46,7 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
         0,
         Math.min(
           currentIndex - Math.floor(itemsPerPage / 2),
-          STEP_ORDER.length - itemsPerPage
+          STEP_CONFIG.length - itemsPerPage
         )
       )
       setScrollPosition(centerPosition)
@@ -59,14 +63,14 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
   }, [currentIndex]) // Remove scrollPosition and itemsPerPage from dependencies
 
   const canScrollLeft = scrollPosition > 0
-  const canScrollRight = scrollPosition + itemsPerPage < STEP_ORDER.length
+  const canScrollRight = scrollPosition + itemsPerPage < STEP_CONFIG.length
 
   const handleScrollLeft = () => {
     setScrollPosition((prev) => Math.max(0, prev - 1))
   }
 
   const handleScrollRight = () => {
-    setScrollPosition((prev) => Math.min(STEP_ORDER.length - itemsPerPage, prev + 1))
+    setScrollPosition((prev) => Math.min(STEP_CONFIG.length - itemsPerPage, prev + 1))
   }
 
   const handleStepClick = (stepId: Step, index: number) => {
@@ -84,7 +88,7 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
         onClick={handleScrollLeft}
         disabled={!canScrollLeft}
         className="h-8 w-8 flex-shrink-0 transition-opacity hover:bg-primary/10"
-        aria-label="이전 단계 보기"
+        aria-label={t('viewPrevious')}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -94,7 +98,7 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
           className="flex items-center gap-2 transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${scrollPosition * 120}px)` }}
         >
-        {STEP_ORDER.map((step, index) => {
+        {STEP_CONFIG.map((step, index) => {
           const actualIndex = index
           const isComplete = actualIndex < currentIndex
           const isActive = actualIndex === currentIndex
@@ -132,10 +136,10 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
                         : 'text-muted-foreground'
                   } ${isClickable && !isActive ? 'group-hover:text-primary' : ''}`}
                 >
-                  {step.label}
+                  {t(step.labelKey)}
                 </span>
               </button>
-              {index < STEP_ORDER.length - 1 && (
+              {index < STEP_CONFIG.length - 1 && (
                 <div
                   className={`w-4 border-t transition-all duration-300 ${
                     actualIndex < currentIndex ? 'border-primary' : 'border-muted'
@@ -154,7 +158,7 @@ export function StepProgress({ currentStep, onStepChange }: StepProgressProps) {
         onClick={handleScrollRight}
         disabled={!canScrollRight}
         className="h-8 w-8 flex-shrink-0 transition-opacity hover:bg-primary/10"
-        aria-label="다음 단계 보기"
+        aria-label={t('viewNext')}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

@@ -1,10 +1,13 @@
-import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils/helpers'
 
 export default async function ExhibitionListPage() {
+  const t = await getTranslations('exhibition')
+  const tCommon = await getTranslations('common')
   const supabase = await createClient()
 
   // Fetch public exhibitions
@@ -20,9 +23,9 @@ export default async function ExhibitionListPage() {
     <div className="container mx-auto py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">온라인 전시</h1>
+          <h1 className="text-4xl font-bold mb-4">{t('title')}</h1>
           <p className="text-xl text-muted-foreground">
-            AI가 기획한 다양한 전시를 가상 갤러리에서 감상하세요
+            {t('subtitle')}
           </p>
         </div>
 
@@ -30,10 +33,10 @@ export default async function ExhibitionListPage() {
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">
-                아직 공개된 전시가 없습니다.
+                {t('noPublicExhibitions')}
               </p>
               <Link href="/curation">
-                <Button>첫 전시 만들기</Button>
+                <Button>{t('createFirst')}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -44,20 +47,20 @@ export default async function ExhibitionListPage() {
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>
                     <CardTitle className="line-clamp-2">
-                      {exhibition.title || '제목 없음'}
+                      {exhibition.title || tCommon('noTitle')}
                     </CardTitle>
                     {exhibition.artist_name && (
                       <CardDescription className="font-medium">
-                        작가: {exhibition.artist_name}
+                        {t('artistLabel')} {exhibition.artist_name}
                       </CardDescription>
                     )}
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {/* 전시 기간 */}
+                      {/* Exhibition period */}
                       {(exhibition.exhibition_date || exhibition.exhibition_end_date) && (
                         <div className="text-sm">
-                          <span className="font-semibold">전시기간:</span>{' '}
+                          <span className="font-semibold">{t('periodLabel')}</span>{' '}
                           {exhibition.exhibition_date && formatDate(exhibition.exhibition_date)}
                           {exhibition.exhibition_end_date && (
                             <> ~ {formatDate(exhibition.exhibition_end_date)}</>
@@ -65,35 +68,35 @@ export default async function ExhibitionListPage() {
                         </div>
                       )}
 
-                      {/* 주소 */}
+                      {/* Address */}
                       {exhibition.location && (
                         <div className="text-sm">
-                          <span className="font-semibold">주소:</span> {exhibition.location}
+                          <span className="font-semibold">{t('addressLabel')}</span> {exhibition.location}
                         </div>
                       )}
 
-                      {/* 전시장소 */}
+                      {/* Venue */}
                       {exhibition.venue && (
                         <div className="text-sm">
-                          <span className="font-semibold">전시장소:</span> {exhibition.venue}
+                          <span className="font-semibold">{t('venueLabel')}</span> {exhibition.venue}
                         </div>
                       )}
 
-                      {/* 운영시간 */}
+                      {/* Opening hours */}
                       {exhibition.opening_hours && (
                         <div className="text-sm">
-                          <span className="font-semibold">운영시간:</span> {exhibition.opening_hours}
+                          <span className="font-semibold">{t('hoursLabel')}</span> {exhibition.opening_hours}
                         </div>
                       )}
 
-                      {/* 입장료 */}
+                      {/* Admission */}
                       {exhibition.admission_fee && (
                         <div className="text-sm">
-                          <span className="font-semibold">입장료:</span> {exhibition.admission_fee}
+                          <span className="font-semibold">{t('admissionLabel')}</span> {exhibition.admission_fee}
                         </div>
                       )}
 
-                      {/* 키워드 */}
+                      {/* Keywords */}
                       {exhibition.keywords && exhibition.keywords.length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-2">
                           {exhibition.keywords.slice(0, 5).map((keyword: string, index: number) => (
@@ -107,10 +110,10 @@ export default async function ExhibitionListPage() {
                         </div>
                       )}
 
-                      {/* 조회수 및 관람하기 */}
+                      {/* Views and view button */}
                       <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
-                        <span>조회수: {exhibition.view_count || 0}</span>
-                        <span className="text-primary font-medium">관람하기 →</span>
+                        <span>{tCommon('views')}: {exhibition.view_count || 0}</span>
+                        <span className="text-primary font-medium">{t('viewExhibition')}</span>
                       </div>
                     </div>
                   </CardContent>

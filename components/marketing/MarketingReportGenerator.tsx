@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
@@ -16,6 +17,9 @@ export function MarketingReportGenerator({
   data,
   onComplete,
 }: MarketingReportGeneratorProps) {
+  const t = useTranslations('marketing')
+  const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [isGenerating, setIsGenerating] = useState(false)
   const [report, setReport] = useState<MarketingReport | null>(null)
   const [error, setError] = useState('')
@@ -34,6 +38,7 @@ export function MarketingReportGenerator({
           keywords: data.keywords,
           introduction: data.introduction,
           preface: data.preface,
+          locale,
         }),
       })
 
@@ -67,17 +72,17 @@ export function MarketingReportGenerator({
 
         if (saveError) {
           console.error('Failed to save marketing report:', saveError)
-          throw new Error('마케팅 리포트 저장에 실패했습니다.')
+          throw new Error(t('generationFailed'))
         }
 
         console.log('Marketing report saved successfully for exhibition:', data.id)
       } else if (!data.id) {
         console.warn('Marketing report not saved - missing exhibition ID')
-        throw new Error('전시 ID가 없어 마케팅 리포트를 저장할 수 없습니다.')
+        throw new Error(t('generationFailed'))
       }
     } catch (err) {
       console.error('Error generating marketing report:', err)
-      setError('마케팅 리포트 생성 중 오류가 발생했습니다.')
+      setError(t('generationError'))
     } finally {
       setIsGenerating(false)
     }
@@ -92,15 +97,15 @@ export function MarketingReportGenerator({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>마케팅 리포트 생성</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         <CardDescription>
-          전시의 타깃 관람객, 마케팅 포인트, 홍보 전략을 분석합니다.
+          {t('generatingDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!report && !isGenerating && (
           <Button onClick={generateReport} size="lg" className="w-full">
-            마케팅 리포트 생성하기
+            {t('generate')}
           </Button>
         )}
 
@@ -108,9 +113,8 @@ export function MarketingReportGenerator({
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
             <p className="text-muted-foreground">
-              마케팅 리포트를 생성하고 있습니다...
+              {t('generating')}
             </p>
-            <p className="text-sm font-medium text-primary mt-2">예상 소요시간: 약 10-15초</p>
           </div>
         )}
 
@@ -123,7 +127,7 @@ export function MarketingReportGenerator({
               onClick={generateReport}
               className="mt-2"
             >
-              다시 시도
+              {t('retry')}
             </Button>
           </div>
         )}
@@ -131,12 +135,12 @@ export function MarketingReportGenerator({
         {report && (
           <div className="space-y-6">
             <div>
-              <h3 className="font-semibold mb-2">전시 요약</h3>
+              <h3 className="font-semibold mb-2">{t('overview')}</h3>
               <p className="text-sm text-muted-foreground">{report.overview}</p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">주요 타깃</h3>
+              <h3 className="font-semibold mb-2">{t('targetAudience')}</h3>
               <ul className="list-disc list-inside space-y-1">
                 {report.targetAudience.map((target, index) => (
                   <li key={index} className="text-sm text-muted-foreground">
@@ -147,7 +151,7 @@ export function MarketingReportGenerator({
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">마케팅 포인트</h3>
+              <h3 className="font-semibold mb-2">{t('marketingPoints')}</h3>
               <ul className="list-disc list-inside space-y-1">
                 {report.marketingPoints.map((point, index) => (
                   <li key={index} className="text-sm text-muted-foreground">
@@ -158,14 +162,14 @@ export function MarketingReportGenerator({
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">가격 전략</h3>
+              <h3 className="font-semibold mb-2">{t('pricingStrategy')}</h3>
               <p className="text-sm text-muted-foreground">
                 {report.pricingStrategy}
               </p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">추천 홍보 전략</h3>
+              <h3 className="font-semibold mb-2">{t('promotionStrategy')}</h3>
               <ul className="list-disc list-inside space-y-1">
                 {report.promotionStrategy.map((strategy, index) => (
                   <li key={index} className="text-sm text-muted-foreground">
@@ -177,10 +181,10 @@ export function MarketingReportGenerator({
 
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={generateReport}>
-                다시 생성
+                {t('regenerate')}
               </Button>
               <Button onClick={handleComplete} size="lg" className="flex-1">
-                리포트 확정
+                {tCommon('confirm')}
               </Button>
             </div>
           </div>
@@ -195,7 +199,7 @@ export function MarketingReportGenerator({
             pricingStrategy: '',
             promotionStrategy: []
           })}>
-            마케팅 리포트 건너뛰기
+            {t('skip')}
           </Button>
         </div>
       </CardContent>

@@ -1,18 +1,19 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link, usePathname } from '@/i18n/navigation'
 import { cn } from '@/lib/utils/helpers'
 
 export function NavItems() {
   const pathname = usePathname()
+  const t = useTranslations('nav')
 
   const navItems = [
-    { href: '/curation', label: 'AI 큐레이터' },
-    { href: '/exhibition', label: '온라인 전시' },
-    { href: '/notice', label: '공지사항' },
-    { href: '/about', label: 'About' },
-  ]
+    { href: '/curation', labelKey: 'aiCurator' },
+    { href: '/exhibition', labelKey: 'onlineExhibition' },
+    { href: '/notice', labelKey: 'notice' },
+    { href: '/about', labelKey: 'about' },
+  ] as const
 
   return (
     <nav className="flex items-center space-x-6 text-sm font-medium flex-1">
@@ -27,7 +28,7 @@ export function NavItems() {
               : 'text-foreground/60'
           )}
         >
-          {item.label}
+          {t(item.labelKey)}
         </Link>
       ))}
     </nav>

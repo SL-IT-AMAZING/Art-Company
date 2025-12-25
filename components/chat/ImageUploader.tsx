@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X } from 'lucide-react'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -20,6 +21,8 @@ export function ImageUploader({
   existingImages = [],
   maxImages = 10,
 }: ImageUploaderProps) {
+  const t = useTranslations('imageUpload')
+  const tCommon = useTranslations('common')
   const [previews, setPreviews] = useState<string[]>(existingImages)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [error, setError] = useState<string>('')
@@ -31,7 +34,7 @@ export function ImageUploader({
 
       // Validate file count
       if (previews.length + acceptedFiles.length > maxImages) {
-        setError(`최대 ${maxImages}개의 이미지만 업로드할 수 있습니다.`)
+        setError(t('maxImages', { max: maxImages }))
         return
       }
 
@@ -40,13 +43,13 @@ export function ImageUploader({
       for (const file of acceptedFiles) {
         // Check file type
         if (!ALLOWED_TYPES.includes(file.type)) {
-          setError('JPG, PNG, WebP 파일만 업로드 가능합니다.')
+          setError(t('invalidFileType'))
           continue
         }
 
         // Check file size
         if (file.size > MAX_FILE_SIZE) {
-          setError('파일 크기는 10MB 이하여야 합니다.')
+          setError(t('fileTooLarge'))
           continue
         }
 
@@ -82,9 +85,9 @@ export function ImageUploader({
   }
 
   const handleComplete = () => {
-    if (isUploading) return  // 중복 클릭 방지
+    if (isUploading) return
     if (uploadedFiles.length === 0) {
-      setError('최소 1개 이상의 이미지를 업로드해주세요.')
+      setError(t('minImages'))
       return
     }
     setIsUploading(true)
@@ -104,14 +107,14 @@ export function ImageUploader({
         <input {...getInputProps()} />
         <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
         {isDragActive ? (
-          <p className="text-lg">이미지를 여기에 놓으세요...</p>
+          <p className="text-lg">{t('dropHere')}</p>
         ) : (
           <div>
             <p className="text-lg mb-2">
-              이미지를 드래그하거나 클릭하여 업로드
+              {t('dragOrClick')}
             </p>
             <p className="text-sm text-gray-500">
-              JPG, PNG, WebP (최대 10MB, {maxImages}개까지)
+              {t('fileTypes', { max: maxImages })}
             </p>
           </div>
         )}
@@ -145,7 +148,7 @@ export function ImageUploader({
       {previews.length > 0 && (
         <div className="flex justify-end">
           <Button onClick={handleComplete} disabled={isUploading} size="lg">
-            {isUploading ? '업로드 중...' : `이미지 ${previews.length}개 업로드 완료`}
+            {isUploading ? tCommon('uploading') : t('uploadComplete', { count: previews.length })}
           </Button>
         </div>
       )}

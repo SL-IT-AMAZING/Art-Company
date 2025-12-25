@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ComponentType } from 'react'
 import { Loader2, Chrome } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 
@@ -16,6 +17,7 @@ const PROVIDERS: { id: Provider; label: string; icon: ComponentType<{ className?
 ]
 
 export function SocialLoginButtons({ nextPath = '/mypage' }: SocialLoginButtonsProps) {
+  const t = useTranslations('auth')
   const [loading, setLoading] = useState<Provider | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
@@ -32,7 +34,7 @@ export function SocialLoginButtons({ nextPath = '/mypage' }: SocialLoginButtonsP
 
       if (error) {
         console.error(`${provider} login error:`, error)
-        alert(`${provider} 로그인에 실패했습니다: ${error.message}`)
+        alert(`${t('socialLoginError')}: ${error.message}`)
       }
     } catch (error) {
       console.error('Social login error:', error)
@@ -61,7 +63,7 @@ export function SocialLoginButtons({ nextPath = '/mypage' }: SocialLoginButtonsP
             ) : (
               <Icon className="mr-2 h-4 w-4" />
             )}
-            {provider.label}로 계속하기
+            {t('continueWith')} {provider.label}
           </Button>
         )
       })}

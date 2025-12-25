@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils/helpers'
@@ -14,6 +15,8 @@ interface TitleSelectorProps {
 }
 
 export function TitleSelector({ keywords, images, conversationContext, onSelect }: TitleSelectorProps) {
+  const t = useTranslations('titleSelector')
+  const tCommon = useTranslations('common')
   const [titles, setTitles] = useState<string[]>([])
   const [selectedTitle, setSelectedTitle] = useState<string>('')
   const [customTitle, setCustomTitle] = useState<string>('')
@@ -47,14 +50,14 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
       setTitles(data.titles || [])
     } catch (err) {
       console.error('Error generating titles:', err)
-      setError('타이틀 생성 중 오류가 발생했습니다. 다시 시도해주세요.')
+      setError(t('generationError'))
       // Fallback titles
       setTitles([
-        '빛의 궤적',
-        '경계의 해체',
-        '기억의 지도',
-        '도시의 리듬',
-        '자연의 시간',
+        'Traces of Light',
+        'Dissolving Boundaries',
+        'Maps of Memory',
+        'Urban Rhythms',
+        "Nature's Time",
       ])
     } finally {
       setIsLoading(false)
@@ -73,8 +76,8 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">AI가 전시 타이틀을 생성하고 있습니다...</p>
-            <p className="text-sm font-medium text-primary">예상 소요시간: 약 10초</p>
+            <p className="text-muted-foreground">{t('generating')}</p>
+            <p className="text-sm font-medium text-primary">{t('estimatedTime')}</p>
           </div>
         </CardContent>
       </Card>
@@ -84,9 +87,9 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>전시 타이틀 선택</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         <CardDescription>
-          AI가 생성한 5개의 타이틀 중 마음에 드는 것을 선택해주세요.
+          {t('subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -99,7 +102,7 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
               onClick={generateTitles}
               className="mt-2"
             >
-              다시 생성
+              {t('regenerate')}
             </Button>
           </div>
         )}
@@ -124,10 +127,10 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
           ))}
         </div>
 
-        {/* 직접 입력 섹션 */}
+        {/* Custom input section */}
         <div className="pt-4 border-t">
           <p className="text-sm text-muted-foreground mb-2">
-            또는 직접 입력
+            {t('orEnterDirectly')}
           </p>
           <input
             type="text"
@@ -136,21 +139,21 @@ export function TitleSelector({ keywords, images, conversationContext, onSelect 
               setCustomTitle(e.target.value)
               setSelectedTitle('')
             }}
-            placeholder="원하는 전시 타이틀을 입력하세요"
+            placeholder={t('customPlaceholder')}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
         <div className="flex justify-between pt-4">
           <Button variant="outline" onClick={generateTitles}>
-            다시 생성
+            {t('regenerate')}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!selectedTitle && !customTitle.trim()}
             size="lg"
           >
-            타이틀 선택 완료
+            {t('confirm')}
           </Button>
         </div>
       </CardContent>

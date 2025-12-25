@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { ChevronDown } from 'lucide-react'
+import { useTranslations, useLocale } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 
 interface ProfileMenuProps {
@@ -12,6 +13,8 @@ interface ProfileMenuProps {
 }
 
 export function ProfileMenu({ email, username, logoutAction }: ProfileMenuProps) {
+  const t = useTranslations('auth')
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -34,7 +37,7 @@ export function ProfileMenu({ email, username, logoutAction }: ProfileMenuProps)
         className="flex items-center gap-2"
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span>{username ? `${username}님` : email}</span>
+        <span>{username ? `${username}${t('nameSuffix')}` : email}</span>
         <ChevronDown className="w-4 h-4" />
       </Button>
 
@@ -42,7 +45,7 @@ export function ProfileMenu({ email, username, logoutAction }: ProfileMenuProps)
         <div className="absolute right-0 mt-2 w-56 rounded-lg border bg-popover shadow-lg z-50">
           <div className="p-3 border-b">
             <p className="text-sm font-semibold leading-tight">
-              {username || '사용자'}
+              {username || t('user')}
             </p>
             <p className="text-xs text-muted-foreground truncate">{email}</p>
           </div>
@@ -52,18 +55,18 @@ export function ProfileMenu({ email, username, logoutAction }: ProfileMenuProps)
               className="px-2 py-1.5 rounded hover:bg-muted"
               onClick={() => setOpen(false)}
             >
-              마이페이지
+              {t('myPage')}
             </Link>
             <Link
               href="/reset-password"
               className="px-2 py-1.5 rounded hover:bg-muted"
               onClick={() => setOpen(false)}
             >
-              비밀번호 재설정
+              {t('resetPassword')}
             </Link>
             <form action={logoutAction} className="mt-2">
               <Button type="submit" variant="outline" className="w-full">
-                로그아웃
+                {t('logout')}
               </Button>
             </form>
           </div>
