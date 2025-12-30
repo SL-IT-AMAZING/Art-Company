@@ -11,8 +11,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
-import { Link } from '@/i18n/navigation'
+import { Trash2, Eye, EyeOff } from 'lucide-react'
 import { deleteNotice, toggleNoticePublish } from '@/app/actions/admin'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -31,6 +30,10 @@ export function NoticesTable({ notices }: { notices: Notice[] }) {
   const t = useTranslations('admin')
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
+
+  const handleRowClick = (noticeId: string) => {
+    router.push(`/admin/notices/${noticeId}/edit`)
+  }
 
   const handleDelete = async (id: string) => {
     if (!confirm(t('deleteConfirm'))) return
@@ -80,7 +83,11 @@ export function NoticesTable({ notices }: { notices: Notice[] }) {
         </TableHeader>
         <TableBody>
           {notices.map((notice) => (
-            <TableRow key={notice.id}>
+            <TableRow
+              key={notice.id}
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleRowClick(notice.id)}
+            >
               <TableCell className="font-medium max-w-xs truncate">
                 {notice.title_ko}
               </TableCell>
@@ -98,9 +105,10 @@ export function NoticesTable({ notices }: { notices: Notice[] }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation()
                       handleTogglePublish(notice.id, notice.is_published)
-                    }
+                    }}
                     disabled={loading === notice.id}
                   >
                     {notice.is_published ? (
@@ -109,15 +117,13 @@ export function NoticesTable({ notices }: { notices: Notice[] }) {
                       <Eye className="w-4 h-4" />
                     )}
                   </Button>
-                  <Link href={`/admin/notices/${notice.id}/edit`}>
-                    <Button variant="ghost" size="sm">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                  </Link>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(notice.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(notice.id)
+                    }}
                     disabled={loading === notice.id}
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
