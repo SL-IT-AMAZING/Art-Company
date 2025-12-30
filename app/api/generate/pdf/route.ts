@@ -34,11 +34,7 @@ const getPdfLabels = (locale: string) => {
 marked.setOptions({
   breaks: true,        // Convert \n to <br>
   gfm: true,           // GitHub Flavored Markdown
-  headerIds: false,    // Don't generate header IDs
-  mangle: false,       // Don't mangle email addresses
   pedantic: false,     // Don't be overly strict
-  smartLists: true,    // Better list handling
-  smartypants: false,  // Don't convert quotes to smart quotes (can cause issues)
 })
 
 console.log('[PDF] Marked.js configured with enhanced safety')
