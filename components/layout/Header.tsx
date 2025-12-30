@@ -7,11 +7,13 @@ import { MobileNav } from './MobileNav'
 import { ProfileMenu } from './ProfileMenu'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { getTranslations } from 'next-intl/server'
+import { isAdmin } from '@/lib/utils/admin'
 
 export async function Header() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const t = await getTranslations('auth')
+  const isAdminUser = await isAdmin()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -37,11 +39,20 @@ export async function Header() {
         <div className="flex items-center space-x-2 ml-auto">
           <LanguageToggle />
           {user ? (
-            <ProfileMenu
-              email={user.email || ''}
-              username={(user.user_metadata?.username as string) || undefined}
-              logoutAction={logout}
-            />
+            <>
+              {isAdminUser && (
+                <Link href="/admin/dashboard">
+                  <Button variant="outline" size="sm">
+                    Admin
+                  </Button>
+                </Link>
+              )}
+              <ProfileMenu
+                email={user.email || ''}
+                username={(user.user_metadata?.username as string) || undefined}
+                logoutAction={logout}
+              />
+            </>
           ) : (
             <>
               <Link href="/login" className="hidden sm:inline-block">

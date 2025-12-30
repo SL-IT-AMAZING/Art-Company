@@ -47,40 +47,6 @@ export default async function AboutPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('techStack')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">{t('frontend')}</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>Next.js 14</li>
-                    <li>React 18</li>
-                    <li>Tailwind CSS</li>
-                    <li>Framer Motion</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">{t('backend')}</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>Supabase</li>
-                    <li>OpenAI GPT-4o</li>
-                    <li>Next.js API Routes</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">{t('features')}</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>AI Streaming Chat</li>
-                    <li>RAG System</li>
-                    <li>2.5D Gallery</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

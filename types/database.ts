@@ -151,6 +151,70 @@ export interface Database {
           created_at?: string
         }
       }
+      notices: {
+        Row: {
+          id: string
+          title_ko: string
+          title_en: string
+          content_ko: string
+          content_en: string
+          author_id: string | null
+          is_published: boolean
+          published_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title_ko: string
+          title_en: string
+          content_ko: string
+          content_en: string
+          author_id?: string | null
+          is_published?: boolean
+          published_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title_ko?: string
+          title_en?: string
+          content_ko?: string
+          content_en?: string
+          author_id?: string | null
+          is_published?: boolean
+          published_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      registration_notifications: {
+        Row: {
+          id: string
+          user_id: string
+          user_email: string
+          user_metadata: Json | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          user_email: string
+          user_metadata?: Json | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          user_email?: string
+          user_metadata?: Json | null
+          is_read?: boolean
+          created_at?: string
+        }
+      }
     }
   }
 }
