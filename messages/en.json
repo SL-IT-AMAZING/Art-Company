@@ -3,7 +3,8 @@
     "aiCurator": "AI Curator",
     "onlineExhibition": "Online Exhibition",
     "notice": "Notice",
-    "about": "About"
+    "about": "About",
+    "contact": "Contact"
   },
   "auth": {
     "login": "Login",
@@ -225,7 +226,16 @@
     "createFirst": "Create First Exhibition",
     "totalExhibitions": "Total Exhibitions",
     "publicExhibitions": "Public Exhibitions",
-    "totalViews": "Total Views"
+    "totalViews": "Total Views",
+    "accountSettings": "Account Settings",
+    "deleteAccount": "Delete Account",
+    "deleteAccountTitle": "Delete Account",
+    "deleteAccountDesc": "Deleting your account will permanently remove all your data and cannot be recovered.",
+    "deleteAccountWarning": "Are you sure you want to delete your account? This action cannot be undone.",
+    "deleteAccountConfirm": "Delete Account",
+    "deleteAccountCancel": "Cancel",
+    "deleteAccountSuccess": "Your account has been deleted.",
+    "deleteAccountError": "An error occurred while deleting your account."
   },
   "exhibition": {
     "title": "Online Exhibition",
@@ -659,6 +669,39 @@
     "readNotifications": "Read",
     "unreadNotifications": "Unread",
     "noNotifications": "No notifications",
-    "memberDetail": "Member Details"
+    "memberDetail": "Member Details",
+    "inquiries": "Inquiries",
+    "inquiriesDesc": "Manage inquiries submitted through the contact form",
+    "allInquiries": "All Inquiries",
+    "totalInquiries": "Total {count} inquiries",
+    "unreadCount": "Unread",
+    "noInquiries": "No inquiries",
+    "read": "Read",
+    "unread": "Unread",
+    "inquiryDetails": "Inquiry Details",
+    "phone": "Phone"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "description": "If you have any questions, please feel free to contact us",
+    "formTitle": "Contact Form",
+    "formDescription": "Please fill out the form below to send us your inquiry. We will respond as soon as possible.",
+    "name": "Name",
+    "namePlaceholder": "John Doe",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "phone": "Phone",
+    "phonePlaceholder": "+1 234-567-8900",
+    "subject": "Subject",
+    "subjectPlaceholder": "Enter your inquiry subject",
+    "message": "Message",
+    "messagePlaceholder": "Please describe your inquiry in detail",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "submitSuccess": "Inquiry submitted",
+    "submitSuccessDesc": "We will respond as soon as possible. Thank you.",
+    "submitError": "Failed to submit inquiry",
+    "unknownError": "An unknown error occurred",
+    "emailAutoFilled": "Your email address has been automatically filled in"
   }
 }

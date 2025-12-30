@@ -12,7 +12,11 @@ import {
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
+import { deleteUserByAdmin } from '@/app/actions/admin'
 
 interface Member {
   id: string
@@ -27,7 +31,9 @@ interface Member {
 
 export function MembersTable({ members }: { members: Member[] }) {
   const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState<string | null>(null)
   const t = useTranslations('admin')
+  const router = useRouter()
 
   const filtered = members.filter(
     (member) =>
@@ -36,6 +42,22 @@ export function MembersTable({ members }: { members: Member[] }) {
         ?.toLowerCase()
         .includes(search.toLowerCase())
   )
+
+  const handleDelete = async (userId: string, userEmail: string) => {
+    if (!confirm(`정말로 ${userEmail} 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+      return
+    }
+
+    setLoading(userId)
+    const result = await deleteUserByAdmin(userId)
+    setLoading(null)
+
+    if (result.error) {
+      alert(result.error)
+    } else {
+      router.refresh()
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -56,12 +78,13 @@ export function MembersTable({ members }: { members: Member[] }) {
               <TableHead>{t('lastSignIn')}</TableHead>
               <TableHead className="text-right">{t('exhibitions')}</TableHead>
               <TableHead className="text-right">{t('views')}</TableHead>
+              <TableHead className="text-right">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <p className="text-muted-foreground">{t('noMembers')}</p>
                 </TableCell>
               </TableRow>
@@ -86,6 +109,16 @@ export function MembersTable({ members }: { members: Member[] }) {
                   </TableCell>
                   <TableCell className="text-right">
                     {member.total_views}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(member.id, member.email || 'Unknown')}
+                      disabled={loading === member.id}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

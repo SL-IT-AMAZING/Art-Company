@@ -3,7 +3,8 @@
     "aiCurator": "AI 큐레이터",
     "onlineExhibition": "온라인 전시",
     "notice": "공지사항",
-    "about": "About"
+    "about": "About",
+    "contact": "문의하기"
   },
   "auth": {
     "login": "로그인",
@@ -225,7 +226,16 @@
     "createFirst": "첫 전시 만들기",
     "totalExhibitions": "총 전시 수",
     "publicExhibitions": "공개 전시",
-    "totalViews": "총 조회수"
+    "totalViews": "총 조회수",
+    "accountSettings": "계정 설정",
+    "deleteAccount": "회원 탈퇴",
+    "deleteAccountTitle": "회원 탈퇴",
+    "deleteAccountDesc": "계정을 탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다.",
+    "deleteAccountWarning": "정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "deleteAccountConfirm": "탈퇴하기",
+    "deleteAccountCancel": "취소",
+    "deleteAccountSuccess": "회원 탈퇴가 완료되었습니다.",
+    "deleteAccountError": "회원 탈퇴 중 오류가 발생했습니다."
   },
   "exhibition": {
     "title": "온라인 전시",
@@ -659,6 +669,39 @@
     "readNotifications": "읽음",
     "unreadNotifications": "읽지 않음",
     "noNotifications": "알림이 없습니다",
-    "memberDetail": "회원 상세"
+    "memberDetail": "회원 상세",
+    "inquiries": "문의 관리",
+    "inquiriesDesc": "Contact 폼으로 접수된 문의사항을 관리합니다",
+    "allInquiries": "전체 문의",
+    "totalInquiries": "총 {count}건의 문의",
+    "unreadCount": "읽지 않음",
+    "noInquiries": "문의가 없습니다",
+    "read": "읽음",
+    "unread": "읽지 않음",
+    "inquiryDetails": "문의 상세",
+    "phone": "전화번호"
+  },
+  "contact": {
+    "title": "문의하기",
+    "description": "궁금하신 사항이 있으시면 언제든지 문의해주세요",
+    "formTitle": "문의 양식",
+    "formDescription": "아래 양식을 작성하여 문의를 보내주세요. 빠른 시일 내에 답변드리겠습니다.",
+    "name": "이름",
+    "namePlaceholder": "홍길동",
+    "email": "이메일",
+    "emailPlaceholder": "your@email.com",
+    "phone": "전화번호",
+    "phonePlaceholder": "010-1234-5678",
+    "subject": "제목",
+    "subjectPlaceholder": "문의 제목을 입력해주세요",
+    "message": "문의 내용",
+    "messagePlaceholder": "문의하실 내용을 자세히 작성해주세요",
+    "submit": "문의하기",
+    "submitting": "전송 중...",
+    "submitSuccess": "문의가 접수되었습니다",
+    "submitSuccessDesc": "빠른 시일 내에 답변드리겠습니다. 감사합니다.",
+    "submitError": "문의 전송 실패",
+    "unknownError": "알 수 없는 오류가 발생했습니다",
+    "emailAutoFilled": "로그인한 이메일 주소가 자동으로 입력되었습니다"
   }
 }

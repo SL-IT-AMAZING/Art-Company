@@ -3,7 +3,7 @@
 import { Link } from '@/i18n/navigation'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/helpers'
-import { LayoutDashboard, Users, FileText, Bell } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, Bell, MessageSquare } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { useTranslations } from 'next-intl'
 
@@ -22,6 +22,11 @@ const adminRoutes = [
     labelKey: 'notices',
     icon: FileText,
     href: '/admin/notices',
+  },
+  {
+    labelKey: 'inquiries',
+    icon: MessageSquare,
+    href: '/admin/inquiries',
   },
   {
     labelKey: 'notifications',

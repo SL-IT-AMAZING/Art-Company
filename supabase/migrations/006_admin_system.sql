@@ -83,6 +83,10 @@ CREATE POLICY "Admins can view registration notifications" ON registration_notif
 CREATE POLICY "Admins can update notifications" ON registration_notifications
   FOR UPDATE USING (is_admin(auth.uid()));
 
+-- 인증된 사용자는 자신의 알림을 생성할 수 있음 (회원가입 시)
+CREATE POLICY "Authenticated users can create their own notifications" ON registration_notifications
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
 -- =====================================================
 -- 4. 자동 업데이트 트리거 (updated_at)
 -- =====================================================

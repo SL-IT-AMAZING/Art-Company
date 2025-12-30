@@ -31,6 +31,37 @@ export async function GET(request: Request) {
           },
         })
       }
+
+      // Create registration notification for new users
+      // Check if notification already exists
+      const { data: existingNotification, error: checkError } = await supabase
+        .from('registration_notifications')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .maybeSingle() // Use maybeSingle instead of single to avoid error when no rows
+
+      console.log('Checking existing notification:', { existingNotification, checkError, userId: data.user.id })
+
+      if (!existingNotification) {
+        console.log('Creating new notification for user:', data.user.email)
+        // Create notification for admin
+        const { error: insertError } = await supabase
+          .from('registration_notifications')
+          .insert({
+            user_id: data.user.id,
+            user_email: data.user.email,
+            user_metadata: data.user.user_metadata || null,
+            is_read: false,
+          })
+
+        if (insertError) {
+          console.error('Failed to create notification:', insertError)
+        } else {
+          console.log('Notification created successfully')
+        }
+      } else {
+        console.log('Notification already exists for user:', data.user.email)
+      }
     }
   }
 

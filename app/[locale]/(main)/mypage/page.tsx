@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils/helpers'
 import { ProfileSettingsCard } from '@/components/profile/ProfileSettingsCard'
+import { DeleteAccountSection } from '@/components/profile/DeleteAccountSection'
 
 export default async function MyPage() {
   const t = await getTranslations('mypage')
@@ -152,6 +153,10 @@ export default async function MyPage() {
                 </p>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="mt-12 pt-8 border-t">
+            <DeleteAccountSection />
           </div>
         </div>
       </div>

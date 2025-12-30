@@ -13,6 +13,7 @@ export function NavItems() {
     { href: '/exhibition', labelKey: 'onlineExhibition' },
     { href: '/notice', labelKey: 'notice' },
     { href: '/about', labelKey: 'about' },
+    { href: '/contact', labelKey: 'contact' },
   ] as const
 
   return (

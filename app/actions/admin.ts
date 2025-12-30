@@ -143,3 +143,29 @@ export async function getMemberStats(userId: string) {
 
   return { data: stats }
 }
+
+export async function deleteUserByAdmin(userId: string) {
+  await requireAdmin()
+  const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+
+  // Delete user using admin API
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/members')
+  return { success: true }
+}
