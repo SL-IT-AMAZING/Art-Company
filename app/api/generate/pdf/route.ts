@@ -30,11 +30,18 @@ const getPdfLabels = (locale: string) => {
   }
 }
 
-// Configure marked for safe HTML output
+// Configure marked for safe HTML output with enhanced error handling
 marked.setOptions({
-  breaks: true, // Convert \n to <br>
-  gfm: true, // GitHub Flavored Markdown
+  breaks: true,        // Convert \n to <br>
+  gfm: true,           // GitHub Flavored Markdown
+  headerIds: false,    // Don't generate header IDs
+  mangle: false,       // Don't mangle email addresses
+  pedantic: false,     // Don't be overly strict
+  smartLists: true,    // Better list handling
+  smartypants: false,  // Don't convert quotes to smart quotes (can cause issues)
 })
+
+console.log('[PDF] Marked.js configured with enhanced safety')
 
 // Remote chromium URL for Vercel serverless (official Sparticuz release)
 const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
@@ -98,7 +105,9 @@ export async function POST(req: NextRequest) {
     let conversationSummary = ''
     if (exhibition.curator_conversation && exhibition.curator_conversation.length > 0) {
       try {
-        console.log('[PDF] Summarizing conversation...')
+        console.log('[PDF] Summarizing conversation for locale:', locale)
+        console.log('[PDF] Conversation messages count:', exhibition.curator_conversation.length)
+
         const summaryResponse = await openai.chat.completions.create({
           model: 'gpt-4o',
           messages: [
@@ -112,15 +121,32 @@ export async function POST(req: NextRequest) {
         })
 
         const summaryText = summaryResponse.choices[0]?.message?.content || ''
+        console.log('[PDF] Raw summary text length:', summaryText.length, 'locale:', locale)
+        console.log('[PDF] Summary preview:', summaryText.substring(0, 150))
+
         try {
           const parsed = JSON.parse(summaryText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim())
           conversationSummary = parsed.summary || ''
-        } catch {
+          console.log('[PDF] ✓ Parsed summary successfully, length:', conversationSummary.length)
+        } catch (jsonError) {
+          console.warn('[PDF] ⚠ Summary is not JSON, using as-is')
           conversationSummary = summaryText
         }
-        console.log('[PDF] Conversation summary generated:', conversationSummary.substring(0, 100))
+
+        // Test if summary can be parsed by marked
+        try {
+          const testParsed = marked.parse(conversationSummary)
+          console.log('[PDF] ✓ Conversation summary markdown is valid')
+        } catch (markdownError) {
+          console.error('[PDF] ✗ Conversation summary contains invalid markdown:', markdownError)
+          console.error('[PDF] Problematic summary:', conversationSummary.substring(0, 500))
+          // Continue anyway - will handle in template
+        }
+
       } catch (error) {
-        console.error('[PDF] Failed to summarize conversation:', error)
+        console.error('[PDF] ✗ Failed to summarize conversation for locale:', locale, error)
+        // Continue without summary
+        conversationSummary = ''
       }
     }
 
@@ -153,27 +179,98 @@ export async function POST(req: NextRequest) {
 
     // Content mapping helper with post-processing for gender-neutral language
     const getContent = (type: string) => {
-      // Check for both snake_case and camelCase versions (database has inconsistent naming)
-      const snakeCase = type
-      const camelCase = type.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+      const logPrefix = `[PDF][getContent(${type})]`
 
-      const item = content?.find((c: any) =>
-        c.content_type === snakeCase || c.content_type === camelCase
-      )
-      if (!item?.content) return ''
+      try {
+        console.log(`${logPrefix} Processing for locale: ${locale}`)
 
-      // Handle marketing report object format (saved directly as object, not wrapped in {text: ...})
-      if (type === 'marketing_report' && typeof item.content === 'object' && !item.content.text) {
-        const mr = item.content
-        let formatted = ''
-        if (mr.overview) formatted += mr.overview + '<br><br>'
-        if (mr.targetAudience?.length) formatted += `<strong>${labels.targetAudience}:</strong><br>` + mr.targetAudience.join('<br>') + '<br><br>'
-        if (mr.marketingPoints?.length) formatted += `<strong>${labels.marketingPoints}:</strong><br>` + mr.marketingPoints.join('<br>') + '<br><br>'
-        if (mr.pricingStrategy) formatted += `<strong>${labels.pricingStrategy}:</strong><br>` + mr.pricingStrategy + '<br><br>'
-        if (mr.promotionStrategy?.length) formatted += `<strong>${labels.promotionStrategy}:</strong><br>` + mr.promotionStrategy.join('<br>')
+        // Check for both snake_case and camelCase versions (database has inconsistent naming)
+        const snakeCase = type
+        const camelCase = type.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
 
-        let result = formatted.trim()
+        const item = content?.find((c: any) =>
+          c.content_type === snakeCase || c.content_type === camelCase
+        )
+
+        if (!item?.content) {
+          console.log(`${logPrefix} No content found`)
+          return ''
+        }
+
+        console.log(`${logPrefix} Found content, type:`, typeof item.content)
+
+        // Handle marketing report object format (saved directly as object, not wrapped in {text: ...})
+        if (type === 'marketing_report' && typeof item.content === 'object' && !item.content.text) {
+          console.log(`${logPrefix} Processing as marketing report object`)
+          const mr = item.content
+          let formatted = ''
+          if (mr.overview) formatted += mr.overview + '<br><br>'
+          if (mr.targetAudience?.length) formatted += `<strong>${labels.targetAudience}:</strong><br>` + mr.targetAudience.join('<br>') + '<br><br>'
+          if (mr.marketingPoints?.length) formatted += `<strong>${labels.marketingPoints}:</strong><br>` + mr.marketingPoints.join('<br>') + '<br><br>'
+          if (mr.pricingStrategy) formatted += `<strong>${labels.pricingStrategy}:</strong><br>` + mr.pricingStrategy + '<br><br>'
+          if (mr.promotionStrategy?.length) formatted += `<strong>${labels.promotionStrategy}:</strong><br>` + mr.promotionStrategy.join('<br>')
+
+          let result = formatted.trim()
+          result = postProcessLLMOutput(result)
+          result = replaceTBDPlaceholders(result, {
+            exhibition_date: exhibition.exhibition_date,
+            exhibition_end_date: exhibition.exhibition_end_date,
+            venue: exhibition.venue,
+            location: exhibition.location,
+            admission_fee: exhibition.admission_fee,
+          })
+
+          console.log(`${logPrefix} ✓ Marketing report processed, length:`, result.length)
+          return result
+        }
+
+        let text = typeof item.content === 'string' ? item.content : item.content.text || ''
+        let result = text
+        console.log(`${logPrefix} Raw text length:`, text.length)
+
+        // Remove JSON formatting if present
+        if (text.trim().startsWith('{') || text.trim().startsWith('```json')) {
+          console.log(`${logPrefix} Detected JSON format, parsing...`)
+          try {
+            // Remove markdown code block if present
+            text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+
+            // Try to parse as JSON
+            const parsed = JSON.parse(text)
+
+            // Extract the actual content from common JSON response formats
+            if (parsed.artistBio) result = parsed.artistBio
+            else if (parsed.introduction) result = parsed.introduction
+            else if (parsed.preface) result = parsed.preface
+            else if (parsed.pressRelease) result = parsed.pressRelease
+            else if (parsed.marketingReport) {
+              // Format marketing report if it's an object
+              if (typeof parsed.marketingReport === 'object') {
+                const mr = parsed.marketingReport
+                let formatted = ''
+                if (mr.overview) formatted += mr.overview + '<br><br>'
+                if (mr.targetAudience) formatted += `<strong>${labels.targetAudience}:</strong><br>` + mr.targetAudience.join('<br>') + '<br><br>'
+                if (mr.marketingPoints) formatted += `<strong>${labels.marketingPoints}:</strong><br>` + mr.marketingPoints.join('<br>') + '<br><br>'
+                if (mr.pricingStrategy) formatted += `<strong>${labels.pricingStrategy}:</strong><br>` + mr.pricingStrategy + '<br><br>'
+                if (mr.promotionStrategy) formatted += `<strong>${labels.promotionStrategy}:</strong><br>` + mr.promotionStrategy.join('<br>')
+                result = formatted.trim()
+              } else {
+                result = parsed.marketingReport
+              }
+            }
+            console.log(`${logPrefix} ✓ JSON parsed successfully`)
+          } catch (e) {
+            console.warn(`${logPrefix} ⚠ JSON parsing failed, using original text`)
+            // If parsing fails, use original text
+            result = text
+          }
+        }
+
+        // Apply post-processing: removes gendered language, cleans JSON artifacts, markdown, typos
+        console.log(`${logPrefix} Applying post-processing...`)
         result = postProcessLLMOutput(result)
+
+        // Replace [TBD] placeholders with actual exhibition data
         result = replaceTBDPlaceholders(result, {
           exhibition_date: exhibition.exhibition_date,
           exhibition_end_date: exhibition.exhibition_end_date,
@@ -181,63 +278,42 @@ export async function POST(req: NextRequest) {
           location: exhibition.location,
           admission_fee: exhibition.admission_fee,
         })
-        return result
-      }
 
-      let text = typeof item.content === 'string' ? item.content : item.content.text || ''
-      let result = text
+        console.log(`${logPrefix} Text after post-processing, length:`, result.length)
+        console.log(`${logPrefix} Preview:`, result.substring(0, 100))
 
-      // Remove JSON formatting if present
-      if (text.trim().startsWith('{') || text.trim().startsWith('```json')) {
+        // CRITICAL: Convert markdown to HTML with error handling
         try {
-          // Remove markdown code block if present
-          text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+          const htmlResult = marked.parse(result) as string
+          console.log(`${logPrefix} ✓ Markdown parsed successfully, HTML length:`, htmlResult.length)
+          return htmlResult
+        } catch (markdownError: any) {
+          console.error(`${logPrefix} ✗ MARKDOWN PARSING FAILED:`, markdownError)
+          console.error(`${logPrefix} Error message:`, markdownError.message)
+          console.error(`${logPrefix} Problematic content (first 500 chars):`)
+          console.error(result.substring(0, 500))
+          console.error(`${logPrefix} Locale:`, locale)
 
-          // Try to parse as JSON
-          const parsed = JSON.parse(text)
+          // Fallback: Return HTML-escaped content with line breaks
+          console.warn(`${logPrefix} Using fallback: HTML-escaped text`)
+          const fallback = result
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
 
-          // Extract the actual content from common JSON response formats
-          if (parsed.artistBio) result = parsed.artistBio
-          else if (parsed.introduction) result = parsed.introduction
-          else if (parsed.preface) result = parsed.preface
-          else if (parsed.pressRelease) result = parsed.pressRelease
-          else if (parsed.marketingReport) {
-            // Format marketing report if it's an object
-            if (typeof parsed.marketingReport === 'object') {
-              const mr = parsed.marketingReport
-              let formatted = ''
-              if (mr.overview) formatted += mr.overview + '<br><br>'
-              if (mr.targetAudience) formatted += `<strong>${labels.targetAudience}:</strong><br>` + mr.targetAudience.join('<br>') + '<br><br>'
-              if (mr.marketingPoints) formatted += `<strong>${labels.marketingPoints}:</strong><br>` + mr.marketingPoints.join('<br>') + '<br><br>'
-              if (mr.pricingStrategy) formatted += `<strong>${labels.pricingStrategy}:</strong><br>` + mr.pricingStrategy + '<br><br>'
-              if (mr.promotionStrategy) formatted += `<strong>${labels.promotionStrategy}:</strong><br>` + mr.promotionStrategy.join('<br>')
-              result = formatted.trim()
-            } else {
-              result = parsed.marketingReport
-            }
-          }
-        } catch (e) {
-          // If parsing fails, use original text
-          result = text
+          return `<p>${fallback}</p>`
         }
+
+      } catch (error: any) {
+        console.error(`${logPrefix} ✗ CRITICAL ERROR:`, error)
+        console.error(`${logPrefix} Error stack:`, error?.stack)
+        console.error(`${logPrefix} Locale:`, locale)
+        return ''
       }
-
-      // Apply post-processing: removes gendered language, cleans JSON artifacts, markdown, typos
-      result = postProcessLLMOutput(result)
-
-      // Replace [TBD] placeholders with actual exhibition data
-      result = replaceTBDPlaceholders(result, {
-        exhibition_date: exhibition.exhibition_date,
-        exhibition_end_date: exhibition.exhibition_end_date,
-        venue: exhibition.venue,
-        location: exhibition.location,
-        admission_fee: exhibition.admission_fee,
-      })
-
-      // Convert markdown to HTML
-      result = marked.parse(result) as string
-
-      return result
     }
 
     // Create HTML with Korean font support
@@ -478,7 +554,28 @@ export async function POST(req: NextRequest) {
 
             ${conversationSummary ? `
               <div class="content-area" style="margin-top: 24px;">
-                ${marked.parse(conversationSummary)}
+                ${(() => {
+                  try {
+                    console.log('[PDF] Parsing conversation summary markdown in template, length:', conversationSummary.length)
+                    const parsed = marked.parse(conversationSummary)
+                    console.log('[PDF] ✓ Conversation summary parsed in template successfully')
+                    return parsed
+                  } catch (markdownError) {
+                    console.error('[PDF] ✗ MARKDOWN PARSING FAILED IN TEMPLATE:', markdownError)
+                    console.error('[PDF] Summary content:', conversationSummary.substring(0, 500))
+                    console.error('[PDF] Locale:', locale)
+                    // Fallback: HTML-escaped text with line breaks
+                    console.warn('[PDF] Using fallback for conversation summary')
+                    return '<p>' + conversationSummary
+                      .replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;')
+                      .replace(/\n\n/g, '</p><p>')
+                      .replace(/\n/g, '<br>') + '</p>'
+                  }
+                })()}
               </div>
             ` : ''}
           </div>
@@ -665,8 +762,14 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error('[PDF] Generate PDF error:', error)
+    console.error('═══════════════════════════════════════')
+    console.error('[PDF] ✗ PDF GENERATION FAILED')
+    console.error('[PDF] Error:', error)
+    console.error('[PDF] Error message:', error?.message)
     console.error('[PDF] Error stack:', error?.stack)
+    console.error('[PDF] Exhibition ID:', requestBody?.exhibitionId || 'unknown')
+    console.error('[PDF] Locale:', requestBody?.locale || 'unknown')
+    console.error('═══════════════════════════════════════')
 
     if (browser) {
       try {
@@ -676,14 +779,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Provide more specific error messages based on locale
-    // Note: locale may not be available if error occurred before parsing
     const errorLocale = requestBody?.locale || 'ko'
     const isEn = errorLocale === 'en'
 
     let errorMessage = isEn
       ? 'An error occurred while generating PDF.'
       : 'PDF 생성 중 오류가 발생했습니다.'
+
+    let errorDetails = ''
+
+    // Specific error messages based on error type
     if (error?.message?.includes('timeout')) {
       errorMessage = isEn
         ? 'PDF generation timed out. There may be too many or large images.'
@@ -692,10 +797,41 @@ export async function POST(req: NextRequest) {
       errorMessage = isEn
         ? 'PDF generation failed due to memory shortage.'
         : '메모리 부족으로 PDF 생성에 실패했습니다.'
+    } else if (error?.message?.includes('Prompt loading')) {
+      errorMessage = isEn
+        ? 'Failed to load content templates. Please try again.'
+        : '콘텐츠 템플릿 로드에 실패했습니다. 다시 시도해주세요.'
+      errorDetails = 'PROMPTS_ERROR'
+    } else if (error?.message?.includes('marked') || error?.message?.includes('markdown') || error?.message?.toLowerCase().includes('parse')) {
+      errorMessage = isEn
+        ? 'Content formatting error. Please try regenerating the exhibition content.'
+        : '콘텐츠 형식 오류입니다. 전시 콘텐츠를 다시 생성해주세요.'
+      errorDetails = 'MARKDOWN_PARSE_ERROR'
+    } else if (error?.message?.includes('browser') || error?.message?.includes('chromium')) {
+      errorMessage = isEn
+        ? 'PDF generation service unavailable. Please try again later.'
+        : 'PDF 생성 서비스를 시작할 수 없습니다. 잠시 후 다시 시도해주세요.'
+      errorDetails = 'BROWSER_ERROR'
+    } else if (error?.code === 'ECONNREFUSED' || error?.code === 'ETIMEDOUT') {
+      errorMessage = isEn
+        ? 'Network error. Please check your connection and try again.'
+        : '네트워크 오류입니다. 연결을 확인하고 다시 시도해주세요.'
+      errorDetails = 'NETWORK_ERROR'
     }
 
+    console.error('[PDF] Returning error response:', {
+      error: errorMessage,
+      details: errorDetails || error?.message,
+      locale: errorLocale
+    })
+
     return NextResponse.json(
-      { error: errorMessage },
+      {
+        error: errorMessage,
+        details: errorDetails || undefined,
+        locale: errorLocale,
+        debugInfo: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      },
       { status: 500 }
     )
   }

@@ -72,7 +72,34 @@ export function VirtualExhibitionPrompt({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         console.error('[PDF Client] Error response:', errorData)
-        throw new Error(errorData.error || t('pdfGenerationFailed'))
+        console.error('[PDF Client] Status:', response.status)
+        console.error('[PDF Client] Locale:', locale)
+
+        // Build detailed error message
+        let errorMsg = errorData.error || t('pdfGenerationFailed')
+
+        if (errorData.details) {
+          console.error('[PDF Client] Error details:', errorData.details)
+
+          // Add user-friendly guidance based on error type
+          if (errorData.details === 'MARKDOWN_PARSE_ERROR') {
+            const guidance = locale === 'en'
+              ? '\n\nTip: Try regenerating the exhibition content (Introduction, Preface, etc.) and try again.'
+              : '\n\n팁: 전시 콘텐츠(소개, 서문 등)를 다시 생성한 후 시도해보세요.'
+            errorMsg += guidance
+          } else if (errorData.details === 'BROWSER_ERROR') {
+            const guidance = locale === 'en'
+              ? '\n\nThis is a temporary server issue. Please try again in a few minutes.'
+              : '\n\n일시적인 서버 문제입니다. 몇 분 후 다시 시도해주세요.'
+            errorMsg += guidance
+          }
+        }
+
+        if (errorData.debugInfo && process.env.NODE_ENV === 'development') {
+          console.error('[PDF Client] Debug info:', errorData.debugInfo)
+        }
+
+        throw new Error(errorMsg)
       }
 
       const blob = await response.blob()

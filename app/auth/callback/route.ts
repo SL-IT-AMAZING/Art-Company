@@ -15,7 +15,23 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    // Magic Link 인증 성공 후 비밀번호 자동 설정
+    if (!error && data.user) {
+      const pendingPassword = data.user.user_metadata?.pending_password
+
+      if (pendingPassword) {
+        // 비밀번호 설정
+        await supabase.auth.updateUser({
+          password: pendingPassword,
+          data: {
+            full_name: data.user.user_metadata?.full_name,
+            pending_password: null, // 사용 완료된 비밀번호 제거
+          },
+        })
+      }
+    }
   }
 
   if (errorDescription) {

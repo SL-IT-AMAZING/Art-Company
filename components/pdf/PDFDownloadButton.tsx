@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Download, Loader2, FileText } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
@@ -10,6 +11,7 @@ export interface PDFDownloadButtonProps {
   exhibitionTitle: string
   variant?: 'default' | 'outline' | 'ghost'
   size?: 'default' | 'sm' | 'lg'
+  locale?: string
 }
 
 export function PDFDownloadButton({
@@ -17,9 +19,12 @@ export function PDFDownloadButton({
   exhibitionTitle,
   variant = 'default',
   size = 'default',
+  locale: localeProp,
 }: PDFDownloadButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const { toast } = useToast()
+  const currentLocale = useLocale()
+  const locale = localeProp || currentLocale
 
   const handleDownload = async () => {
     setIsGenerating(true)
@@ -28,11 +33,32 @@ export function PDFDownloadButton({
       const response = await fetch('/api/generate/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ exhibitionId }),
+        body: JSON.stringify({ exhibitionId, locale }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('[PDF Download] Error response:', errorData)
+        console.error('[PDF Download] Status:', response.status)
+        console.error('[PDF Download] Locale:', locale)
+
+        let errorMsg = errorData.error || 'PDF 생성에 실패했습니다.'
+
+        if (errorData.details) {
+          console.error('[PDF Download] Error details:', errorData.details)
+
+          if (errorData.details === 'MARKDOWN_PARSE_ERROR') {
+            errorMsg += '\n\n팁: 전시 콘텐츠를 다시 생성한 후 시도해보세요.'
+          } else if (errorData.details === 'BROWSER_ERROR') {
+            errorMsg += '\n\n일시적인 서버 문제입니다. 잠시 후 다시 시도해주세요.'
+          }
+        }
+
+        if (errorData.debugInfo && process.env.NODE_ENV === 'development') {
+          console.error('[PDF Download] Debug:', errorData.debugInfo)
+        }
+
+        throw new Error(errorMsg)
       }
 
       // Get PDF blob and download directly

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
+import { useToast } from '@/hooks/use-toast'
 
 export default function LoginPage() {
   const t = useTranslations('auth')
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const { toast } = useToast()
 
   useEffect(() => {
     const authError = searchParams.get('auth_error')
@@ -39,12 +41,45 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setError(error.message)
+        // 이메일 미인증 에러 구분
+        if (error.message.includes('Email not confirmed')) {
+          toast({
+            variant: "destructive",
+            title: t('loginError'),
+            description: t('emailNotConfirmed'),
+            duration: 8000,
+          })
+          setError(t('emailNotConfirmed'))
+        } else if (error.message.includes('Invalid login credentials')) {
+          toast({
+            variant: "destructive",
+            title: t('loginError'),
+            description: t('invalidCredentials'),
+          })
+          setError(t('invalidCredentials'))
+        } else {
+          toast({
+            variant: "destructive",
+            title: t('loginError'),
+            description: error.message,
+          })
+          setError(error.message)
+        }
       } else {
+        toast({
+          title: t('loginSuccess'),
+          description: t('redirectingToMypage'),
+        })
         router.push('/mypage')
         router.refresh()
       }
     } catch (err) {
+      console.error('Login error:', err)
+      toast({
+        variant: "destructive",
+        title: t('loginError'),
+        description: t('unknownError'),
+      })
       setError(t('loginError'))
     } finally {
       setLoading(false)
