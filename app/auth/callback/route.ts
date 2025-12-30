@@ -9,9 +9,9 @@ export async function GET(request: Request) {
   const next = requestUrl.searchParams.get('next') || '/mypage'
   const errorDescription = requestUrl.searchParams.get('error_description')
 
-  // Get locale from cookie or default to 'en'
+  // Get locale from cookie or default to 'ko'
   const cookieLocale = request.headers.get('cookie')?.match(/NEXT_LOCALE=(\w+)/)?.[1]
-  const locale = cookieLocale || 'en'
+  const locale = cookieLocale || 'ko'
 
   if (code) {
     const supabase = await createClient()
